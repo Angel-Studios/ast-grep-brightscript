@@ -13,6 +13,12 @@ sub init()
     m.summary = m.top.findNode("summary")
     m.cols = [m.top.findNode("col0"), m.top.findNode("col1"), m.top.findNode("col2")]
 
+    ' Small monospace font (bundled Ubuntu Mono TTF) for the terse boot-log -
+    ' ~half the default size to leave room for many more specs.
+    m.bodyFont = MakeFont(14)
+    m.title.font = MakeFont(24)
+    m.summary.font = m.bodyFont
+
     ' Prove the SpecShowcase loaded and its interface is reachable (component-scope
     ' callFunc, which is allowed across components).
     showcase = m.top.findNode("showcase")
@@ -63,6 +69,7 @@ sub render()
         idx = i \ perCol
         if idx > 2 then idx = 2
         row = m.cols[idx].createChild("Label")
+        row.font = m.bodyFont
         row.width = 600
         row.wrap = false
         row.text = line
@@ -94,4 +101,12 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
         return true
     end if
     return false
+end function
+
+' Build a Font node from the bundled Ubuntu Mono TTF at the given pixel size.
+function MakeFont(sz as Integer) as Object
+    f = CreateObject("roSGNode", "Font")
+    f.uri = "pkg:/fonts/UbuntuMono-Regular.ttf"
+    f.size = sz
+    return f
 end function
