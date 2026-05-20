@@ -396,13 +396,12 @@ Statement       ::= AssignmentStatement
 
 (*--- 3.2 Assignment --------------------------------------------------------*)
 
-(* Plain assignment. The optional leading 'let' keyword is accepted (legacy).
-   The LHS is an assignable l-value: a variable or a member/index target.
-   OPEN QUESTION (pending device verification, see grammar/CLAUDE.md):
-   BrighterScript REJECTS leading 'let' (error BS1081 "Unexpected token
-   'let'"), yet 'let' IS in Roku's reserved-word list. Confirm on a real
-   device whether the BrightScript runtime still accepts 'let x = 5'. *)
-AssignmentStatement ::= 'let'? AssignTarget ASSIGN Expression
+(* Plain assignment. The LHS is an assignable l-value: a variable or a
+   member/index target. DEVICE-CONFIRMED on Roku OS 15.1.4: a leading 'let' is
+   NOT accepted -- 'let x = 5' is a Syntax Error (compile error &h02). 'let'
+   stays a reserved word (it cannot be a variable name) but the LET-assignment
+   form is unsupported. (BrighterScript agrees: BS1081.) *)
+AssignmentStatement ::= AssignTarget ASSIGN Expression
 
 AssignTarget    ::= Identifier PostfixSuffix*
                     (* e.g. x  |  m.count  |  arr[i]  |  obj.list[2].name *)
@@ -576,19 +575,14 @@ ErrorMessageText ::= ( Char - LINE_BREAK )*
    BlockItem) appear and are conditionally included. *)
 BlockItemsCC    ::= ( BlockItem EOS )* BlockItem?
 
-(* The expression in a #if / #else if is a compile-time boolean expression
-   over #const-defined identifiers and boolean literals.
-   OPEN QUESTION (pending device verification, see grammar/CLAUDE.md): the
-   BrighterScript compiler REJECTS 'and'/'or'/'not' inside #if (BS1091 "#if
-   conditionals can only be 'true', 'false', or other #const names"). Roku's
-   conditional compilation may permit only a single #const/boolean, which would
-   make CCOr/CCAnd/CCNot below over-permissive. Confirm on a real device before
-   relying on boolean operators in conditional compilation. *)
-CCExpression    ::= CCOr
-CCOr            ::= CCAnd ( 'or' CCAnd )*
-CCAnd           ::= CCNot ( 'and' CCNot )*
-CCNot           ::= 'not'? CCPrimary
-CCPrimary       ::= BooleanLiteral | Identifier | LPAREN CCExpression RPAREN
+(* The expression in a #if / #else if. DEVICE-CONFIRMED on Roku OS 15.1.4
+   (Streaming Stick 4K): the ONLY legal forms are a single boolean literal or a
+   single #const name -- the docs' "(True | False | <CONST-NAME>)". Boolean
+   operators 'and'/'or'/'not', parentheses, and any compound expression are a
+   COMPILE ERROR (&h93 "Invalid #If/#ElseIf expression"). Negation/conjunction
+   must be expressed structurally via #else and nested #if. (BrighterScript
+   agrees: BS1091.) *)
+CCExpression    ::= BooleanLiteral | Identifier
 
 
 (*===========================================================================*)

@@ -1,0 +1,23 @@
+# Editor / tool scratch
+target/
+.DS_Store
+*.swp
+
+# tree-sitter grammar build artifacts (for the future tree-sitter-brightscript/ project)
+node_modules/
+*.so
+*.dylib
+*.dll
+*.wasm
+parser.c.log
+
+# Roku packaging output
+*.zip
+*.pkg
+out/
+
+# ast-grep local caches
+.ast-grep/
+
+# Secrets / device config (dev passwords etc.)
+.env

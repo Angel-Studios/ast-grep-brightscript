@@ -1,0 +1,22 @@
+{
+  "name": "roku-listener",
+  "version": "0.1.0",
+  "module": "src/main.ts",
+  "type": "module",
+  "private": true,
+  "description": "Roku debug-console listening layer: connects to a Roku BrightScript debug console (telnet), parses ##SPEC## result lines, and produces machine-readable + human reports.",
+  "scripts": {
+    "listen": "bun run src/main.ts live",
+    "replay": "bun run src/main.ts replay",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "effect": "^3.12.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

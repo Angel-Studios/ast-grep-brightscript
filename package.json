@@ -1,0 +1,19 @@
+{
+  "name": "ast-grep-brightscript-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev tooling for ast-grep-brightscript: BrightScript + SceneGraph compiler/diagnostic checks for roku-test-harness/ via brighterscript (bsc).",
+  "scripts": {
+    "check": "bsc --project roku-test-harness/bsconfig.json",
+    "lint": "bsc --project roku-test-harness/bsconfig.json",
+    "watch": "bsc --project roku-test-harness/bsconfig.json --watch",
+    "roku:zip": "bun scripts/roku-deploy.ts zip",
+    "roku:install": "bun scripts/roku-deploy.ts install",
+    "roku:launch": "bun scripts/roku-deploy.ts launch",
+    "roku:delete": "bun scripts/roku-deploy.ts delete",
+    "roku:deploy": "bun scripts/roku-deploy.ts deploy"
+  },
+  "devDependencies": {
+    "brighterscript": "^0.72.2"
+  }
+}

@@ -1,0 +1,42 @@
+------ Compiling dev 'spec-harness' ------
+BrightScript Micro Debugger.
+Enabling Micro Debugger.
+
+------ Running dev 'spec-harness' main ------
+[scrpt.ctx.run.enter] UI: Entering 'spec-harness', id 'dev'
+[beacon.signal] |AppLaunchInitiate ----> TimeBase(0 ms)
+[scrpt.ctx.cmpl.time] Compiled 'spec-harness', id 'dev' in 121ms (BrightScript)
+SpecHarness: starting suite
+##SPEC## event=run-start total=12
+##SPEC## v=1 id=literals.integer kind=IntegerLiteral status=PASS
+##SPEC## v=1 id=literals.float kind=FloatLiteral status=PASS
+##SPEC## v=1 id=literals.string kind=StringLiteral status=PASS detail="round-tripped \"quoted\" value with = sign ok"
+[some noisy print from the harness] value = 42
+##SPEC## v=1 id=operators.add kind=BinaryExpression status=PASS
+##SPEC## v=1 id=operators.intdiv kind=BinaryExpression status=FAIL detail="expected 3 got 3.5 (\\ should be integer divide)"
+##SPEC## v=1 id=operators.mod kind=BinaryExpression status=PASS
+?some bare print statement output that should be ignored
+##SPEC## v=1 id=controlflow.for kind=ForStatement status=PASS
+##SPEC## v=1 id=controlflow.while kind=WhileStatement status=PASS
+##SPEC## v=1 id=functions.anon kind=AnonymousFunction status=COMPILE_ERROR detail="Function does not return a value"
+##SPEC## v=1 id=collections.assocarray kind=AssociativeArray status=PASS
+SpecHarness: about to exercise the crashy construct
+'Syntax Error. (compile error &h02) in pkg:/source/tests/test_misc.brs(88)
+##SPEC## v=1 id=exceptions.trycatch kind=TryCatchStatement status=CRASH detail="uncaught error thrown in catch"
+Backtrace:
+#1  Function exercise_crash() As Void
+   file/line: pkg:/source/tests/test_misc.brs(88)
+Local Variables:
+global           Interface:ifGlobal
+m                roAssociativeArray refcnt=2 count=3
+current function:
+   88:     badCall(invalid.thing)
+   89:   end function
+runtime error &h28: Invalid number of array elements (runtime error &h35) in pkg:/source/tests/test_misc.brs(88)
+BACKTRACE:
+#0  Function badcall(x as dynamic) as void
+   file/line: pkg:/source/tests/test_misc.brs(88)
+
+Brightscript Debugger>
+##SPEC## event=run-end pass=8 fail=1
+[beacon.report] |AppLaunchComplete ----> Duration(842 ms)

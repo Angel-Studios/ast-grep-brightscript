@@ -85,11 +85,12 @@ These were called out by the spec authors as uncertain. Verify before treating a
 - Trailing commas in `[]`/`{}` literals — modeled permissively; runtime tolerance not documented.
 - Reserved built-ins (`Eval`, `Run`, `Type`, `Box`, `GetGlobalAA`, `Line_Num`, …) — call signatures not fully spec'd.
 - Optional-chaining `?.`/`?[` vs print `?` disambiguation (space sensitivity) — validate against device behavior.
-- Optional leading `let` on assignment — **OPEN** (annotated in `brightscript.ebnf`): BrighterScript rejects it (BS1081 "Unexpected token 'let'"), but `let` is a Roku reserved word. Confirm on a device.
-- Boolean operators (`and`/`or`/`not`) inside `#if` conditional compilation — **OPEN** (annotated in `brightscript.ebnf`): BrighterScript rejects them (BS1091/BS1081); Roku may permit only a single `#const`/boolean, making `CCExpression` over-permissive. Confirm on a device.
+- ~~Optional leading `let` on assignment~~ — **RESOLVED (device, see [DEVICE_FACTS.md](DEVICE_FACTS.md) #2)**: Roku OS 15.1.4 rejects `let x = 5` (Syntax Error &h02). `let` stays reserved but the LET-assignment form is unsupported; removed from `AssignmentStatement`.
+- ~~Boolean operators (`and`/`or`/`not`) inside `#if`~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #1)**: rejected (compile error &h93). `CCExpression` reduced to a single boolean/const; negation via `#else`, conjunction via nested `#if`.
 
 **SceneGraph:**
-- ~~`array` vs `roArray` spelling~~ — **RESOLVED**: the XSD enumerates only `array`; `roArray` removed from `FieldType`, enforced by `check_scenegraph_xsd.py`. (A device check could still confirm whether the runtime *also* tolerates `roArray`.)
+- `array` vs `roArray` spelling — `roArray` removed from `FieldType` (not in XSD; `check_scenegraph_xsd.py` enforces). Device test so far **INCONCLUSIVE** (see [DEVICE_FACTS.md](DEVICE_FACTS.md)): a `type="roArray"` field with no `value` did not error, but a field type is only validated when a `value` is present — needs a valued test.
+- **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #3)**: a `stringarray` initial value needs quoted elements — `value='["a","b","c"]'`; `[a, b, c]` is rejected. (Array field-init values are validated only when a `value` is present.)
 - Color string formats beyond `0xRRGGBBAA` (e.g. `#RRGGBB`) — only `0xRRGGBBAA` confirmed.
 - Node-reference attribute micro-syntax (e.g. `"dictionary:SomeId"`) — from an example, not a formal spec.
 - `AnimationBase`/`ArrayGrid` in the `extends` enumeration — present in the XSD but base-ish; instantiability unverified.
