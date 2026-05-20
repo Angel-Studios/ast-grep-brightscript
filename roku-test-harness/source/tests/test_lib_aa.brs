@@ -169,7 +169,7 @@ sub test_lib_aa_all(t as Object)
 
     ' Type(Box(1)) - the boxed integer's runtime type. On device Box() of an
     ' Integer reports "roInt"; accept the "roInteger" spelling too via kind check.
-    t.spec("lib.boxed.box_type", "CallExpression", "Type() of a boxed integer")
+    t.spec("lib.boxed.box_type", "BuiltinCall", "Type() of a boxed integer")
     try
         tn = Type(Box(1))
         ok = (tn = "roInt" or tn = "roInteger")

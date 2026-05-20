@@ -218,7 +218,7 @@ sub test_expr_ops_all(t as Object)
     t.assertEqual("expr.primary.paren", x, 1)
 
     ' m as a primary
-    t.spec("expr.primary.m", "Primary", "m as a primary")
+    t.spec("expr.primary.m", "Identifier", "m as a primary")
     m.v = 1
     x = m.v
     t.assertEqual("expr.primary.m", x, 1)

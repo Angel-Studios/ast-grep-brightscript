@@ -1,0 +1,282 @@
+================================================================================
+component: required name attribute
+================================================================================
+
+<component name="MyComp" />
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))))
+
+================================================================================
+component: extends a built-in node class
+================================================================================
+
+<component name="C" extends="Group" />
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (ComponentAttribute
+      (Eq)
+      value: (ExtendsAttValue
+        (ExtendsValue
+          (BuiltinNodeClass))))))
+
+================================================================================
+component: extends a user-defined component name
+================================================================================
+
+<component name="C" extends="MyBase" />
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (ComponentAttribute
+      (Eq)
+      value: (ExtendsAttValue
+        (ExtendsValue)))))
+
+================================================================================
+component: initialFocus and version attributes
+================================================================================
+
+<component name="C" initialFocus="btn" version="1.0" />
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))))
+
+================================================================================
+interface: empty
+================================================================================
+
+<component name="C"><interface /></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Interface)))
+
+================================================================================
+interface: with a field (integer with value)
+================================================================================
+
+<component name="C"><interface><field id="a" type="integer" value="42" /></interface></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Interface
+      (Field
+        (FieldAttribute
+          (Eq)
+          value: (AttValue))
+        (FieldAttribute
+          (Eq)
+          value: (FieldTypeAttValue
+            (FieldType)))
+        (FieldAttribute
+          (Eq)
+          value: (AttValue))))))
+
+================================================================================
+field: type value matched case-insensitively (boolean)
+================================================================================
+
+<component name="C"><interface><field id="a" type="boolean" value="true" /></interface></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Interface
+      (Field
+        (FieldAttribute
+          (Eq)
+          value: (AttValue))
+        (FieldAttribute
+          (Eq)
+          value: (FieldTypeAttValue
+            (FieldType)))
+        (FieldAttribute
+          (Eq)
+          value: (AttValue))))))
+
+================================================================================
+field: alias micro-syntax
+================================================================================
+
+<component name="C"><interface><field id="a" type="integer" alias="child.width" /></interface></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Interface
+      (Field
+        (FieldAttribute
+          (Eq)
+          value: (AttValue))
+        (FieldAttribute
+          (Eq)
+          value: (FieldTypeAttValue
+            (FieldType)))
+        (FieldAttribute
+          (Eq)
+          value: (AliasAttValue))))))
+
+================================================================================
+field: onChange and alwaysNotify
+================================================================================
+
+<component name="C"><interface><field id="a" type="integer" value="1" onChange="onA" alwaysNotify="true" /></interface></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Interface
+      (Field
+        (FieldAttribute
+          (Eq)
+          value: (AttValue))
+        (FieldAttribute
+          (Eq)
+          value: (FieldTypeAttValue
+            (FieldType)))
+        (FieldAttribute
+          (Eq)
+          value: (AttValue))
+        (FieldAttribute
+          (Eq)
+          value: (AttValue))
+        (FieldAttribute
+          (Eq)
+          value: (BoolAttValue
+            (BoolText)))))))
+
+================================================================================
+function: exposes a BrightScript fn (callFunc)
+================================================================================
+
+<component name="C"><interface><function name="doThing" /></interface></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Interface
+      (Function
+        (FunctionAttribute
+          (Eq)
+          value: (AttValue))))))
+
+================================================================================
+script: external uri (no body), fixed type
+================================================================================
+
+<component name="C"><script type="text/brightscript" uri="pkg:/c.brs" /></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Script
+      (ScriptExternal
+        (ScriptAttribute
+          (Eq)
+          value: (ScriptTypeAttValue
+            (ScriptType)))
+        (ScriptAttribute
+          (Eq)
+          value: (AttValue))))))
+
+================================================================================
+script: inline CDATA BrightScript body (injection point)
+================================================================================
+
+<component name="C"><script type="text/brightscript"><![CDATA[sub init()
+end sub]]></script></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Script
+      (ScriptAttribute
+        (Eq)
+        value: (ScriptTypeAttValue
+          (ScriptType)))
+      (ScriptCData
+        content: (BrightScriptBody)))))
+
+================================================================================
+script: inline bare (non-CDATA) BrightScript text (injection point)
+================================================================================
+
+<component name="C"><script type="text/brightscript">sub init()
+end sub</script></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Script
+      (ScriptAttribute
+        (Eq)
+        value: (ScriptTypeAttValue
+          (ScriptType)))
+      (ScriptText
+        content: (BrightScriptBody)))))

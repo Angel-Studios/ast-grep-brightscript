@@ -1,0 +1,165 @@
+================================================================================
+children: empty
+================================================================================
+
+<component name="C"><children /></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Children)))
+
+================================================================================
+children: node element whose tag is a built-in class (self-closing, field init)
+================================================================================
+
+<component name="C"><children><Label text="hi" /></children></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Children
+      (NodeElement
+        (NodeEmptyTag
+          name: (NodeName
+            (Name))
+          (NodeAttribute
+            name: (Name)
+            (Eq)
+            value: (FieldInitValue
+              (AttValue))))))))
+
+================================================================================
+children: node element whose tag is a user component name
+================================================================================
+
+<component name="C"><children><MyWidget /></children></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Children
+      (NodeElement
+        (NodeEmptyTag
+          name: (NodeName
+            (Name)))))))
+
+================================================================================
+children: nested node elements (parent/child)
+================================================================================
+
+<component name="C"><children><Group><Label /></Group></children></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Children
+      (NodeElement
+        (NodeStartTag
+          name: (NodeName
+            (Name)))
+        (NodeContent
+          (NodeElement
+            (NodeEmptyTag
+              name: (NodeName
+                (Name)))))
+        (NodeEndTag
+          (NodeName
+            (Name)))))))
+
+================================================================================
+node: reserved id attribute
+================================================================================
+
+<component name="C"><children><Label id="title" /></children></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Children
+      (NodeElement
+        (NodeEmptyTag
+          name: (NodeName
+            (Name))
+          (NodeAttribute
+            (Eq)
+            value: (AttValue)))))))
+
+================================================================================
+node: role assigns child as the value of a parent field
+================================================================================
+
+<component name="C"><children><Animation><Vector2DFieldInterpolator role="animationData" /></Animation></children></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Children
+      (NodeElement
+        (NodeStartTag
+          name: (NodeName
+            (Name)))
+        (NodeContent
+          (NodeElement
+            (NodeEmptyTag
+              name: (NodeName
+                (Name))
+              (NodeAttribute
+                (Eq)
+                value: (RoleAttValue)))))
+        (NodeEndTag
+          (NodeName
+            (Name)))))))
+
+================================================================================
+node: color and vector2d field-init micro-syntax (opaque strings)
+================================================================================
+
+<component name="C"><children><Rectangle color="0xFF0000FF" translation="[10,20]" /></children></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Children
+      (NodeElement
+        (NodeEmptyTag
+          name: (NodeName
+            (Name))
+          (NodeAttribute
+            name: (Name)
+            (Eq)
+            value: (FieldInitValue
+              (AttValue)))
+          (NodeAttribute
+            name: (Name)
+            (Eq)
+            value: (FieldInitValue
+              (AttValue))))))))

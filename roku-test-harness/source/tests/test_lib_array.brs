@@ -466,7 +466,7 @@ sub test_lib_array_all(t as Object)
     end try
 
     ' Indexed write/read of a single byte (ifByteArray index suffix) (snippet: ba[0]=65 -> 65)
-    t.spec("lib.bytearray.index", "CallExpression", "roByteArray indexed byte read/write")
+    t.spec("lib.bytearray.index", "CreateObjectCall", "roByteArray indexed byte read/write")
     try
         ba = CreateObject("roByteArray")
         ba[0] = 65

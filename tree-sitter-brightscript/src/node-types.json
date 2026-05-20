@@ -1,0 +1,4250 @@
+[
+  {
+    "type": "AnonymousFunction",
+    "named": true,
+    "subtypes": [
+      {
+        "type": "AnonFunctionExpr",
+        "named": true
+      },
+      {
+        "type": "AnonSubExpr",
+        "named": true
+      }
+    ]
+  },
+  {
+    "type": "Literal",
+    "named": true,
+    "subtypes": [
+      {
+        "type": "BooleanLiteral",
+        "named": true
+      },
+      {
+        "type": "InvalidLiteral",
+        "named": true
+      },
+      {
+        "type": "LINE_NUM_Literal",
+        "named": true
+      },
+      {
+        "type": "NumericLiteral",
+        "named": true
+      },
+      {
+        "type": "StringLiteral",
+        "named": true
+      }
+    ]
+  },
+  {
+    "type": "NumericLiteral",
+    "named": true,
+    "subtypes": [
+      {
+        "type": "DoubleLiteral",
+        "named": true
+      },
+      {
+        "type": "FloatLiteral",
+        "named": true
+      },
+      {
+        "type": "HexLiteral",
+        "named": true
+      },
+      {
+        "type": "IntegerLiteral",
+        "named": true
+      },
+      {
+        "type": "LongIntegerLiteral",
+        "named": true
+      }
+    ]
+  },
+  {
+    "type": "OptChainSuffix",
+    "named": true,
+    "subtypes": [
+      {
+        "type": "OC_AT",
+        "named": true
+      },
+      {
+        "type": "OC_BRACKET",
+        "named": true
+      },
+      {
+        "type": "OC_DOT",
+        "named": true
+      },
+      {
+        "type": "OC_PAREN",
+        "named": true
+      }
+    ]
+  },
+  {
+    "type": "Primary",
+    "named": true,
+    "subtypes": [
+      {
+        "type": "AnonymousFunction",
+        "named": true
+      },
+      {
+        "type": "ArrayLiteral",
+        "named": true
+      },
+      {
+        "type": "AssocArrayLiteral",
+        "named": true
+      },
+      {
+        "type": "BuiltinCall",
+        "named": true
+      },
+      {
+        "type": "CreateObjectCall",
+        "named": true
+      },
+      {
+        "type": "Identifier",
+        "named": true
+      },
+      {
+        "type": "Literal",
+        "named": true
+      },
+      {
+        "type": "ParenExpr",
+        "named": true
+      }
+    ]
+  },
+  {
+    "type": "AAEntry",
+    "named": true,
+    "fields": {
+      "key": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AAKey",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "AAKey",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Identifier",
+          "named": true
+        },
+        {
+          "type": "StringLiteral",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "AdditiveExpr",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "+",
+            "named": false
+          },
+          {
+            "type": "-",
+            "named": false
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "AndExpr",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "AnonFunctionExpr",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "EndFunction",
+          "named": true
+        },
+        {
+          "type": "ParameterList",
+          "named": true
+        },
+        {
+          "type": "ReturnType",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "AnonSubExpr",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "EndSub",
+          "named": true
+        },
+        {
+          "type": "ParameterList",
+          "named": true
+        },
+        {
+          "type": "ReturnType",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ArgumentList",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ArrayElement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ArrayLiteral",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "ArrayElement",
+          "named": true
+        },
+        {
+          "type": "ElementSep",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "AssignTarget",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Identifier",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "AssignmentStatement",
+    "named": true,
+    "fields": {
+      "target": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AssignTarget",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "AssocArrayLiteral",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "AAEntry",
+          "named": true
+        },
+        {
+          "type": "ElementSep",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "AttributeSuffix",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "BitshiftExpr",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "<<",
+            "named": false
+          },
+          {
+            "type": ">>",
+            "named": false
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "Block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AssignmentStatement",
+          "named": true
+        },
+        {
+          "type": "CompoundAssignStatement",
+          "named": true
+        },
+        {
+          "type": "ContinueStatement",
+          "named": true
+        },
+        {
+          "type": "DimStatement",
+          "named": true
+        },
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "EndStatement",
+          "named": true
+        },
+        {
+          "type": "ErrorDirective",
+          "named": true
+        },
+        {
+          "type": "ExitStatement",
+          "named": true
+        },
+        {
+          "type": "ExpressionStatement",
+          "named": true
+        },
+        {
+          "type": "ForEachStatement",
+          "named": true
+        },
+        {
+          "type": "ForStatement",
+          "named": true
+        },
+        {
+          "type": "GotoStatement",
+          "named": true
+        },
+        {
+          "type": "IfDirectiveBlock",
+          "named": true
+        },
+        {
+          "type": "IfStatement",
+          "named": true
+        },
+        {
+          "type": "IncDecStatement",
+          "named": true
+        },
+        {
+          "type": "Label",
+          "named": true
+        },
+        {
+          "type": "PrintStatement",
+          "named": true
+        },
+        {
+          "type": "ReturnStatement",
+          "named": true
+        },
+        {
+          "type": "StopStatement",
+          "named": true
+        },
+        {
+          "type": "ThrowStatement",
+          "named": true
+        },
+        {
+          "type": "TryStatement",
+          "named": true
+        },
+        {
+          "type": "WhileStatement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "BlockIf",
+    "named": true,
+    "fields": {
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "consequence": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "ElseClause",
+          "named": true
+        },
+        {
+          "type": "ElseIfClause",
+          "named": true
+        },
+        {
+          "type": "EndIf",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "BooleanLiteral",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "BuiltinCall",
+    "named": true,
+    "fields": {
+      "callee": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "ArgumentList",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "CCExpression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "BooleanLiteral",
+          "named": true
+        },
+        {
+          "type": "Identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "CallExpression",
+    "named": true,
+    "fields": {
+      "callee": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "CallSuffix",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "CallSuffix",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "ArgumentList",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ComparisonExpr",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "ComparisonOp",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "ComparisonOp",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "CompoundAssignStatement",
+    "named": true,
+    "fields": {
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "CompoundOp",
+            "named": true
+          }
+        ]
+      },
+      "target": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AssignTarget",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "CompoundOp",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "ConstDirective",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "CCExpression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "ContinueStatement",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "CreateObjectCall",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "ArgumentList",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "DimBounds",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "DimStatement",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "DimBounds",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "EOS",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "ElementSep",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ElseClause",
+    "named": true,
+    "fields": {
+      "consequence": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ElseIfClause",
+    "named": true,
+    "fields": {
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "consequence": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "EndStatement",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "ExitStatement",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "ExpressionStatement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "BuiltinCall",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "CreateObjectCall",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ForEachStatement",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      },
+      "collection": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "item": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ForStatement",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      },
+      "counter": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      },
+      "end": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "start": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "step": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "ForTerminator",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ForTerminator",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "Identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "FunctionDeclaration",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "EndFunction",
+          "named": true
+        },
+        {
+          "type": "ParameterList",
+          "named": true
+        },
+        {
+          "type": "ReturnType",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "GotoStatement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Identifier",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "IdentStart",
+          "named": true
+        },
+        {
+          "type": "TypeSuffix",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "IfDirectiveBlock",
+    "named": true,
+    "fields": {
+      "condition": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "CCExpression",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "Block",
+          "named": true
+        },
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "EndIfDirective",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "IfStatement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "BlockIf",
+          "named": true
+        },
+        {
+          "type": "SingleLineIf",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "IncDecStatement",
+    "named": true,
+    "fields": {
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "++",
+            "named": false
+          },
+          {
+            "type": "--",
+            "named": false
+          }
+        ]
+      },
+      "target": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AssignTarget",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "IndexSuffix",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "InlineStatements",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AssignmentStatement",
+          "named": true
+        },
+        {
+          "type": "CompoundAssignStatement",
+          "named": true
+        },
+        {
+          "type": "ContinueStatement",
+          "named": true
+        },
+        {
+          "type": "DimStatement",
+          "named": true
+        },
+        {
+          "type": "EndStatement",
+          "named": true
+        },
+        {
+          "type": "ExitStatement",
+          "named": true
+        },
+        {
+          "type": "ExpressionStatement",
+          "named": true
+        },
+        {
+          "type": "ForEachStatement",
+          "named": true
+        },
+        {
+          "type": "ForStatement",
+          "named": true
+        },
+        {
+          "type": "GotoStatement",
+          "named": true
+        },
+        {
+          "type": "IfStatement",
+          "named": true
+        },
+        {
+          "type": "IncDecStatement",
+          "named": true
+        },
+        {
+          "type": "PrintStatement",
+          "named": true
+        },
+        {
+          "type": "ReturnStatement",
+          "named": true
+        },
+        {
+          "type": "StopStatement",
+          "named": true
+        },
+        {
+          "type": "ThrowStatement",
+          "named": true
+        },
+        {
+          "type": "TryStatement",
+          "named": true
+        },
+        {
+          "type": "WhileStatement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "InvalidLiteral",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "LINE_NUM_Literal",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "Label",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "LibraryStatement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "StringLiteral",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "MemberSuffix",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "MultiplicativeExpr",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "MultiplicativeOp",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "MultiplicativeOp",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "NotExpr",
+    "named": true,
+    "fields": {
+      "operand": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "OC_AT",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "OC_BRACKET",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "OC_DOT",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "OC_PAREN",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "ArgumentList",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "OrExpr",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "Parameter",
+    "named": true,
+    "fields": {
+      "default": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      },
+      "type": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Type",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "ParameterList",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "Parameter",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ParenExpr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "PosItem",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "PostfixExpr",
+    "named": true,
+    "fields": {
+      "object": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "AttributeSuffix",
+          "named": true
+        },
+        {
+          "type": "IndexSuffix",
+          "named": true
+        },
+        {
+          "type": "MemberSuffix",
+          "named": true
+        },
+        {
+          "type": "OptChainSuffix",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "PowerExpr",
+    "named": true,
+    "fields": {
+      "base": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "exp": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "PrintItemList",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PosItem",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "PrintSep",
+          "named": true
+        },
+        {
+          "type": "TabItem",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "PrintSep",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "PrintStatement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "PrintItemList",
+          "named": true
+        },
+        {
+          "type": "QUESTION",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ReturnStatement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ReturnType",
+    "named": true,
+    "fields": {
+      "type": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Type",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "SingleLineIf",
+    "named": true,
+    "fields": {
+      "alternative": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "InlineStatements",
+            "named": true
+          }
+        ]
+      },
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      },
+      "consequence": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "InlineStatements",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "SourceFile",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "AssignmentStatement",
+          "named": true
+        },
+        {
+          "type": "CompoundAssignStatement",
+          "named": true
+        },
+        {
+          "type": "ConstDirective",
+          "named": true
+        },
+        {
+          "type": "ContinueStatement",
+          "named": true
+        },
+        {
+          "type": "DimStatement",
+          "named": true
+        },
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "EndStatement",
+          "named": true
+        },
+        {
+          "type": "ErrorDirective",
+          "named": true
+        },
+        {
+          "type": "ExitStatement",
+          "named": true
+        },
+        {
+          "type": "ExpressionStatement",
+          "named": true
+        },
+        {
+          "type": "ForEachStatement",
+          "named": true
+        },
+        {
+          "type": "ForStatement",
+          "named": true
+        },
+        {
+          "type": "FunctionDeclaration",
+          "named": true
+        },
+        {
+          "type": "GotoStatement",
+          "named": true
+        },
+        {
+          "type": "IfDirectiveBlock",
+          "named": true
+        },
+        {
+          "type": "IfStatement",
+          "named": true
+        },
+        {
+          "type": "IncDecStatement",
+          "named": true
+        },
+        {
+          "type": "Label",
+          "named": true
+        },
+        {
+          "type": "LibraryStatement",
+          "named": true
+        },
+        {
+          "type": "PrintStatement",
+          "named": true
+        },
+        {
+          "type": "ReturnStatement",
+          "named": true
+        },
+        {
+          "type": "StopStatement",
+          "named": true
+        },
+        {
+          "type": "SubDeclaration",
+          "named": true
+        },
+        {
+          "type": "ThrowStatement",
+          "named": true
+        },
+        {
+          "type": "TryStatement",
+          "named": true
+        },
+        {
+          "type": "WhileStatement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "StopStatement",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "StringLiteral",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "EscapedQuote",
+          "named": true
+        },
+        {
+          "type": "StringChar",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "SubDeclaration",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "EndSub",
+          "named": true
+        },
+        {
+          "type": "ParameterList",
+          "named": true
+        },
+        {
+          "type": "ReturnType",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "TabItem",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ThrowStatement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "AdditiveExpr",
+          "named": true
+        },
+        {
+          "type": "AndExpr",
+          "named": true
+        },
+        {
+          "type": "BitshiftExpr",
+          "named": true
+        },
+        {
+          "type": "CallExpression",
+          "named": true
+        },
+        {
+          "type": "ComparisonExpr",
+          "named": true
+        },
+        {
+          "type": "MultiplicativeExpr",
+          "named": true
+        },
+        {
+          "type": "NotExpr",
+          "named": true
+        },
+        {
+          "type": "OrExpr",
+          "named": true
+        },
+        {
+          "type": "PostfixExpr",
+          "named": true
+        },
+        {
+          "type": "PowerExpr",
+          "named": true
+        },
+        {
+          "type": "Primary",
+          "named": true
+        },
+        {
+          "type": "UnaryExpr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "TryStatement",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      },
+      "exception": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Identifier",
+            "named": true
+          }
+        ]
+      },
+      "handler": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "EndTry",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Type",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "Identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "UnaryExpr",
+    "named": true,
+    "fields": {
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "+",
+            "named": false
+          },
+          {
+            "type": "-",
+            "named": false
+          }
+        ]
+      },
+      "operand": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "WhileStatement",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Block",
+            "named": true
+          }
+        ]
+      },
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AdditiveExpr",
+            "named": true
+          },
+          {
+            "type": "AndExpr",
+            "named": true
+          },
+          {
+            "type": "BitshiftExpr",
+            "named": true
+          },
+          {
+            "type": "CallExpression",
+            "named": true
+          },
+          {
+            "type": "ComparisonExpr",
+            "named": true
+          },
+          {
+            "type": "MultiplicativeExpr",
+            "named": true
+          },
+          {
+            "type": "NotExpr",
+            "named": true
+          },
+          {
+            "type": "OrExpr",
+            "named": true
+          },
+          {
+            "type": "PostfixExpr",
+            "named": true
+          },
+          {
+            "type": "PowerExpr",
+            "named": true
+          },
+          {
+            "type": "Primary",
+            "named": true
+          },
+          {
+            "type": "UnaryExpr",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EOS",
+          "named": true
+        },
+        {
+          "type": "EndWhile",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "\"",
+    "named": false
+  },
+  {
+    "type": "(",
+    "named": false
+  },
+  {
+    "type": ")",
+    "named": false
+  },
+  {
+    "type": "*",
+    "named": false
+  },
+  {
+    "type": "*=",
+    "named": false
+  },
+  {
+    "type": "+",
+    "named": false
+  },
+  {
+    "type": "++",
+    "named": false
+  },
+  {
+    "type": "+=",
+    "named": false
+  },
+  {
+    "type": ",",
+    "named": false
+  },
+  {
+    "type": "-",
+    "named": false
+  },
+  {
+    "type": "--",
+    "named": false
+  },
+  {
+    "type": "-=",
+    "named": false
+  },
+  {
+    "type": ".",
+    "named": false
+  },
+  {
+    "type": "/",
+    "named": false
+  },
+  {
+    "type": "/=",
+    "named": false
+  },
+  {
+    "type": ":",
+    "named": false
+  },
+  {
+    "type": ";",
+    "named": false
+  },
+  {
+    "type": "<",
+    "named": false
+  },
+  {
+    "type": "<<",
+    "named": false
+  },
+  {
+    "type": "<<=",
+    "named": false
+  },
+  {
+    "type": "<=",
+    "named": false
+  },
+  {
+    "type": "<>",
+    "named": false
+  },
+  {
+    "type": "=",
+    "named": false
+  },
+  {
+    "type": ">",
+    "named": false
+  },
+  {
+    "type": ">=",
+    "named": false
+  },
+  {
+    "type": ">>",
+    "named": false
+  },
+  {
+    "type": ">>=",
+    "named": false
+  },
+  {
+    "type": "?(",
+    "named": false
+  },
+  {
+    "type": "?.",
+    "named": false
+  },
+  {
+    "type": "?@",
+    "named": false
+  },
+  {
+    "type": "?[",
+    "named": false
+  },
+  {
+    "type": "@",
+    "named": false
+  },
+  {
+    "type": "Comment",
+    "named": true,
+    "extra": true
+  },
+  {
+    "type": "DoubleLiteral",
+    "named": true
+  },
+  {
+    "type": "EndFunction",
+    "named": true
+  },
+  {
+    "type": "EndIf",
+    "named": true
+  },
+  {
+    "type": "EndIfDirective",
+    "named": true
+  },
+  {
+    "type": "EndSub",
+    "named": true
+  },
+  {
+    "type": "EndTry",
+    "named": true
+  },
+  {
+    "type": "EndWhile",
+    "named": true
+  },
+  {
+    "type": "ErrorDirective",
+    "named": true
+  },
+  {
+    "type": "EscapedQuote",
+    "named": true
+  },
+  {
+    "type": "FloatLiteral",
+    "named": true
+  },
+  {
+    "type": "HexLiteral",
+    "named": true
+  },
+  {
+    "type": "IdentStart",
+    "named": true
+  },
+  {
+    "type": "IntegerLiteral",
+    "named": true
+  },
+  {
+    "type": "LongIntegerLiteral",
+    "named": true
+  },
+  {
+    "type": "QUESTION",
+    "named": true
+  },
+  {
+    "type": "StringChar",
+    "named": true
+  },
+  {
+    "type": "TypeSuffix",
+    "named": true
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "\\",
+    "named": false
+  },
+  {
+    "type": "\\=",
+    "named": false
+  },
+  {
+    "type": "]",
+    "named": false
+  },
+  {
+    "type": "^",
+    "named": false
+  },
+  {
+    "type": "{",
+    "named": false
+  },
+  {
+    "type": "}",
+    "named": false
+  }
+]

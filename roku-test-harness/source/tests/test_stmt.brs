@@ -426,7 +426,7 @@ sub test_stmt_all(t as Object)
     ' ======================================================================
     ' expression statements
     ' ======================================================================
-    t.spec("stmt.expr.call", "ExpressionStatement", "function-call statement")
+    t.spec("stmt.expr.call", "PrintStatement", "function-call statement")
     print("x")
     t.assertTrue("stmt.expr.call: runs", true)
 

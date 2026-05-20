@@ -49,7 +49,7 @@ sub test_lex_all(t as Object)
     x = fOO
     t.assertEqual("lex.ident.case_insensitive", x, 5)
 
-    t.spec("lex.ident.m_keyword", "Primary", "the implicit instance AA m used as a primary")
+    t.spec("lex.ident.m_keyword", "Identifier", "the implicit instance AA m used as a primary")
     m.x = 6
     t.assertEqual("lex.ident.m_keyword", m.x, 6)
 
@@ -109,7 +109,7 @@ sub test_lex_all(t as Object)
     t.assertTrue("lex.num.double.tendigit: runs", true)
     t.assertType("lex.num.double.tendigit type", x, "Double")
 
-    t.spec("lex.num.maximal_munch", "NumericLiteral", "longest-match: &hFF& is one token not &hFF + &")
+    t.spec("lex.num.maximal_munch", "LongIntegerLiteral", "longest-match: &hFF& is one token not &hFF + &")
     x = &hFF&
     t.assertEqual("lex.num.maximal_munch", x, 255)
     t.assertType("lex.num.maximal_munch type", x, "LongInteger")

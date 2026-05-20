@@ -1,0 +1,35 @@
+{
+  "name": "tree-sitter-scenegraph",
+  "version": "0.0.1",
+  "description": "Roku SceneGraph XML grammar for tree-sitter / ast-grep",
+  "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "ast-grep-brightscript"
+  },
+  "main": "bindings/node",
+  "types": "bindings/node",
+  "keywords": [
+    "incremental",
+    "parsing",
+    "tree-sitter",
+    "scenegraph",
+    "roku",
+    "xml"
+  ],
+  "files": [
+    "grammar.js",
+    "tree-sitter.json",
+    "binding.gyp",
+    "bindings/node/*",
+    "queries/*",
+    "src/**"
+  ],
+  "devDependencies": {
+    "tree-sitter-cli": "^0.26.9"
+  },
+  "scripts": {
+    "start": "tree-sitter playground",
+    "test": "tree-sitter test"
+  }
+}

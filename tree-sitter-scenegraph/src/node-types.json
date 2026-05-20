@@ -1,0 +1,1160 @@
+[
+  {
+    "type": "AliasAttValue",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "AttValue",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "Reference",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Attribute",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Name",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AttValue",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "BoolAttValue",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "BoolText",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Children",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "Comment",
+          "named": true
+        },
+        {
+          "type": "NodeElement",
+          "named": true
+        },
+        {
+          "type": "PI",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Component",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "Children",
+          "named": true
+        },
+        {
+          "type": "Comment",
+          "named": true
+        },
+        {
+          "type": "ComponentAttribute",
+          "named": true
+        },
+        {
+          "type": "Interface",
+          "named": true
+        },
+        {
+          "type": "PI",
+          "named": true
+        },
+        {
+          "type": "Script",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ComponentAttribute",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "extends",
+            "named": false
+          },
+          {
+            "type": "initialFocus",
+            "named": false
+          },
+          {
+            "type": "name",
+            "named": false
+          },
+          {
+            "type": "version",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AttValue",
+            "named": true
+          },
+          {
+            "type": "ExtendsAttValue",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "EmptyElemTag",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Name",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "Attribute",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "EncodingDecl",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AttValue",
+          "named": true
+        },
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ExtendsAttValue",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "ExtendsValue",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ExtendsValue",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "BuiltinNodeClass",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Field",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "FieldAttribute",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "FieldAttribute",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "alias",
+            "named": false
+          },
+          {
+            "type": "alwaysNotify",
+            "named": false
+          },
+          {
+            "type": "id",
+            "named": false
+          },
+          {
+            "type": "onChange",
+            "named": false
+          },
+          {
+            "type": "type",
+            "named": false
+          },
+          {
+            "type": "value",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AliasAttValue",
+            "named": true
+          },
+          {
+            "type": "AttValue",
+            "named": true
+          },
+          {
+            "type": "BoolAttValue",
+            "named": true
+          },
+          {
+            "type": "FieldTypeAttValue",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "FieldInitValue",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "AttValue",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "FieldTypeAttValue",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "FieldType",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Function",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "FunctionAttribute",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "FunctionAttribute",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "name",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AttValue",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "GenericElement",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "Name",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "Attribute",
+          "named": true
+        },
+        {
+          "type": "CDSect",
+          "named": true
+        },
+        {
+          "type": "CharData",
+          "named": true
+        },
+        {
+          "type": "Comment",
+          "named": true
+        },
+        {
+          "type": "EmptyElemTag",
+          "named": true
+        },
+        {
+          "type": "GenericElement",
+          "named": true
+        },
+        {
+          "type": "Name",
+          "named": true
+        },
+        {
+          "type": "PI",
+          "named": true
+        },
+        {
+          "type": "Reference",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Interface",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "Comment",
+          "named": true
+        },
+        {
+          "type": "Field",
+          "named": true
+        },
+        {
+          "type": "Function",
+          "named": true
+        },
+        {
+          "type": "PI",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "NodeAttribute",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Name",
+            "named": true
+          },
+          {
+            "type": "id",
+            "named": false
+          },
+          {
+            "type": "role",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AttValue",
+            "named": true
+          },
+          {
+            "type": "FieldInitValue",
+            "named": true
+          },
+          {
+            "type": "RoleAttValue",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "NodeContent",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "Comment",
+          "named": true
+        },
+        {
+          "type": "NodeElement",
+          "named": true
+        },
+        {
+          "type": "PI",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "NodeElement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "NodeContent",
+          "named": true
+        },
+        {
+          "type": "NodeEmptyTag",
+          "named": true
+        },
+        {
+          "type": "NodeEndTag",
+          "named": true
+        },
+        {
+          "type": "NodeStartTag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "NodeEmptyTag",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "NodeName",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "NodeAttribute",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "NodeEndTag",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "NodeName",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "NodeName",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "NodeStartTag",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "NodeName",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "NodeAttribute",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "PI",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "Reference",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "CharRef",
+          "named": true
+        },
+        {
+          "type": "EntityRef",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "RoleAttValue",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "SDDecl",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AttValue",
+          "named": true
+        },
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "SGDocument",
+    "named": true,
+    "root": true,
+    "fields": {
+      "prolog": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "prolog",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "CDSect",
+          "named": true
+        },
+        {
+          "type": "CharData",
+          "named": true
+        },
+        {
+          "type": "Comment",
+          "named": true
+        },
+        {
+          "type": "Component",
+          "named": true
+        },
+        {
+          "type": "GenericElement",
+          "named": true
+        },
+        {
+          "type": "PI",
+          "named": true
+        },
+        {
+          "type": "Reference",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Script",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "Comment",
+          "named": true
+        },
+        {
+          "type": "PI",
+          "named": true
+        },
+        {
+          "type": "ScriptAttribute",
+          "named": true
+        },
+        {
+          "type": "ScriptCData",
+          "named": true
+        },
+        {
+          "type": "ScriptExternal",
+          "named": true
+        },
+        {
+          "type": "ScriptText",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ScriptAttribute",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type",
+            "named": false
+          },
+          {
+            "type": "uri",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AttValue",
+            "named": true
+          },
+          {
+            "type": "ScriptTypeAttValue",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ScriptCData",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "BrightScriptBody",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "ScriptExternal",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "ScriptAttribute",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ScriptText",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "BrightScriptBody",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "ScriptTypeAttValue",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "ScriptType",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "VersionInfo",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "AttValue",
+          "named": true
+        },
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "XMLDecl",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "EncodingDecl",
+          "named": true
+        },
+        {
+          "type": "SDDecl",
+          "named": true
+        },
+        {
+          "type": "VersionInfo",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "prolog",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "XMLDecl",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "\"",
+    "named": false
+  },
+  {
+    "type": "'",
+    "named": false
+  },
+  {
+    "type": "/>",
+    "named": false
+  },
+  {
+    "type": "<",
+    "named": false
+  },
+  {
+    "type": "<![CDATA[",
+    "named": false
+  },
+  {
+    "type": "</",
+    "named": false
+  },
+  {
+    "type": "<?",
+    "named": false
+  },
+  {
+    "type": "<?xml",
+    "named": false
+  },
+  {
+    "type": ">",
+    "named": false
+  },
+  {
+    "type": "?>",
+    "named": false
+  },
+  {
+    "type": "BoolText",
+    "named": true
+  },
+  {
+    "type": "BrightScriptBody",
+    "named": true
+  },
+  {
+    "type": "BuiltinNodeClass",
+    "named": true
+  },
+  {
+    "type": "CDSect",
+    "named": true
+  },
+  {
+    "type": "CharData",
+    "named": true
+  },
+  {
+    "type": "CharRef",
+    "named": true
+  },
+  {
+    "type": "Comment",
+    "named": true
+  },
+  {
+    "type": "EntityRef",
+    "named": true
+  },
+  {
+    "type": "Eq",
+    "named": true
+  },
+  {
+    "type": "FieldType",
+    "named": true
+  },
+  {
+    "type": "Name",
+    "named": true
+  },
+  {
+    "type": "ScriptType",
+    "named": true
+  },
+  {
+    "type": "]]>",
+    "named": false
+  },
+  {
+    "type": "alias",
+    "named": false
+  },
+  {
+    "type": "alwaysNotify",
+    "named": false
+  },
+  {
+    "type": "children",
+    "named": false
+  },
+  {
+    "type": "component",
+    "named": false
+  },
+  {
+    "type": "encoding",
+    "named": false
+  },
+  {
+    "type": "extends",
+    "named": false
+  },
+  {
+    "type": "field",
+    "named": false
+  },
+  {
+    "type": "function",
+    "named": false
+  },
+  {
+    "type": "id",
+    "named": false
+  },
+  {
+    "type": "initialFocus",
+    "named": false
+  },
+  {
+    "type": "interface",
+    "named": false
+  },
+  {
+    "type": "name",
+    "named": false
+  },
+  {
+    "type": "onChange",
+    "named": false
+  },
+  {
+    "type": "role",
+    "named": false
+  },
+  {
+    "type": "script",
+    "named": false
+  },
+  {
+    "type": "standalone",
+    "named": false
+  },
+  {
+    "type": "type",
+    "named": false
+  },
+  {
+    "type": "uri",
+    "named": false
+  },
+  {
+    "type": "value",
+    "named": false
+  },
+  {
+    "type": "version",
+    "named": false
+  }
+]

@@ -40,14 +40,16 @@ token, including punctuation and keywords. ast-grep matches against that CST:
   `$$VAR` (double-dollar) form to capture as a meta-variable. Prefer giving structure a *named* rule if
   you want to match it cleanly.
 - A **hidden rule** (name starts with `_`, e.g. `_expression`) does **not** appear as its own node in the
-  tree; it is inlined into its parent. You cannot `kind`-match `_expression` directly (use `supertypes`
-  if you want a queryable abstract category — see below).
+  tree; it is inlined into its parent. You cannot `kind`-match `_expression` directly. A `supertypes`
+  entry records the abstract category in `node-types.json` (with its `subtypes`), but **do not assume
+  ast-grep expands it to its subtypes** — verified caveat in §8.
 - A `field("name", $.rule)` wrapper assigns a **field name** to a child. In ast-grep this surfaces as the
   `field:` parameter inside `has`/`inside` relational rules. Fields are how you say "the *name* child of
   this declaration" instead of "any child."
 
 So: **named rules → `kind`; fields → `has/inside ... field:`; literal tokens → anonymous nodes / `$$VAR`;
-supertypes → queryable abstract kinds.** Design the grammar with the matches you eventually want in mind.
+supertypes → grouping in `node-types.json` (but match the concrete subtype in ast-grep, §8).** Design the
+grammar with the matches you eventually want in mind.
 
 Verify the exact kinds/fields you produced with `tree-sitter parse` (S-expression output) or by reading
 `src/node-types.json`. Never guess a kind name — read it off the actual tree.
@@ -209,8 +211,10 @@ module.exports = grammar({
   whereas anonymous nodes correspond to string literals." Anonymous nodes are present in the CST (it is a
   concrete tree with commas, parens, keywords) but are awkward to target — give recurring structure a
   named rule.
-- **Supertype** → hidden abstract category that is still queryable and that expands to its subtypes in
-  `node-types.json`.
+- **Supertype** → hidden abstract category recorded in `node-types.json` with a `subtypes` list. Good for
+  grammar structure and for documenting an abstract category, but ❌ **not matchable as an ast-grep
+  `kind`** — it is hidden (never in the CST) and ast-grep does not expand it to its subtypes (verified,
+  §8). Match the concrete subtype instead.
 
 ### Why fields matter for ast-grep
 
@@ -475,7 +479,12 @@ How grammar concepts surface in ast-grep rules:
 - named rule  → `kind: <rule_name>` and patterns that parse to that node;
 - field        → `has:`/`inside:` with `field: <field_name>`;
 - anonymous token → captured only with `$$VAR`; not reliably `kind`-matchable;
-- supertype    → usable as a `kind` that expands to its subtypes.
+- supertype    → present in `node-types.json`, accepted as a known kind WITHOUT error, but **NOT expanded
+  to its subtypes when matching** (VERIFIED on ast-grep 0.42.3: `kind: <supertype>` matched 0 nodes on a
+  file full of its subtypes, while `kind: <concrete-subtype>` matched). A supertype node is hidden, so it
+  never appears in the actual CST for ast-grep to compare against. **Match the concrete subtype kind.**
+  Keep supertypes for grammar structure / `node-types.json` grouping, but point real queries (and any
+  coverage/test taxonomy) at the concrete subtype kinds.
 
 ## 9. Workflow loop (recommended order of operations)
 

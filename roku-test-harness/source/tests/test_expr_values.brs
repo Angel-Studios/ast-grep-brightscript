@@ -60,7 +60,7 @@ sub test_expr_values_all(t as Object)
 
     ' mixed suffix chain a[0].f() (snippet builds an array holding an AA whose f
     ' returns 3 -> value:3)
-    t.spec("expr.postfix.mixed_chain", "PostfixExpr", "mixed suffix chain a[0].f()")
+    t.spec("expr.postfix.mixed_chain", "CallExpression", "mixed suffix chain a[0].f()")
     mc = [{ f: function()
         return 3
     end function }]
@@ -93,7 +93,7 @@ sub test_expr_values_all(t as Object)
     ' ?[ / ?( chaining requires no space (else ? = print). The optional-index
     ' suffix needs an integer subscript on an array (an AA would require a string
     ' key -> &h18). The point of the leaf is the no-space ?[ token.
-    t.spec("expr.optchain.space_vs_print", "OptChainSuffix", "?[/?( chaining requires no space (else ? = print)")
+    t.spec("expr.optchain.space_vs_print", "OC_BRACKET", "?[/?( chaining requires no space (else ? = print)")
     oci = [10, 11]
     y = oci?[0]
     t.assertEqual("expr.optchain.space_vs_print: runs", y, 10)
@@ -230,14 +230,14 @@ sub test_expr_values_all(t as Object)
 
     ' anon function passed as a call argument (snippet: call(fn) returns fn();
     ' call(function()\nreturn 2\nend function) -> value:2)
-    t.spec("expr.anon.as_arg", "AnonymousFunction", "anon function passed as a call argument")
+    t.spec("expr.anon.as_arg", "AnonFunctionExpr", "anon function passed as a call argument")
     y = evh_call(function()
         return 2
     end function)
     t.assertEqual("expr.anon.as_arg", y, 2)
 
     ' anon function as an AA value / method (snippet: m.go = function()...; y = m.go() -> value:3)
-    t.spec("expr.anon.in_aa", "AnonymousFunction", "anon function as an AA value (method)")
+    t.spec("expr.anon.in_aa", "AnonFunctionExpr", "anon function as an AA value (method)")
     obj = {}
     obj.go = function()
         return 3
@@ -250,22 +250,22 @@ sub test_expr_values_all(t as Object)
     ' =====================================================================
 
     ' numeric literal as primary (snippet: x = 42 -> value:42)
-    t.spec("expr.literal.numeric", "Literal", "numeric literal as primary")
+    t.spec("expr.literal.numeric", "IntegerLiteral", "numeric literal as primary")
     x = 42
     t.assertEqual("expr.literal.numeric", x, 42)
 
     ' string literal as primary (snippet: x = "s" -> value:s)
-    t.spec("expr.literal.string", "Literal", "string literal as primary")
+    t.spec("expr.literal.string", "StringLiteral", "string literal as primary")
     x = "s"
     t.assertEqual("expr.literal.string", x, "s")
 
     ' boolean literal as primary (snippet: x = true -> value:true)
-    t.spec("expr.literal.boolean", "Literal", "boolean literal as primary")
+    t.spec("expr.literal.boolean", "BooleanLiteral", "boolean literal as primary")
     x = true
     t.assertTrue("expr.literal.boolean", x)
 
     ' invalid literal as primary (snippet: x = invalid -> value:invalid)
-    t.spec("expr.literal.invalid", "Literal", "invalid literal as primary")
+    t.spec("expr.literal.invalid", "InvalidLiteral", "invalid literal as primary")
     x = invalid
     t.assertInvalid("expr.literal.invalid", x)
 

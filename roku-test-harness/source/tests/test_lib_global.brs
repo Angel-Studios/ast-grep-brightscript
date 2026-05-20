@@ -293,7 +293,7 @@ sub test_lib_global_all(t as Object)
     ' UTILITY FUNCTIONS
     ' =====================================================================
 
-    t.spec("lib.global.type", "CallExpression", "Type(v) runtime type name")
+    t.spec("lib.global.type", "BuiltinCall", "Type(v) runtime type name")
     try
         r = Type(1)
         t.assertEqual("lib.global.type", r, "Integer")
@@ -302,7 +302,7 @@ sub test_lib_global_all(t as Object)
     end try
 
     ' GetGlobalAA() returns the global associative array (m at global scope).
-    t.spec("lib.global.getglobalaa", "CallExpression", "GetGlobalAA() global AA")
+    t.spec("lib.global.getglobalaa", "BuiltinCall", "GetGlobalAA() global AA")
     try
         r = GetGlobalAA()
         t.assertTrue("lib.global.getglobalaa", Type(r) = "roAssociativeArray")
@@ -311,7 +311,7 @@ sub test_lib_global_all(t as Object)
     end try
 
     ' Box() wraps an intrinsic scalar in its boxed (ro*) object form.
-    t.spec("lib.global.box", "CallExpression", "Box(v) wrap intrinsic in boxed object")
+    t.spec("lib.global.box", "BuiltinCall", "Box(v) wrap intrinsic in boxed object")
     try
         r = Box(1)
         t.assertNotInvalid("lib.global.box", r)

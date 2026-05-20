@@ -1,0 +1,11 @@
+# ast-grep configuration registering the BrightScript + SceneGraph custom
+# languages (compiled tree-sitter grammars). See tree-sitter-*/ for the grammars.
+ruleDirs:
+  - rules
+customLanguages:
+  brightscript:
+    libraryPath: tree-sitter-brightscript/brightscript.so
+    extensions: [brs]
+  scenegraph:
+    libraryPath: tree-sitter-scenegraph/scenegraph.so
+    extensions: [xml]

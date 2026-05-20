@@ -1,0 +1,397 @@
+/// <reference types="tree-sitter-cli/dsl" />
+// @ts-check
+//
+// Roku SceneGraph XML grammar for tree-sitter / ast-grep.
+// Translated from grammar/scenegraph.ebnf (the authoritative, device-corrected
+// spec) + the vendored RokuSceneGraph.xsd enums. Rule names mirror the EBNF
+// non-terminals 1:1 so they line up with the `kind`s in grammar/coverage.json
+// (layer == "scenegraph") and with ast-grep patterns.
+//
+// DESIGN NOTES (verified empirically — see roadmap 03 + the task brief):
+//  * XML element/attribute NAMES are case-SENSITIVE; SceneGraph framework names
+//    (component/interface/field/function/script/children) have a single canonical
+//    lowercase spelling and are matched literally. Keyword extraction (`word`)
+//    makes `componentLibrary` lex as one Name, not `component` + `Library`.
+//  * The <field type=...> VALUE is case-INSENSITIVE and `extends`/node-tag values
+//    can be ARBITRARY user component names. Enumerations (FieldType /
+//    BuiltinNodeClass / ExtendsValue / NodeName) are therefore SEMANTIC, not
+//    structural: those rules capture the VALUE position as a generic token, NOT
+//    restricted to the enum literals (scenegraph.ebnf implementer note 2).
+//  * ast-grep 0.42.3 does NOT expand hidden supertypes, so EVERY coverage `kind`
+//    is a CONCRETE visible node. Hidden helper rules (leading `_`) are only used
+//    for plumbing that is not a coverage kind.
+//  * The grammar is a lenient well-formed-XML document: the root accepts the
+//    SceneGraph <component> AND bare fragments (a lone CDATA section, PI, comment,
+//    a generic <a/> element, an XML decl with no root) because the parse-only
+//    corpus contains exactly such fragments.
+//  * BrightScript language injection: a <script> body appears as ScriptCData
+//    (CDATA), ScriptText (bare char-data) or ScriptExternal (uri, no body). The
+//    injectable BrightScript text is exposed as a clean named node so ast-grep
+//    injection can target it — see ScriptCData/ScriptText below. We do NOT parse
+//    BrightScript here.
+//
+// Distinguishing GenericElement (Layer-1 generic XML) from NodeElement (a
+// SceneGraph node in markup): both are structurally "any Name tag", so they are
+// disambiguated by CONTEXT — an element inside <children> / inside a node is a
+// NodeElement; an element in generic document content is a GenericElement.
+
+/** Case-insensitive token from a literal word (used for the case-insensitive
+ *  field-type / bool attribute VALUES only, never for element/attr names). */
+function ci(word) {
+  return new RegExp(
+    [...word].map((ch) => {
+      const lo = ch.toLowerCase(), hi = ch.toUpperCase();
+      return lo !== hi ? `[${lo}${hi}]` : ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }).join(''),
+  );
+}
+
+export default grammar({
+  name: 'scenegraph',
+
+  // Whitespace is insignificant in XML structural positions. Comments and PIs are
+  // NOT in `extras` because they are addressable coverage kinds that must appear
+  // as real nodes in content/misc positions.
+  extras: $ => [/\s+/],
+
+  // Keyword extraction: framework element/attribute name keywords are matched
+  // through the Name token, so e.g. <componentLibrary> is one Name not a keyword.
+  word: $ => $.Name,
+
+  rules: {
+    // ----------------------------------------------------------------------
+    // Document root (lenient: SceneGraph component OR generic XML fragment)
+    // ----------------------------------------------------------------------
+    // The first rule is the start symbol. A real SceneGraph file is
+    //   prolog Component Misc*
+    // but the parse-only corpus also contains bare fragments, so the root is a
+    // prolog followed by any number of top-level items.
+    SGDocument: $ => seq(
+      optional(field('prolog', $.prolog)),
+      repeat($._TopItem),
+    ),
+
+    // A top-level item: the SceneGraph component, a generic element, or stray
+    // markup that may legally float at the document level / in fragments.
+    _TopItem: $ => choice(
+      $.Component,
+      $.GenericElement,
+      $.Comment,
+      $.PI,
+      $.CDSect,
+      $.Reference,
+      $.CharData,
+    ),
+
+    // ----------------------------------------------------------------------
+    // Prolog: XML declaration + misc
+    // ----------------------------------------------------------------------
+    // Non-nullable (tree-sitter forbids an empty non-start rule): a prolog node
+    // exists only when there is an XML declaration; leading/trailing comments and
+    // PIs are ordinary top-level items (this keeps the document grammar
+    // unambiguous). A document with no decl (e.g. just `<component/>`) has no
+    // prolog node — fine: `sg.prolog.no_xmldecl` is a non-device leaf (kind
+    // unchecked) and the `prolog` kind still exists in node-types.json.
+    prolog: $ => seq($.XMLDecl),
+
+    XMLDecl: $ => seq(
+      '<?xml',
+      $.VersionInfo,
+      optional($.EncodingDecl),
+      optional($.SDDecl),
+      '?>',
+    ),
+
+    VersionInfo: $ => seq('version', $.Eq, $.AttValue),
+
+    EncodingDecl: $ => seq('encoding', $.Eq, $.AttValue),
+
+    SDDecl: $ => seq('standalone', $.Eq, $.AttValue),
+
+    // ----------------------------------------------------------------------
+    // Lexical: names, equals, quoted values
+    // ----------------------------------------------------------------------
+    // W3C XML Name. ':' is permitted (note 5) but carries no namespace meaning.
+    Name: _ => /[A-Za-z_:][A-Za-z0-9_:.\-]*/,
+
+    Eq: _ => '=',
+
+    // AttValue: the quoted string content (may contain references). Named so it
+    // is matchable as the coverage `AttValue` kind.
+    AttValue: $ => choice(
+      seq('"', repeat(choice($._att_dq_chunk, $.Reference)), '"'),
+      seq("'", repeat(choice($._att_sq_chunk, $.Reference)), "'"),
+    ),
+    _att_dq_chunk: _ => token.immediate(prec(1, /[^<&"]+/)),
+    _att_sq_chunk: _ => token.immediate(prec(1, /[^<&']+/)),
+
+    // ----------------------------------------------------------------------
+    // References, character data
+    // ----------------------------------------------------------------------
+    Reference: $ => choice($.EntityRef, $.CharRef),
+
+    EntityRef: _ => token(seq('&', /[A-Za-z_:][A-Za-z0-9_:.\-]*/, ';')),
+
+    CharRef: _ => token(choice(
+      seq('&#', /[0-9]+/, ';'),
+      seq('&#x', /[0-9a-fA-F]+/, ';'),
+    )),
+
+    // Character data between markup: a run of chars containing no markup
+    // delimiter and not the CDATA-close. Must contain at least one non-whitespace
+    // character so that whitespace-only runs are swallowed by `extras` instead of
+    // forming spurious CharData nodes.
+    CharData: _ => token(prec(-1, /[^<&\s]([^<&]*[^<&\s])?/)),
+
+    // ----------------------------------------------------------------------
+    // Comments, CDATA sections, processing instructions
+    // ----------------------------------------------------------------------
+    Comment: _ => token(seq('<!--', /([^-]|-[^-])*/, '-->')),
+
+    // Generic CDATA section (NOT a script body). Coverage kind `CDSect`.
+    CDSect: _ => token(seq('<![CDATA[', /([^\]]|\][^\]]|\]\][^>])*/, ']]>')),
+
+    // Processing instruction. The '<?' start is a SEPARATE literal from XMLDecl's
+    // '<?xml' literal, so the lexer's longest-match rule makes '<?xml' win for a
+    // declaration and '<?' win for any other target (the regex engine has no
+    // lookahead, so this literal-length tiebreak is how PITarget excludes "xml").
+    PI: $ => seq('<?', $._pi_rest),
+    _pi_rest: _ => token.immediate(seq(
+      /[A-Za-z_:][A-Za-z0-9_:.\-]*/,
+      optional(seq(/\s/, /([^?]|\?[^>])*/)),
+      '?>',
+    )),
+
+    // ----------------------------------------------------------------------
+    // Generic XML element (Layer 1)
+    // ----------------------------------------------------------------------
+    GenericElement: $ => choice(
+      $.EmptyElemTag,
+      seq($._GenericSTag, repeat($._GenericContent), $._GenericETag),
+    ),
+
+    EmptyElemTag: $ => seq('<', field('name', $.Name), repeat($.Attribute), '/>'),
+
+    _GenericSTag: $ => seq('<', field('name', $.Name), repeat($.Attribute), '>'),
+    _GenericETag: $ => seq('</', $.Name, '>'),
+
+    _GenericContent: $ => choice(
+      $.GenericElement,
+      $.Reference,
+      $.CDSect,
+      $.PI,
+      $.Comment,
+      $.CharData,
+    ),
+
+    // A generic attribute: Name = AttValue.
+    Attribute: $ => seq(field('name', $.Name), $.Eq, field('value', $.AttValue)),
+
+    // ======================================================================
+    // LAYER 2 — SceneGraph
+    // ======================================================================
+
+    // ----------------------------------------------------------------------
+    // <component> root
+    // ----------------------------------------------------------------------
+    // The <component> root. Normally paired (<component>...</component>) but the
+    // self-closing form <component .../> is also valid (and appears in the
+    // parse-only corpus, e.g. sg.prolog.no_xmldecl `<component name="C" />`).
+    Component: $ => choice(
+      seq(
+        '<', 'component', repeat($.ComponentAttribute), '>',
+        repeat($._ComponentContent),
+        '</', 'component', '>',
+      ),
+      seq('<', 'component', repeat($.ComponentAttribute), '/>'),
+    ),
+
+    _ComponentContent: $ => choice(
+      $.Interface,
+      $.Script,
+      $.Children,
+      $.Comment,
+      $.PI,
+    ),
+
+    // Component attributes. `name` required; `extends` value is captured via
+    // ExtendsValue; others are plain AttValues. Each alternative is a
+    // ComponentAttribute node (the coverage kind).
+    ComponentAttribute: $ => choice(
+      seq(field('name', 'name'), $.Eq, field('value', $.AttValue)),
+      seq(field('name', 'extends'), $.Eq, field('value', $.ExtendsAttValue)),
+      seq(field('name', 'initialFocus'), $.Eq, field('value', $.AttValue)),
+      seq(field('name', 'version'), $.Eq, field('value', $.AttValue)),
+    ),
+
+    // `extends` value: a built-in node class OR a user component name. Both are
+    // captured as a generic ExtendsValue (semantic, not enum-restricted). The
+    // BuiltinNodeClass node is produced when the value matches a known class so
+    // that coverage `BuiltinNodeClass` is matchable; otherwise a bare value.
+    ExtendsAttValue: $ => choice(
+      seq('"', $.ExtendsValue, '"'),
+      seq("'", $.ExtendsValue, "'"),
+    ),
+    ExtendsValue: $ => choice($.BuiltinNodeClass, $._ext_name),
+    _ext_name: _ => token.immediate(/[^"'<&]+/),
+
+    // Built-in SceneGraph node classes (XSD `extends` enumeration). SEMANTIC:
+    // captured so `kind: BuiltinNodeClass` matches the well-known classes; an
+    // arbitrary user component name falls through to _ext_name above.
+    BuiltinNodeClass: _ => token.immediate(prec(1, choice(
+      'AnimationBase', 'Animation', 'ArrayGrid', 'Audio', 'BusySpinner',
+      'ButtonGroup', 'Button', 'ChannelStore', 'CheckList',
+      'ColorFieldInterpolator', 'ComponentLibrary', 'ContentNode', 'Dialog',
+      'FloatFieldInterpolator', 'Font', 'GridPanel', 'Group', 'KeyboardDialog',
+      'Keyboard', 'LabelList', 'Label', 'LayoutGroup', 'ListPanel', 'MarkupGrid',
+      'MarkupList', 'MaskGroup', 'MiniKeyboard', 'Node', 'OverhangPanelSetScene',
+      'Overhang', 'PanelSet', 'Panel', 'ParallelAnimation',
+      'ParentalControlPinPad', 'PinDialog', 'PinPad', 'PosterGrid', 'Poster',
+      'ProgressDialog', 'RadioButtonList', 'Rectangle', 'RowList', 'Scene',
+      'ScrollableText', 'ScrollingLabel', 'SequentialAnimation', 'SimpleLabel',
+      'SoundEffect', 'TargetGroup', 'TargetList', 'TargetSet', 'Task',
+      'TextEditBox', 'TimeGrid', 'Timer', 'Vector2DFieldInterpolator', 'Video',
+      'ZoomRowList',
+    ))),
+
+    // ----------------------------------------------------------------------
+    // <interface>, <field>, <function>
+    // ----------------------------------------------------------------------
+    Interface: $ => choice(
+      seq(
+        '<', 'interface', '>',
+        repeat(choice($.Field, $.Function, $.Comment, $.PI)),
+        '</', 'interface', '>',
+      ),
+      seq('<', 'interface', '/>'),
+    ),
+
+    // <field> — always an empty element.
+    Field: $ => seq('<', 'field', repeat($.FieldAttribute), '/>'),
+
+    FieldAttribute: $ => choice(
+      seq(field('name', 'id'), $.Eq, field('value', $.AttValue)),
+      seq(field('name', 'type'), $.Eq, field('value', $.FieldTypeAttValue)),
+      seq(field('name', 'value'), $.Eq, field('value', $.AttValue)),
+      seq(field('name', 'alias'), $.Eq, field('value', $.AliasAttValue)),
+      seq(field('name', 'onChange'), $.Eq, field('value', $.AttValue)),
+      seq(field('name', 'alwaysNotify'), $.Eq, field('value', $.BoolAttValue)),
+    ),
+
+    // type="..." VALUE — case-insensitive, captured via FieldType. The whole
+    // quoted thing is FieldTypeAttValue (a coverage kind).
+    FieldTypeAttValue: $ => choice(
+      seq('"', $.FieldType, '"'),
+      seq("'", $.FieldType, "'"),
+    ),
+
+    // FieldType: SEMANTIC. Captures the type token in any case; NOT restricted to
+    // the enum (note 2 — case-insensitive; unknown spellings are caught by lint).
+    FieldType: _ => token.immediate(/[A-Za-z][A-Za-z0-9]*/),
+
+    // alias="node.field" micro-syntax.
+    AliasAttValue: $ => choice(
+      seq('"', $._alias_body, '"'),
+      seq("'", $._alias_body, "'"),
+    ),
+    _alias_body: _ => token.immediate(/[^"'<&]+/),
+
+    // alwaysNotify="true|false" — matched case-insensitively (note 1).
+    BoolAttValue: $ => choice(
+      seq('"', $.BoolText, '"'),
+      seq("'", $.BoolText, "'"),
+    ),
+    BoolText: _ => token.immediate(choice(ci('true'), ci('false'))),
+
+    // <function name="..."/> — always an empty element.
+    Function: $ => seq('<', 'function', repeat($.FunctionAttribute), '/>'),
+    FunctionAttribute: $ => seq(field('name', 'name'), $.Eq, field('value', $.AttValue)),
+
+    // ----------------------------------------------------------------------
+    // <script> (BrightScript embedding point)
+    // ----------------------------------------------------------------------
+    Script: $ => choice($._ScriptInline, $.ScriptExternal),
+
+    _ScriptInline: $ => seq(
+      '<', 'script', repeat($.ScriptAttribute), '>',
+      repeat(choice($.ScriptCData, $.ScriptText, $.Comment, $.PI)),
+      '</', 'script', '>',
+    ),
+
+    // External script: empty <script .../> (no body). Coverage kind.
+    ScriptExternal: $ => seq('<', 'script', repeat($.ScriptAttribute), '/>'),
+
+    ScriptAttribute: $ => choice(
+      seq(field('name', 'type'), $.Eq, field('value', $.ScriptTypeAttValue)),
+      seq(field('name', 'uri'), $.Eq, field('value', $.AttValue)),
+    ),
+
+    // Fixed type="text/brightscript".
+    ScriptTypeAttValue: $ => choice(
+      seq('"', alias('text/brightscript', $.ScriptType), '"'),
+      seq("'", alias('text/brightscript', $.ScriptType), "'"),
+    ),
+
+    // CDATA-wrapped BrightScript. The INJECTABLE BrightScript body is the
+    // `content` field — a single named token holding the raw bytes between the
+    // CDATA delimiters (ast-grep injects the brightscript grammar there).
+    ScriptCData: $ => seq(
+      '<![CDATA[',
+      optional(field('content', alias($._cdata_body, $.BrightScriptBody))),
+      ']]>',
+    ),
+    _cdata_body: _ => token(/([^\]]|\][^\]]|\]\][^>])+/),
+
+    // Bare (non-CDATA) inline BrightScript. The INJECTABLE body is the `content`
+    // field, the raw character-data text of the <script> element.
+    ScriptText: $ => field('content', alias($._script_text_body, $.BrightScriptBody)),
+    _script_text_body: _ => token(prec(-1, /[^<]+/)),
+
+    // ----------------------------------------------------------------------
+    // <children> and node elements
+    // ----------------------------------------------------------------------
+    Children: $ => choice(
+      seq(
+        '<', 'children', '>',
+        repeat(choice($.NodeElement, $.Comment, $.PI)),
+        '</', 'children', '>',
+      ),
+      seq('<', 'children', '/>'),
+    ),
+
+    NodeElement: $ => choice(
+      seq($.NodeStartTag, optional($.NodeContent), $.NodeEndTag),
+      $.NodeEmptyTag,
+    ),
+
+    NodeStartTag: $ => seq('<', field('name', $.NodeName), repeat($.NodeAttribute), '>'),
+    NodeEndTag: $ => seq('</', $.NodeName, '>'),
+    NodeEmptyTag: $ => seq('<', field('name', $.NodeName), repeat($.NodeAttribute), '/>'),
+
+    // The tag name: a built-in node class OR an arbitrary user component Name.
+    // SEMANTIC: captured as a name; not restricted to BuiltinNodeClass. Wraps the
+    // shared `Name` token (which is the `word` token, so it cannot be a duplicate
+    // standalone terminal here).
+    NodeName: $ => $.Name,
+
+    // Node content: nested node elements interleaved with misc.
+    NodeContent: $ => repeat1(choice($.NodeElement, $.Comment, $.PI)),
+
+    // A node attribute = a field initializer (plus reserved id / role).
+    NodeAttribute: $ => choice(
+      seq(field('name', 'id'), $.Eq, field('value', $.AttValue)),
+      seq(field('name', 'role'), $.Eq, field('value', $.RoleAttValue)),
+      seq(field('name', $.Name), $.Eq, field('value', $.FieldInitValue)),
+    ),
+
+    // role="parentFieldName".
+    RoleAttValue: $ => choice(
+      seq('"', $._role_body, '"'),
+      seq("'", $._role_body, "'"),
+    ),
+    _role_body: _ => token.immediate(/[^"'<&]+/),
+
+    // A generic field-initializer value — structurally a quoted string.
+    FieldInitValue: $ => $.AttValue,
+  },
+});

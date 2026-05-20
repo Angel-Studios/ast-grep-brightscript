@@ -14,6 +14,8 @@
     "roku:deploy": "bun scripts/roku-deploy.ts deploy"
   },
   "devDependencies": {
-    "brighterscript": "^0.72.2"
+    "@ast-grep/cli": "^0.42.3",
+    "brighterscript": "^0.72.2",
+    "tree-sitter-cli": "^0.26.9"
   }
 }
