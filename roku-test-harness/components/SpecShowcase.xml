@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SpecShowcase: exists ONLY to exercise the SceneGraph XML spec surface.
+     It declares one <field> of EACH documented field type (from the
+     RokuSceneGraph.xsd enumeration in scenegraph.ebnf), demonstrates value=,
+     alias=, onChange= + alwaysNotify=, an interface <function>, a <children>
+     block of built-in node elements with attribute field-initializers, and a
+     <script>. It is instantiated hidden by MainScene to prove it loads. -->
+<component name="SpecShowcase" extends="Group" version="1.0">
+
+  <interface>
+    <!-- ===== One field of EACH documented FieldType ===================== -->
+
+    <!-- integer (and the 'int' alias spelling) -->
+    <field id="intField"      type="integer"     value="42" />
+    <field id="intAliasField" type="int"         value="7" />
+
+    <!-- longinteger -->
+    <field id="longField"     type="longinteger" value="5000000000" />
+
+    <!-- float -->
+    <field id="floatField"    type="float"       value="3.14159" />
+
+    <!-- string (and the 'str' alias spelling). titleText carries an onChange
+         observer AND alwaysNotify so set-without-change still notifies. -->
+    <field id="stringField"   type="string"      value="hello" />
+    <field id="strAliasField" type="str"         value="world" />
+    <field id="titleText"     type="string"      value="Spec Showcase"
+                              onChange="onTitleTextChanged" alwaysNotify="true" />
+
+    <!-- Boolean (and the 'bool' alias spelling) -->
+    <field id="boolField"     type="Boolean"     value="true" />
+    <field id="boolAlias"     type="bool"        value="false" />
+
+    <!-- vector2d  ([x, y]) -->
+    <field id="positionField" type="vector2d"    value="[100, 200]" />
+
+    <!-- color (0xRRGGBBAA) -->
+    <field id="colorField"    type="color"       value="0xFF8800FF" />
+
+    <!-- time -->
+    <field id="timeField"     type="time" />
+
+    <!-- uri -->
+    <field id="uriField"      type="uri"         value="pkg:/images/icon_focus_hd.png" />
+
+    <!-- node (a SceneGraph node reference) -->
+    <field id="nodeField"     type="node" />
+
+    <!-- ===== Array variants ============================================= -->
+    <field id="floatArray"    type="floatarray"     value="[1.0, 2.5, 3.75]" />
+    <field id="intArray"      type="intarray"       value="[1, 2, 3, 4]" />
+    <field id="boolArray"     type="boolarray"      value="[true, false, true]" />
+    <field id="stringArray"   type="stringarray"    value='["a", "b", "c"]' />
+    <field id="vector2dArray" type="vector2darray"  value="[[0,0],[10,10]]" />
+    <field id="colorArray"    type="colorarray"     value="[0xFF0000FF, 0x00FF00FF]" />
+    <field id="timeArray"     type="timearray" />
+    <field id="nodeArray"     type="nodearray" />
+
+    <!-- ===== assoc / generic array / rect ============================== -->
+    <field id="assocField"    type="assocarray" />
+    <field id="genericArray"  type="array" />
+    <field id="roArrayField"  type="roArray" />
+    <field id="rectField"     type="rect2D"      value="[0, 0, 1280, 720]" />
+    <field id="rectArray"     type="rect2DArray" value="[[0,0,10,10],[20,20,30,30]]" />
+
+    <!-- ===== alias= field: exposes a child node's field ================= -->
+    <!-- Exposes the inner rectangle's 'color' field as 'bgColor' on this
+         component (the alias micro-syntax is "node.field"). -->
+    <field id="bgColor"       type="color"       alias="bgRect.color" />
+
+    <!-- ===== interface function (callable via callFunc, Roku OS 7.5+) === -->
+    <function name="describe" />
+    <function name="resetState" />
+  </interface>
+
+  <!-- External script implementing init, the interface functions, and the
+       onChange observer. -->
+  <script type="text/brightscript" uri="pkg:/components/SpecShowcase.brs" />
+
+  <!-- Inline CDATA script: covers the inline embedding form for ast-grep. Kept
+       SELF-CONTAINED (not referenced from SpecShowcase.brs); see the note in
+       MainScene.xml. The real showcaseVersionTag() lives in SpecShowcase.brs. -->
+  <script type="text/brightscript"><![CDATA[
+    function showcaseInlineSample() as String
+        return "showcase-inline-sample"
+    end function
+  ]]></script>
+
+  <!-- Declarative children: several built-in node elements with attribute
+       field-initializers covering color, vector2d, rect2d, numeric, boolean,
+       uri micro-syntaxes, plus role= and id=. -->
+  <children>
+    <Rectangle id="bgRect"
+               color="0x202030FF"
+               width="600"
+               height="400"
+               translation="[0, 0]" />
+
+    <LayoutGroup id="panel"
+                 layoutDirection="vert"
+                 itemSpacings="[12]"
+                 translation="[20, 20]"
+                 horizAlignment="left">
+
+      <Label id="captionLabel"
+             text="SpecShowcase"
+             color="0xFFFFFFFF"
+             width="560"
+             wrap="true"
+             horizAlign="left"
+             vertAlign="top">
+        <!-- role="font" assigns this child Font node as the VALUE of the
+             parent Label's 'font' field. Exercises the role= attribute. -->
+        <Font role="font" uri="font:MediumBoldSystemFont" size="36" />
+      </Label>
+
+      <Poster id="iconPoster"
+              uri="pkg:/images/icon_focus_hd.png"
+              width="160"
+              height="90"
+              translation="[0, 0]"
+              loadDisplayMode="scaleToFit" />
+
+      <Rectangle id="swatch"
+                 color="0xFF8800FF"
+                 width="80"
+                 height="80"
+                 opacity="0.85"
+                 visible="true"
+                 clippingRect="[0, 0, 80, 80]" />
+    </LayoutGroup>
+
+    <Timer id="tick" repeat="false" duration="0.1" />
+  </children>
+
+</component>

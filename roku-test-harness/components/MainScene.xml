@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- MainScene: the root Scene. Renders a terse, server-boot-log style view of
+     the spec run (one "[ ok ] / [FAIL] <spec.id>" line per registered spec,
+     green for pass / red for fail), laid out in columns on a dark background.
+     The suite itself runs in source/main.brs (Main scope) and hands the per-spec
+     results here via the 'specResults' field (see grammar/DEVICE_FACTS.md for why
+     component scripts cannot run the suite themselves).
+
+     NOTE: text uses the built-in default font deliberately (no <Font> node) -
+     a small, monospace-ish system font fits the terse boot-log aesthetic and
+     renders reliably. -->
+<component name="MainScene" extends="Scene">
+
+  <interface>
+    <!-- Launch arguments handed in from Main(). -->
+    <field id="launchArgs" type="assocarray" />
+    <!-- The per-spec results, set by Main() after it runs the suite. Each element
+         is an AA { id, kind, description, passed, detail }. onChange renders. -->
+    <field id="specResults" type="array" onChange="onResultsChanged" />
+    <!-- Re-render on demand (callFunc target). -->
+    <function name="rerunTests" />
+  </interface>
+
+  <!-- External script (component scope): this scene's render logic. -->
+  <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+
+  <!-- Inline CDATA script: present so the inline <![CDATA[ ... ]]> embedding form
+       is covered for ast-grep. Intentionally self-contained. -->
+  <script type="text/brightscript"><![CDATA[
+    function mainSceneInlineSample(n as Integer) as String
+        if n > 0 then return "rows:" + n.ToStr() else return "empty"
+    end function
+  ]]></script>
+
+  <children>
+    <Rectangle id="bg" color="0x0B0B12FF" width="1920" height="1080" translation="[0, 0]" />
+
+    <LayoutGroup id="root" layoutDirection="vert" itemSpacings="[6]" translation="[28, 22]">
+      <Label id="title"   text="ast-grep brightscript spec harness" color="0x8FA0B6FF" />
+      <Label id="summary" text="running specs ..."                  color="0xCCCCCCFF" />
+
+      <LayoutGroup id="cols" layoutDirection="horiz" itemSpacings="[24]" translation="[0, 10]">
+        <LayoutGroup id="col0" layoutDirection="vert" itemSpacings="[1]" />
+        <LayoutGroup id="col1" layoutDirection="vert" itemSpacings="[1]" />
+        <LayoutGroup id="col2" layoutDirection="vert" itemSpacings="[1]" />
+      </LayoutGroup>
+    </LayoutGroup>
+
+    <!-- Spec-coverage component, instantiated hidden, to prove it loads. -->
+    <SpecShowcase id="showcase" visible="false" />
+  </children>
+
+</component>

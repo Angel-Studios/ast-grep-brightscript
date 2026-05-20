@@ -1,0 +1,15 @@
+{
+  "//": "brighterscript (bsc) config for the Roku test harness. Runs compiler/",
+  "//2": "validation diagnostics WITHOUT producing a .zip (createPackage:false).",
+  "//3": "Run from the repo root with `npm run check`.",
+  "rootDir": ".",
+  "files": [
+    "manifest",
+    "source/**/*.brs",
+    "components/**/*.brs",
+    "components/**/*.xml"
+  ],
+  "createPackage": false,
+  "copyToStaging": false,
+  "diagnosticLevel": "info"
+}

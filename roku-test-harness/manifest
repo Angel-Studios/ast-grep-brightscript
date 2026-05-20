@@ -1,0 +1,33 @@
+# Roku channel manifest for the BrightScript / SceneGraph spec exerciser.
+# See README.md for packaging/sideload instructions and required image assets.
+
+title=AST-Grep BrightScript Spec Harness
+
+# Version numbers must be integers.
+major_version=1
+minor_version=0
+build_version=00001
+
+# Channel / launcher artwork (HD = 1280x720 frame, SD = 720x480 frame).
+# These files must be supplied under images/ before packaging (placeholders noted
+# in images/README.md). The manifest must still reference valid paths.
+mm_icon_focus_hd=pkg:/images/icon_focus_hd.png
+mm_icon_focus_sd=pkg:/images/icon_focus_sd.png
+mm_icon_side_hd=pkg:/images/icon_side_hd.png
+mm_icon_side_sd=pkg:/images/icon_side_sd.png
+
+# Splash screens shown while the channel loads.
+splash_screen_hd=pkg:/images/splash_hd.png
+splash_screen_sd=pkg:/images/splash_sd.png
+splash_screen_fhd=pkg:/images/splash_fhd.png
+splash_color=#000000
+splash_min_time=0
+
+# Render at full HD where the device supports it.
+ui_resolutions=fhd
+
+# Allow deep-link / launch parameters to be exercised by the entry point.
+supports_input_launch=1
+
+# Compile-time constants consumed by #if conditional-compilation directives.
+bs_const=debug=false;enable_extra_tests=true
