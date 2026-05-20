@@ -1,0 +1,663 @@
+(*
+ * ============================================================================
+ * scenegraph.ebnf
+ * ============================================================================
+ *
+ * EBNF grammar for Roku SceneGraph component XML files (.xml).
+ *
+ * WHAT THIS IS
+ *   A precise, two-layer grammar describing the structure of a Roku SceneGraph
+ *   XML component document. SceneGraph components are well-formed XML documents
+ *   that declare a UI component and embed BrightScript source. This grammar is
+ *   intended as the authoritative specification from which a tree-sitter grammar
+ *   (and an ast-grep dialect) for SceneGraph will be derived.
+ *
+ *   It is organized as two clearly labeled layers:
+ *     LAYER 1  Generic XML  -- a faithful well-formed-XML subset (modeled on the
+ *                              W3C XML 1.0 productions). This is the lexical and
+ *                              structural foundation.
+ *     LAYER 2  SceneGraph   -- productions that constrain the generic XML into a
+ *                              valid SceneGraph component (the <component> root,
+ *                              <interface>/<field>/<function>, <script>,
+ *                              <children>, and node elements).
+ *
+ * LANGUAGE EMBEDDING
+ *   BrightScript is embedded inside <script> CDATA bodies (and, for external
+ *   scripts, referenced via the `uri` attribute). The BrightScript itself is
+ *   governed by the sibling grammar `brightscript.ebnf`. Wherever BrightScript
+ *   text appears, this grammar marks the embedding point and defers to that file.
+ *   This mirrors tree-sitter language injection (the implementer will inject the
+ *   BrightScript grammar into the CDATA content of <script> nodes).
+ *
+ * SOURCE / AUTHORITY
+ *   Roku SceneGraph documentation:
+ *     - Hub:        https://developer.roku.com/dev/docs/scenegraph
+ *     - component:  https://developer.roku.com/docs/references/scenegraph/xml-elements/component.md
+ *     - interface:  https://developer.roku.com/docs/references/scenegraph/xml-elements/interface.md
+ *     - script:     https://developer.roku.com/docs/references/scenegraph/xml-elements/script.md
+ *     - children:   https://developer.roku.com/docs/references/scenegraph/xml-elements/children.md
+ *     - defining:   https://developer.roku.com/docs/developer-program/core-concepts/xml-components/defining-scenegraph-components.md
+ *   Official XSD schema (the normative element/attribute/enum source used here):
+ *     - https://devtools.web.roku.com/schema/RokuSceneGraph.xsd
+ *       (schema version 1.0.20200218; field-type enumeration, the `extends`
+ *        built-in node-class enumeration, and all element attributes were taken
+ *        verbatim from this schema.)
+ *   Generic XML layer modeled on:
+ *     - W3C Extensible Markup Language (XML) 1.0 (Fifth Edition),
+ *       https://www.w3.org/TR/xml/  (the production numbers are not reproduced;
+ *       the productions are adapted to the W3C `::=` EBNF style used below).
+ *
+ * EBNF NOTATION DIALECT
+ *   W3C-style EBNF (the notation used by the XML 1.0 spec), kept IDENTICAL in
+ *   style to the sibling file `brightscript.ebnf` so the two read the same:
+ *     Name ::= expression      a production rule
+ *     A | B                    alternation
+ *     ( ... )                  grouping
+ *     A?                       optional (zero or one)
+ *     A*                       zero or more
+ *     A+                       one or more
+ *     'literal'  "literal"     terminal strings (either quote style)
+ *     [abc]  [a-z]  [^abc]     character classes (set, range, negated set)
+ *     #xN                      a character by hexadecimal Unicode code point
+ *     A - B                    set difference (strings matching A but not B)
+ *
+ * COMMENT STYLE (the ONE style used throughout this file)
+ *   (* ... *)   ML/ISO-style block comments. This file uses ONLY this comment
+ *               form. Note: do not confuse grammar comments with XML comments;
+ *               XML comments (<!-- ... -->) are *content* described by the rule
+ *               `Comment` in Layer 1.
+ *
+ * DATE
+ *   Written 2026-05-19.
+ * ============================================================================
+ *)
+
+
+(*
+ * ============================================================================
+ * LAYER 1  --  GENERIC XML  (well-formed-XML subset, modeled on W3C XML 1.0)
+ * ============================================================================
+ *
+ * This layer is the lexical/structural foundation. It is deliberately a faithful
+ * subset of W3C XML 1.0: enough to parse any well-formed SceneGraph document and
+ * no more. The SceneGraph layer (Layer 2) further constrains these productions.
+ *)
+
+
+(* ----------------------------------------------------------------------------
+ * 1.1  Characters and whitespace
+ * ------------------------------------------------------------------------- *)
+
+(* Any legal XML character (Char), per W3C XML 1.0. *)
+Char       ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD]
+             | [#x10000-#x10FFFF]
+
+(* White space. *)
+S          ::= ( #x20 | #x9 | #xD | #xA )+
+
+(* Name-start and name characters (W3C XML 1.0 NameStartChar / NameChar). *)
+NameStartChar ::= ':' | [A-Z] | '_' | [a-z]
+                | [#xC0-#xD6]   | [#xD8-#xF6]   | [#xF8-#x2FF]
+                | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D]
+                | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF]
+                | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+
+NameChar   ::= NameStartChar | '-' | '.' | [0-9]
+             | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
+
+Name       ::= NameStartChar ( NameChar )*
+
+(* A whitespace-separated list of Names (W3C `Names`). *)
+Names      ::= Name ( #x20 Name )*
+
+(* Nmtoken (any run of NameChars; used for tokenized attribute values). *)
+Nmtoken    ::= ( NameChar )+
+Nmtokens   ::= Nmtoken ( #x20 Nmtoken )*
+
+
+(* ----------------------------------------------------------------------------
+ * 1.2  Literals
+ * ------------------------------------------------------------------------- *)
+
+(* Attribute values support both quote styles. References (entity / character)
+ * are permitted inside attribute values; the raw quote that delimits the value
+ * is excluded from its content. *)
+AttValue   ::= '"'  ( [^<&"] | Reference )* '"'
+             | "'"  ( [^<&'] | Reference )* "'"
+
+(* Entity-value and system/public literals (used by the prolog/DTD subset). *)
+EntityValue   ::= '"'  ( [^%&"] | PEReference | Reference )* '"'
+                | "'"  ( [^%&'] | PEReference | Reference )* "'"
+
+SystemLiteral ::= ( '"' [^"]* '"' ) | ( "'" [^']* "'" )
+
+PubidLiteral  ::= '"' PubidChar* '"' | "'" ( PubidChar - "'" )* "'"
+PubidChar     ::= #x20 | #xD | #xA | [a-zA-Z0-9]
+                | [-'()+,./:=?;!*#@$_%]
+
+
+(* ----------------------------------------------------------------------------
+ * 1.3  Character data and references
+ * ------------------------------------------------------------------------- *)
+
+(* Character data: any run of characters not containing a markup delimiter and
+ * not containing the CDATA-section-close delimiter "]]>". *)
+CharData   ::= ( Char - ( '<' | '&' | "]]>" ) )*
+
+(* Character reference (&#nnnn; or &#xhhhh;) and entity reference (&name;). *)
+CharRef    ::= '&#' [0-9]+ ';'
+             | '&#x' [0-9a-fA-F]+ ';'
+
+EntityRef  ::= '&' Name ';'
+PEReference ::= '%' Name ';'
+
+Reference  ::= EntityRef | CharRef
+
+(* The five predefined XML entities are EntityRefs whose Name is one of these.
+ * They are the only entities expected (and the only ones definable without a
+ * DTD) in typical SceneGraph documents. *)
+PredefinedEntityRef ::= '&amp;' | '&lt;' | '&gt;' | '&apos;' | '&quot;'
+
+
+(* ----------------------------------------------------------------------------
+ * 1.4  Comments, CDATA sections, processing instructions
+ * ------------------------------------------------------------------------- *)
+
+(* XML comment. The text may not contain "--". *)
+Comment    ::= '<!--' ( ( Char - '-' ) | ( '-' ( Char - '-' ) ) )* '-->'
+
+(* CDATA section. The content is uninterpreted character data terminated by the
+ * first occurrence of "]]>".  In SceneGraph, the CDATA body of a <script>
+ * element is BrightScript source -- see Layer 2 (`ScriptCData`). *)
+CDSect     ::= CDStart CData CDEnd
+CDStart    ::= '<![CDATA['
+CData      ::= ( Char* - ( Char* ']]>' Char* ) )
+CDEnd      ::= ']]>'
+
+(* Processing instruction (the XML declaration is handled separately below). *)
+PI         ::= '<?' PITarget ( S ( Char* - ( Char* '?>' Char* ) ) )? '?>'
+PITarget   ::= Name - ( ( 'X' | 'x' ) ( 'M' | 'm' ) ( 'L' | 'l' ) )
+
+
+(* ----------------------------------------------------------------------------
+ * 1.5  Prolog: XML declaration and (optional) DOCTYPE
+ * ------------------------------------------------------------------------- *)
+
+(* A SceneGraph file conventionally begins with an XML declaration such as
+ *   <?xml version="1.0" encoding="utf-8" ?>
+ * The declaration is optional in XML, but recommended for SceneGraph files. *)
+prolog     ::= XMLDecl? ( Misc )* ( doctypedecl ( Misc )* )?
+
+XMLDecl    ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
+
+VersionInfo ::= S 'version' Eq ( "'" VersionNum "'" | '"' VersionNum '"' )
+VersionNum  ::= '1.' [0-9]+
+
+EncodingDecl ::= S 'encoding' Eq
+                 ( '"' EncName '"' | "'" EncName "'" )
+EncName      ::= [A-Za-z] ( [A-Za-z0-9._] | '-' )*
+
+SDDecl       ::= S 'standalone' Eq
+                 ( "'" ( 'yes' | 'no' ) "'" | '"' ( 'yes' | 'no' ) '"' )
+
+(* The `=` of an attribute or declaration, with optional surrounding space. *)
+Eq         ::= S? '=' S?
+
+(* Misc: things that may appear before/after the root element. *)
+Misc       ::= Comment | PI | S
+
+(* DOCTYPE declaration. SceneGraph documents do not normally use a DTD; this is
+ * included only for well-formed-XML completeness. The internal subset is
+ * summarized rather than fully expanded. *)
+doctypedecl ::= '<!DOCTYPE' S Name ( S ExternalID )? S?
+                ( '[' intSubset ']' S? )? '>'
+ExternalID  ::= 'SYSTEM' S SystemLiteral
+              | 'PUBLIC' S PubidLiteral S SystemLiteral
+intSubset   ::= ( markupdecl | PEReference | S )*
+markupdecl  ::= Comment | PI
+              (* element/attlist/entity/notation declarations are permitted by
+                 XML but are not used by SceneGraph; omitted here intentionally. *)
+
+
+(* ----------------------------------------------------------------------------
+ * 1.6  Elements, tags, attributes, content  (generic XML element model)
+ * ------------------------------------------------------------------------- *)
+
+(* A generic XML element is either an empty-element tag or a start-tag /
+ * content / end-tag triple. Layer 2 specializes these into SceneGraph elements;
+ * `GenericElement` exists so Layer 1 stands alone as a complete XML subset. *)
+GenericElement ::= EmptyElemTag | ( STag content ETag )
+
+STag         ::= '<' Name ( S Attribute )* S? '>'
+ETag         ::= '</' Name S? '>'
+EmptyElemTag ::= '<' Name ( S Attribute )* S? '/>'
+
+(* An attribute: a Name, '=', and a quoted value. Both quote styles are allowed.
+ * Well-formed XML forbids the same attribute Name twice on one element. *)
+Attribute    ::= Name Eq AttValue
+
+(* Element content: character data interleaved with child markup. *)
+content      ::= CharData?
+                 ( ( GenericElement | Reference | CDSect | PI | Comment )
+                   CharData? )*
+
+
+(* ----------------------------------------------------------------------------
+ * 1.7  Document
+ * ------------------------------------------------------------------------- *)
+
+(* Generic well-formed XML document. In a SceneGraph file the single root
+ * element is constrained to be `Component` (see Layer 2 / `SGDocument`). *)
+document     ::= prolog GenericElement Misc*
+
+
+(*
+ * ============================================================================
+ * LAYER 2  --  SCENEGRAPH  (constrains the generic XML into a component)
+ * ============================================================================
+ *
+ * Everything below specializes the generic XML productions of Layer 1. The
+ * element and attribute names, the required/optional status of each attribute,
+ * the field-type enumeration, and the built-in `extends` node-class enumeration
+ * are taken from the official RokuSceneGraph.xsd and the linked docs.
+ *
+ * IMPORTANT case rules (see "Notes for the tree-sitter implementer"):
+ *   - XML element names and attribute names are CASE-SENSITIVE in general, BUT
+ *     the SceneGraph framework defines fixed element/attribute names with a
+ *     specific spelling (e.g. `component`, `interface`, `field`, `function`,
+ *     `script`, `children`). The literals below give the canonical spelling.
+ *   - The <field> `type` attribute VALUE is explicitly case-INSENSITIVE per the
+ *     docs (e.g. "Boolean" == "boolean"). The enumeration literals below give
+ *     the canonical spellings; an implementer should match them case-insensitively.
+ *)
+
+
+(* ----------------------------------------------------------------------------
+ * 2.1  SceneGraph document and root element
+ * ------------------------------------------------------------------------- *)
+
+(* A SceneGraph component document: the same prolog/misc framing as a generic
+ * XML document, but the single root element MUST be a <component>. *)
+SGDocument ::= prolog Component Misc*
+
+(* The <component> root.  Exactly one per file.
+ *
+ * Attributes (from RokuSceneGraph.xsd):
+ *   name         REQUIRED  unique component identifier; case-sensitive.
+ *   extends      optional  base node class (built-in or another component);
+ *                          defaults to "Group" if omitted. See `ExtendsValue`.
+ *   initialFocus optional  ID of a declared node to receive initial focus.
+ *   version      optional  SceneGraph API version string; defaults to "1.0".
+ *
+ * Child elements (XSD sequence, all optional, in this order for XSD validity):
+ *   <interface>?  then  <script>*  then  <children>?
+ * Comments / PI / whitespace may be interleaved as ordinary XML content. *)
+Component ::= '<' 'component' ( S ComponentAttribute )* S? '>'
+                 ComponentContent
+              '</' 'component' S? '>'
+
+ComponentContent ::=
+      ( Misc | Comment )*
+      Interface?
+      ( ( Misc | Comment )* Script )*
+      ( ( Misc | Comment )* Children )?
+      ( Misc | Comment )*
+
+(* Component attributes. `name` is required; order is not significant in XML. *)
+ComponentAttribute ::=
+      ( 'name'         Eq AttValue )      (* REQUIRED *)
+    | ( 'extends'      Eq ExtendsAttValue )
+    | ( 'initialFocus' Eq AttValue )
+    | ( 'version'      Eq AttValue )
+
+(* `extends` value: a built-in node class name OR a user-defined component name.
+ * The XSD enumerates the built-in classes (below). User-defined component names
+ * are arbitrary Names and cannot be enumerated, so the value is, at the XML
+ * layer, simply a quoted string. Both forms are shown. *)
+ExtendsAttValue ::= '"' ExtendsValue '"' | "'" ExtendsValue "'"
+ExtendsValue    ::= BuiltinNodeClass | Name
+
+(* Built-in SceneGraph node classes accepted by `extends`, verbatim from the
+ * RokuSceneGraph.xsd `extends` enumeration. This is a SEMANTIC constraint:
+ * structurally the value is just a string (see implementer notes). *)
+BuiltinNodeClass ::=
+      'Animation'                 | 'AnimationBase'
+    | 'ArrayGrid'                 | 'Audio'
+    | 'BusySpinner'               | 'Button'
+    | 'ButtonGroup'               | 'ChannelStore'
+    | 'CheckList'                 | 'ColorFieldInterpolator'
+    | 'ComponentLibrary'          | 'ContentNode'
+    | 'Dialog'                    | 'FloatFieldInterpolator'
+    | 'Font'                      | 'GridPanel'
+    | 'Group'                     | 'Keyboard'
+    | 'KeyboardDialog'            | 'Label'
+    | 'LabelList'                 | 'LayoutGroup'
+    | 'ListPanel'                 | 'MarkupGrid'
+    | 'MarkupList'                | 'MaskGroup'
+    | 'MiniKeyboard'              | 'Node'
+    | 'Overhang'                  | 'OverhangPanelSetScene'
+    | 'Panel'                     | 'PanelSet'
+    | 'ParallelAnimation'        | 'ParentalControlPinPad'
+    | 'PinDialog'                 | 'PinPad'
+    | 'Poster'                    | 'PosterGrid'
+    | 'ProgressDialog'           | 'RadioButtonList'
+    | 'Rectangle'                 | 'RowList'
+    | 'Scene'                     | 'ScrollableText'
+    | 'ScrollingLabel'           | 'SequentialAnimation'
+    | 'SimpleLabel'               | 'SoundEffect'
+    | 'TargetGroup'               | 'TargetList'
+    | 'TargetSet'                 | 'Task'
+    | 'TextEditBox'               | 'TimeGrid'
+    | 'Timer'                     | 'Vector2DFieldInterpolator'
+    | 'Video'                     | 'ZoomRowList'
+
+
+(* ----------------------------------------------------------------------------
+ * 2.2  Interface, Field, Function
+ * ------------------------------------------------------------------------- *)
+
+(* <interface> contains zero or more <field> and zero or more <function>.
+ * The XSD orders <field>* before <function>* within the sequence. *)
+Interface ::= '<' 'interface' S? '>'
+                 ( ( Misc | Comment )* ( Field | Function ) )*
+                 ( Misc | Comment )*
+              '</' 'interface' S? '>'
+            | '<' 'interface' S? '/>'
+
+(* <field> -- defines one top-level interface field. Always an empty element.
+ *
+ * Attributes (from RokuSceneGraph.xsd):
+ *   id           REQUIRED  field name (string).
+ *   type         REQUIRED  field data type; one of FieldType (case-insensitive).
+ *   value        optional  initial value as a string (type's default if absent).
+ *   alias        optional  "node.field" -- exposes a child node's field.
+ *   onChange     optional  name of a BrightScript observer callback function;
+ *                          equivalent to m.top.observeField(id, onChange).
+ *   alwaysNotify optional  "true" | "false" -- notify observers on every set,
+ *                          not only on change (default "false"). *)
+Field ::= '<' 'field' ( S FieldAttribute )* S? '/>'
+
+FieldAttribute ::=
+      ( 'id'           Eq AttValue )      (* REQUIRED *)
+    | ( 'type'         Eq FieldTypeAttValue )  (* REQUIRED *)
+    | ( 'value'        Eq AttValue )
+    | ( 'alias'        Eq AliasAttValue )
+    | ( 'onChange'     Eq AttValue )      (* value names a BrightScript fn *)
+    | ( 'alwaysNotify' Eq BoolAttValue )
+
+(* The `type` attribute value: one of the enumerated field types, matched
+ * case-insensitively. The canonical literals are reproduced from the XSD. *)
+FieldTypeAttValue ::= '"' FieldType '"' | "'" FieldType "'"
+
+(* Enumerated SceneGraph field types (RokuSceneGraph.xsd field/type enumeration).
+ *
+ * NOTE on aliased spellings: the XSD encodes several types as a single
+ * comma-joined enumeration token ("Boolean, bool", "integer, int",
+ * "string, str"). Per the docs these are ALIASES -- either spelling is a valid
+ * standalone value. They are listed here as the individual accepted spellings.
+ * The XSD lists only "array" for the generic array type; "roArray" is NOT in
+ * the XSD enumeration and has been removed here pending device confirmation. *)
+FieldType ::=
+      'integer'   | 'int'                 (* BrightScript integer *)
+    | 'longinteger'                        (* BrightScript longinteger *)
+    | 'float'                              (* BrightScript float *)
+    | 'string'    | 'str'                 (* BrightScript string *)
+    | 'Boolean'   | 'bool'                (* BrightScript Boolean *)
+    | 'vector2d'                           (* [x, y] coordinate array *)
+    | 'color'                              (* color (0xRRGGBBAA / #RRGGBB) *)
+    | 'time'                               (* time type *)
+    | 'uri'                                (* URL identifier string *)
+    | 'node'                               (* SceneGraph node reference *)
+    | 'floatarray'                         (* array of float *)
+    | 'intarray'                           (* array of integer *)
+    | 'boolarray'                          (* array of Boolean *)
+    | 'stringarray'                        (* array of string *)
+    | 'vector2darray'                      (* array of vector2d *)
+    | 'colorarray'                         (* array of color *)
+    | 'timearray'                          (* array of time *)
+    | 'nodearray'                          (* array of node references *)
+    | 'assocarray'                         (* associative array *)
+    | 'array'                              (* generic array of objects;
+                                              XSD has no "roArray" spelling *)
+    | 'rect2D'                             (* assocarray {x,y,width,height} *)
+    | 'rect2DArray'                        (* array of rect2D *)
+
+(* `alias` micro-syntax: "node.field" (the XSD describes it as _node_._field_). *)
+AliasAttValue ::= '"' Name '.' Name '"' | "'" Name '.' Name "'"
+
+(* `alwaysNotify` value: the XSD documents it as a string with the value
+   "true" or "false". Matched case-insensitively like other SceneGraph text. *)
+BoolAttValue ::= '"' BoolText '"' | "'" BoolText "'"
+BoolText     ::= 'true' | 'false'
+
+(* <function> -- exposes a BrightScript function callable via callFunc().
+ * Available as of Roku OS 7.5. Always an empty element.
+ *   name  REQUIRED  the BrightScript function name to expose. *)
+Function ::= '<' 'function' ( S FunctionAttribute )* S? '/>'
+FunctionAttribute ::= ( 'name' Eq AttValue )   (* REQUIRED *)
+
+
+(* ----------------------------------------------------------------------------
+ * 2.3  Script  (BrightScript embedding point)
+ * ------------------------------------------------------------------------- *)
+
+(* <script> -- defines or references BrightScript associated with the component.
+ * Zero or more per component.
+ *
+ * Attributes (from RokuSceneGraph.xsd):
+ *   type  REQUIRED  FIXED value "text/brightscript".
+ *   uri   optional  path to an external .brs file under pkg:/components/;
+ *                   relative URIs resolve against the XML file's directory.
+ *
+ * Two forms:
+ *   (a) Inline: a non-empty <script> whose content is BrightScript wrapped in a
+ *       CDATA section (recommended) or as bare character data. The BrightScript
+ *       grammar is the sibling `brightscript.ebnf` (see `BrightScriptBody`).
+ *   (b) External: an empty <script ... uri="..."/> with no body. *)
+Script ::= ScriptInline | ScriptExternal
+
+ScriptInline ::=
+      '<' 'script' ( S ScriptAttribute )* S? '>'
+          ScriptContent
+      '</' 'script' S? '>'
+
+ScriptExternal ::=
+      '<' 'script' ( S ScriptAttribute )* S? '/>'
+
+ScriptAttribute ::=
+      ( 'type' Eq ScriptTypeAttValue )    (* REQUIRED, fixed value *)
+    | ( 'uri'  Eq AttValue )
+
+(* The fixed `type` value. *)
+ScriptTypeAttValue ::= '"' 'text/brightscript' '"'
+                     | "'" 'text/brightscript' "'"
+
+(* Inline script content. Conventionally a single CDATA section, but XML also
+ * permits bare character data interleaved with comments and whitespace. The
+ * non-whitespace text is BrightScript source. *)
+ScriptContent ::=
+      ( Misc | Comment )*
+      ( ScriptCData | ScriptText )?
+      ( Misc | Comment )*
+
+(* A CDATA section whose body is BrightScript.
+ * >>> LANGUAGE EMBEDDING: the bytes between '<![CDATA[' and ']]>' are parsed by
+ *     the sibling grammar `brightscript.ebnf` (production `BrightScriptBody` or
+ *     equivalent). Tree-sitter implementers should inject the BrightScript
+ *     grammar here. The XML layer treats the body as opaque CData (Layer 1). <<< *)
+ScriptCData ::= CDStart BrightScriptBody CDEnd
+
+(* Bare (non-CDATA) inline BrightScript. Discouraged because '<', '>' and '&'
+ * must then be XML-escaped, but it is legal XML.
+ * >>> LANGUAGE EMBEDDING: same injection as ScriptCData. <<< *)
+ScriptText  ::= BrightScriptBody
+
+(* The embedded BrightScript body. Defined by `brightscript.ebnf`; referenced
+ * here only as the injection boundary. At the XML layer it is opaque text:
+ * within a CDATA section it is `CData`; outside, it is `CharData` with
+ * XML-escaped delimiters. *)
+BrightScriptBody ::= (* governed by sibling grammar: brightscript.ebnf *)
+                     CData
+
+
+(* ----------------------------------------------------------------------------
+ * 2.4  Children and node elements
+ * ------------------------------------------------------------------------- *)
+
+(* <children> -- container for the declarative node markup instantiated when the
+ * component is created. At most one per component. The wrapper exists so the
+ * document is XSD-validatable (XSD requires deterministic element order). *)
+Children ::= '<' 'children' S? '>'
+                 ( ( Misc | Comment )* NodeElement )*
+                 ( Misc | Comment )*
+             '</' 'children' S? '>'
+           | '<' 'children' S? '/>'
+
+(* A NodeElement is a generic SceneGraph node declared in markup. Its TAG NAME is
+ * the node/component TYPE to instantiate -- either a built-in node class
+ * (`BuiltinNodeClass`, e.g. <Label>, <Rectangle>, <Poster>) or a user-defined
+ * component name (an arbitrary Name). Because user component names cannot be
+ * enumerated, the tag name is, structurally, any XML Name.
+ *
+ * Its ATTRIBUTES are field initializers: each `attrName="value"` SETS the node's
+ * field `attrName` to the (string-typed) value. Two attributes have special XML
+ * meaning across all node types:
+ *   id    -- the node's dictionary id (used by findNode()); not a "field set" so
+ *            much as an identity; the XSD declares `id` on every node class.
+ *   role  -- assigns this child node as the VALUE of the named field on its
+ *            PARENT node ( role="parentnode_fieldname" ); see `RoleAttValue`.
+ *
+ * A node may nest further NodeElements (its children). The XML element model
+ * also permits comments / whitespace / PIs as content. *)
+NodeElement ::= NodeStartTag NodeContent NodeEndTag
+              | NodeEmptyTag
+
+NodeStartTag ::= '<' NodeName ( S NodeAttribute )* S? '>'
+NodeEndTag   ::= '</' NodeName S? '>'
+NodeEmptyTag ::= '<' NodeName ( S NodeAttribute )* S? '/>'
+
+(* The tag name: a built-in node class or any user-defined component Name. *)
+NodeName     ::= BuiltinNodeClass | Name
+
+(* Node content: nested node elements interleaved with ordinary XML content. *)
+NodeContent  ::= ( Misc | Comment )*
+                 ( NodeElement ( Misc | Comment )* )*
+
+(* A node attribute = a field initializer. `attrName` is a field name on the node
+ * type; the quoted `value` is the field's initial value as a STRING (the runtime
+ * coerces it to the field's declared type -- see attribute micro-syntax notes).
+ * The reserved `id` and `role` attributes are called out explicitly. *)
+NodeAttribute ::=
+      ( 'id'   Eq AttValue )              (* node dictionary id *)
+    | ( 'role' Eq RoleAttValue )          (* assign to parent field *)
+    | ( Name   Eq FieldInitValue )        (* generic field initializer *)
+
+(* `role` value: the name of a field on the PARENT node to which this child node
+ * is assigned. Structurally just a quoted Name. *)
+RoleAttValue ::= '"' Name '"' | "'" Name "'"
+
+(* A field-initializer value. At the XML layer it is always a quoted string
+ * (AttValue). The strings carry a per-field-type MICRO-SYNTAX that is NOT
+ * enforced by XML and is shown here only descriptively (see implementer notes):
+ *   color    e.g. "0xRRGGBBAA"  (also "#RRGGBB" / named-ish hex forms)
+ *   vector2d e.g. "[ 200, 100 ]"
+ *   rect2D   e.g. "[ x, y, w, h ]"
+ *   integer/float  e.g. "42", "3.14"
+ *   Boolean  "true" | "false"
+ *   uri      e.g. "pkg:/images/x.png", "http://..."
+ *   node ref e.g. "dictionary:SomeId"  (reference a node by dictionary id)
+ * All of these are, structurally, just AttValue. *)
+FieldInitValue ::= AttValue
+
+
+(*
+ * ============================================================================
+ * NOTES FOR THE TREE-SITTER IMPLEMENTER
+ * ============================================================================
+ *
+ * 1. CASE SENSITIVITY
+ *    - XML element and attribute NAMES are case-sensitive in general. SceneGraph
+ *      framework names have a single canonical spelling: `component`,
+ *      `interface`, `field`, `function`, `script`, `children`, and the framework
+ *      attribute names (`name`, `extends`, `initialFocus`, `version`, `id`,
+ *      `type`, `value`, `alias`, `onChange`, `alwaysNotify`, `uri`, `role`).
+ *      Match these literally.
+ *    - The `name` attribute of <component> is explicitly case-sensitive for the
+ *      purpose of instantiation: the spelling must match exactly to create the
+ *      component.
+ *    - EXCEPTION: the <field> `type` VALUE is case-INSENSITIVE ("Boolean" ==
+ *      "boolean" == "BOOLEAN"). Built-in node-class names used in `extends` and
+ *      as node tag names are conventionally PascalCase (Label, Poster, Scene)
+ *      and should be treated case-sensitively (the XSD enumerates exact casing).
+ *
+ * 2. ENUMERATIONS ARE SEMANTIC, NOT STRUCTURAL
+ *    - `FieldType` and `BuiltinNodeClass` are reproduced from the XSD as
+ *      alternations of string literals so the grammar documents the legal set.
+ *      But a tree-sitter grammar generally cannot (and should not) hard-enforce
+ *      these as the only legal tokens, because:
+ *        (a) field types are matched case-insensitively, and
+ *        (b) node tag names and `extends` values may be ARBITRARY user-defined
+ *            component names that are unknown at parse time.
+ *      Recommended approach: parse the tag name / type value as a generic
+ *      string/identifier node, and apply the enumeration as a semantic check
+ *      (a linter rule / external validator), not as a tokenizer constraint.
+ *
+ * 3. BRIGHTSCRIPT EMBEDDING (LANGUAGE INJECTION)
+ *    - The body of an inline <script> -- whether inside a CDATA section
+ *      (`ScriptCData`, the normal case) or as bare character data
+ *      (`ScriptText`) -- is BrightScript governed by the sibling grammar
+ *      `brightscript.ebnf`. Implement this as a tree-sitter LANGUAGE INJECTION:
+ *      capture the CDATA/character-data content of a <script type="text/
+ *      brightscript"> node and inject the BrightScript grammar into it.
+ *    - For EXTERNAL scripts (<script uri="...">), there is no body to inject;
+ *      the referenced .brs file is parsed as a standalone BrightScript file by
+ *      `brightscript.ebnf`.
+ *    - BrightScript identifiers also appear as ATTRIBUTE VALUES: the <field>
+ *      `onChange` value names a BrightScript callback function, and <function>
+ *      `name` names a BrightScript function. These are plain strings at the XML
+ *      layer; an implementer may optionally surface them as references to
+ *      BrightScript symbols for cross-file navigation.
+ *
+ * 4. ATTRIBUTE-VALUE MICRO-SYNTAX IS STRING-TYPED AT THE XML LAYER
+ *    - Every attribute value is, structurally, a quoted XML string (AttValue).
+ *      The SceneGraph runtime coerces the string into the field's declared type:
+ *        color    -> 0xRRGGBBAA hex (also #RRGGBB style forms)
+ *        vector2d -> "[ x, y ]"        (a 2-element numeric array literal)
+ *        rect2D   -> "[ x, y, w, h ]"  (a 4-element numeric array literal)
+ *        integer / longinteger / float -> numeric text
+ *        Boolean  -> "true" | "false"
+ *        uri      -> "pkg:/..." or a URL
+ *        node     -> a node reference, e.g. "dictionary:SomeId"
+ *      None of this is enforced by XML well-formedness. If finer-grained nodes
+ *      are desired (e.g. a `vector2d_literal` node), parse the AttValue content
+ *      with a secondary scanner; otherwise keep values as opaque strings.
+ *    - Declarative <children> values are restricted to STRING literals (no
+ *      BrightScript expressions); expression-driven field setting happens in
+ *      <script> code, not in markup.
+ *
+ * 5. NAMESPACES
+ *    - SceneGraph component files do NOT use XML namespaces in practice: there is
+ *      no default-namespace declaration and no prefixed names in the framework
+ *      vocabulary. The generic `Name` production permits a ':' (so prefixed names
+ *      parse), but no SceneGraph semantics are attached to namespace prefixes.
+ *      Treat any ':' in a Name as an ordinary character; do not implement
+ *      namespace resolution.
+ *
+ * 6. PROLOG / DOCTYPE / DTD
+ *    - The XML declaration (<?xml ...?>) is optional but conventional; encoding
+ *      is typically utf-8. A DOCTYPE/DTD is essentially never used in SceneGraph
+ *      files; the `doctypedecl` production is present only for XML completeness
+ *      and may be implemented minimally (or omitted) without affecting real
+ *      SceneGraph documents. Only the five predefined entities
+ *      (&amp; &lt; &gt; &apos; &quot;) and character references (&#...;) should
+ *      be expected; general entity definitions are out of scope.
+ *
+ * 7. ELEMENT ORDER
+ *    - The XSD imposes a deterministic order within <component>:
+ *      <interface>? then <script>* then <children>?. Real-world files generally
+ *      follow this, and the grammar above models it. If you want to be lenient
+ *      (accept these children in any order, as many editors tolerate), relax
+ *      `ComponentContent` to an unordered repetition of the three child kinds.
+ *
+ * ============================================================================
+ *)

@@ -1,0 +1,876 @@
+(*=============================================================================
+  BrightScript Grammar (EBNF)
+=============================================================================
+
+  WHAT THIS IS
+  ------------
+  A comprehensive grammar for Roku's BrightScript language, intended as the
+  authoritative specification from which a tree-sitter / ast-grep parser will
+  be built. It covers the full *core* BrightScript language: lexical tokens,
+  declarations, statements, the precedence-layered expression grammar, the
+  type system, conditional compilation, and exception handling.
+
+  This file describes plain BrightScript only. SceneGraph XML, BrighterScript
+  extensions (classes, namespaces, import, ternary `?:`, `??`), and the
+  component/global-function libraries are intentionally OUT OF SCOPE here.
+  BrighterScript-only constructs are NOT modeled. A couple of constructs that
+  exist in BrightScript but are version-gated (optional chaining, ++/--,
+  compound assignment, LongInteger) ARE modeled and annotated with the Roku OS
+  version that introduced them.
+
+  SOURCE
+  ------
+  Roku BrightScript Language Reference (verified against the live docs):
+    Hub ......................... https://developer.roku.com/dev/docs/brightscript-language-reference
+    Expressions, variables, types https://developer.roku.com/dev/docs/expressions-variables-types
+    Program statements .......... https://developer.roku.com/dev/docs/program-statements
+    Statement summary ........... https://developer.roku.com/dev/docs/statement-summary
+    Reserved words .............. https://developer.roku.com/dev/docs/reserved-words
+    Conditional compilation ..... https://developer.roku.com/dev/docs/conditional-compilation
+    Error handling .............. https://developer.roku.com/dev/docs/error-handling
+    roXMLElement (.@ operator) .. https://developer.roku.com/docs/references/brightscript/components/roxmlelement.md
+
+  Date: 2026-05-19
+
+  EBNF NOTATION (W3C-style, as used in the XML spec)
+  --------------------------------------------------
+  Rules have the form:               Name ::= expression
+  Reference to another rule:         Name
+  Alternation:                       A | B
+  Grouping:                          ( A B )
+  Optional (zero or one):            A?
+  Zero or more:                      A*
+  One or more:                       A+
+  Terminal string (literal token):   'literal'  or  "literal"
+  Character class / range:           [a-zA-Z]  [0-9]  [^"]
+  Exception ("A but not B"):         A - B
+  Hex character code:                #x000A   (Unicode code point)
+  Comments:                          (* ... *)  <-- THIS comment style only
+
+  Convention used here:
+    * UpperCamelCase ........ syntactic (parser) rules / non-terminals.
+    * UPPER_SNAKE ........... lexical (token) rules / terminals produced by
+                              the lexer (keywords, literals, punctuation).
+    * 'lowercase' literals .. spelled keywords. BrightScript keywords are
+                              CASE-INSENSITIVE; see the implementer notes at the
+                              end. Literals are written lowercase here for
+                              readability but match any case.
+
+  HOW TO READ THE NEWLINE / TERMINATOR MODEL
+  ------------------------------------------
+  BrightScript is line-oriented. Statements are terminated by a NEWLINE or by a
+  colon ':' (which separates multiple statements on one physical line). There is
+  NO line-continuation character. The token NL below stands for "one statement
+  terminator" and EOS ("end of statement") abstracts "NL or ':' or end-of-file",
+  with runs of blank terminators collapsed. See implementer notes for how a
+  tree-sitter scanner should treat significant newlines.
+
+=============================================================================*)
+
+
+(*===========================================================================*)
+(*  PART 1 - LEXICAL GRAMMAR (TOKENS)                                         *)
+(*===========================================================================*)
+
+(*--- 1.1 Whitespace, newlines, statement terminators ----------------------*)
+
+(* Horizontal whitespace is insignificant EXCEPT that it separates tokens and
+   is significant for the lexer's longest-match rule. It is skipped between
+   tokens (it does NOT terminate a statement). *)
+WS              ::= ( #x20 | #x09 )+                    (* space, tab *)
+
+(* A physical line break. CRLF, CR, or LF all count as one. *)
+LINE_BREAK      ::= #x0D #x0A | #x0A | #x0D
+
+(* NL = a single statement terminator produced from a line break. *)
+NL              ::= LINE_BREAK
+
+(* EOS = "end of statement": a newline, a colon separator, or EOF. A run of
+   consecutive terminators (blank lines, stray colons) collapses to one EOS.
+   Used throughout the syntactic grammar to terminate statements. *)
+EOS             ::= ( NL | ':' )+
+
+(*--- 1.2 Comments ---------------------------------------------------------*)
+
+(* Two equivalent comment forms; both run to end of line. A comment is NOT a
+   statement terminator by itself - the trailing NEWLINE terminates. *)
+Comment         ::= ( "'" | REM_KW ) CommentText?
+CommentText     ::= ( Char - LINE_BREAK )*
+REM_KW          ::= 'rem'                               (* case-insensitive *)
+(* NOTE: 'rem' as a comment introducer wins over identifier 'rem' via the
+   keyword/longest-match rules; it is a reserved word. *)
+
+(*--- 1.3 Identifiers ------------------------------------------------------*)
+
+(* Start with a letter or underscore; continue with letters, digits, or
+   underscore; MAY end with a single optional type-designator suffix.
+   Case-insensitive. A bare identifier must not collide with a reserved word
+   (see 1.9) - those are lexed as keywords instead. *)
+Identifier      ::= IdentStart IdentCont* TypeSuffix?
+IdentStart      ::= [a-zA-Z_]
+IdentCont       ::= [a-zA-Z0-9_]
+TypeSuffix      ::= '$' | '%' | '!' | '#' | '&'
+                    (* $=String %=Integer !=Float #=Double &=LongInteger.
+                       '&' suffix requires Roku OS 7.0+. The suffix is part of
+                       the identifier token (e.g. count% and count are the same
+                       variable conceptually, but the suffix declares type). *)
+
+(*--- 1.4 Numeric literals -------------------------------------------------*)
+
+(* BrightScript infers numeric literal type by form:
+     - 10+ digits, or 'D' exponent, or '#' suffix  => Double
+     - contains '.' or 'E' exponent or '!' suffix   => Float
+     - hex &h... or plain digits                    => Integer
+     - trailing '&' suffix, or 11+ digit hex        => LongInteger
+   We model the distinct lexical shapes; the type-inference is a semantic note. *)
+
+IntegerLiteral      ::= DecDigits
+                      | HexLiteral
+DecDigits           ::= [0-9]+
+
+(* Hexadecimal integer literal: &h or &H prefix. *)
+HexLiteral          ::= ( '&h' | '&H' ) HexDigits
+HexDigits           ::= [0-9a-fA-F]+
+
+(* LongInteger literal (Roku OS 7.0+): decimal or hex with trailing '&'. *)
+LongIntegerLiteral  ::= ( DecDigits | HexLiteral ) '&'
+
+(* Float literal: decimal point and/or 'E' exponent, optional '!' suffix.
+   Also a plain integer-looking number followed by '!' is a Float. *)
+FloatLiteral        ::= ( DecDigits '.' DecDigits? FloatExp?
+                        | '.' DecDigits FloatExp?
+                        | DecDigits FloatExp
+                        | DecDigits '!' )
+                        '!'?
+FloatExp            ::= ( 'e' | 'E' ) Sign? DecDigits
+
+(* Double literal: 'D' exponent, or '#' suffix, or 10+ digit constant. *)
+DoubleLiteral       ::= ( DecDigits '.' DecDigits? DoubleExp?
+                        | '.' DecDigits DoubleExp?
+                        | DecDigits DoubleExp
+                        | DecDigits '.' DecDigits? '#'
+                        | DecDigits '#' )
+DoubleExp           ::= ( 'd' | 'D' ) Sign? DecDigits
+
+Sign                ::= '+' | '-'
+
+(* Aggregate token used by the expression grammar. *)
+NumericLiteral      ::= DoubleLiteral
+                      | FloatLiteral
+                      | LongIntegerLiteral
+                      | HexLiteral
+                      | IntegerLiteral
+                    (* ORDER MATTERS for longest-match: try Double/Float/Long
+                       shapes before plain Integer; try Hex before bareword.
+                       A tree-sitter scanner should resolve via maximal munch. *)
+
+(*--- 1.5 String literals --------------------------------------------------*)
+
+(* Double-quoted. An embedded double quote is written as two double quotes
+   (""). There are NO backslash escape sequences in BrightScript strings;
+   "" is the only escape. Strings cannot span lines. *)
+StringLiteral   ::= '"' ( StringChar | EscapedQuote )* '"'
+StringChar      ::= Char - ( '"' | LINE_BREAK )
+EscapedQuote    ::= '""'
+
+(*--- 1.6 Boolean and invalid literals -------------------------------------*)
+
+BooleanLiteral  ::= 'true' | 'false'                   (* case-insensitive *)
+InvalidLiteral  ::= 'invalid'                           (* case-insensitive *)
+
+(*--- 1.7 Generic character ------------------------------------------------*)
+
+Char            ::= [#x09#x0A#x0D#x20-#x10FFFF]         (* any Unicode char *)
+
+(*--- 1.8 Operators and punctuation (terminals) ----------------------------*)
+
+(* Listed here so the lexer and the tree-sitter author have an explicit token
+   inventory. Multi-char operators must be matched before their prefixes. *)
+
+(* Arithmetic *)
+OP_PLUS         ::= '+'
+OP_MINUS        ::= '-'
+OP_STAR         ::= '*'
+OP_SLASH        ::= '/'                                 (* float division *)
+OP_BACKSLASH    ::= '\'                                 (* integer division *)
+OP_CARET        ::= '^'                                 (* exponentiation *)
+OP_MOD          ::= 'mod'                               (* keyword operator *)
+
+(* Bit shift (Roku OS supports integer bitshift) *)
+OP_SHL          ::= '<<'
+OP_SHR          ::= '>>'
+
+(* Comparison *)
+OP_EQ           ::= '='
+OP_NE           ::= '<>'
+OP_LT           ::= '<'
+OP_GT           ::= '>'
+OP_LE           ::= '<='
+OP_GE           ::= '>='
+
+(* Logical / bitwise (keyword operators) *)
+OP_AND          ::= 'and'
+OP_OR           ::= 'or'
+OP_NOT          ::= 'not'
+
+(* Assignment and compound assignment (compound forms: Roku OS 7.1+) *)
+ASSIGN          ::= '='
+PLUS_ASSIGN     ::= '+='
+MINUS_ASSIGN    ::= '-='
+STAR_ASSIGN     ::= '*='
+SLASH_ASSIGN    ::= '/='
+BACKSLASH_ASSIGN::= '\='
+SHL_ASSIGN      ::= '<<='
+SHR_ASSIGN      ::= '>>='
+
+(* Increment / decrement (Roku OS 7.1+) *)
+OP_INCR         ::= '++'
+OP_DECR         ::= '--'
+
+(* Member / index / call / attribute / optional-chaining *)
+DOT             ::= '.'
+AT              ::= '@'                                 (* XML attribute access *)
+LBRACKET        ::= '['
+RBRACKET        ::= ']'
+LPAREN          ::= '('
+RPAREN          ::= ')'
+LBRACE          ::= '{'
+RBRACE          ::= '}'
+COMMA           ::= ','
+SEMI            ::= ';'
+COLON           ::= ':'
+
+(* Optional chaining operators (Roku OS 11.0+) *)
+OC_DOT          ::= '?.'                                (* optional member *)
+OC_AT           ::= '?@'                                (* optional XML attr *)
+OC_BRACKET      ::= '?['                                (* optional index *)
+OC_PAREN        ::= '?('                                (* optional call *)
+
+(* Print alias *)
+QUESTION        ::= '?'                                 (* shorthand for print *)
+
+(* Preprocessor / conditional-compilation markers (the leading '#' begins a
+   directive token; see 4.x). *)
+HASH            ::= '#'
+
+(*--- 1.9 Reserved words ---------------------------------------------------*)
+
+(* The documented reserved-word set (case-insensitive). These cannot be used
+   as plain variable names. Note 'mod', 'and', 'or', 'not' double as operators.
+   Source: Reserved words page. *)
+ReservedWord    ::= 'and' | 'box' | 'createobject' | 'dim' | 'each' | 'else'
+                  | 'elseif' | 'end' | 'endfunction' | 'endif' | 'endsub'
+                  | 'endwhile' | 'eval' | 'exit' | 'exitwhile' | 'false'
+                  | 'for' | 'function' | 'getglobalaa'
+                  | 'getlastruncompileerror' | 'getlastrunruntimeerror'
+                  | 'goto' | 'if' | 'invalid' | 'let' | 'line_num' | 'next'
+                  | 'not' | 'objfun' | 'or' | 'pos' | 'print' | 'rem'
+                  | 'return' | 'run' | 'step' | 'stop' | 'sub' | 'tab'
+                  | 'then' | 'to' | 'true' | 'type' | 'while'
+
+(* Soft / contextual keywords: these are documented as language constructs but
+   are NOT in the formal reserved-word list (so they can sometimes be used as
+   identifiers depending on context). Treat as contextual keywords. *)
+ContextualKeyword ::= 'mod' | 'as' | 'in' | 'throw' | 'try' | 'catch'
+                    | 'library' | 'continue' | 'integer' | 'longinteger'
+                    | 'float' | 'double' | 'string' | 'boolean' | 'object'
+                    | 'dynamic' | 'void' | 'interface'
+(* NOTE: 'end function', 'end sub', 'end if', 'end while', 'end for',
+   'end try' are written with an optional space; both 'endfunction' and
+   'end function' are accepted. See implementer notes. *)
+
+
+(*===========================================================================*)
+(*  PART 2 - SYNTACTIC GRAMMAR: PROGRAM STRUCTURE & DECLARATIONS             *)
+(*===========================================================================*)
+
+(*--- 2.1 Program / source file --------------------------------------------*)
+
+(* A source file is a sequence of top-level items: function/sub declarations,
+   library statements, conditional-compilation directives, comments, blank
+   lines, and (legacy) bare statements / labels at file scope. *)
+SourceFile      ::= EOS? ( TopLevelItem ( EOS TopLevelItem )* )? EOS?
+
+TopLevelItem    ::= FunctionDeclaration
+                  | SubDeclaration
+                  | LibraryStatement
+                  | ConstDirective
+                  | ConditionalCompilation
+                  | Comment
+                  | Label
+                  | Statement
+                (* Bare top-level Statements are accepted by the runtime
+                   (legacy global scope); modern code keeps logic in functions. *)
+
+(*--- 2.2 Library statement ------------------------------------------------*)
+
+(* Imports a system or external .brs library by path. *)
+LibraryStatement ::= 'library' StringLiteral
+
+(*--- 2.3 Function & Sub declarations ---------------------------------------*)
+
+(* A named function. Return type via 'as Type' is optional (defaults Dynamic).
+   'function' ... 'end function' (or 'endfunction'). *)
+FunctionDeclaration ::=
+        'function' Identifier LPAREN ParameterList? RPAREN ReturnType?
+            EOS
+            Block?
+        EndFunction
+
+(* A named sub: a function whose return type is implicitly Void.
+   A return type may still be written but must be 'void' if present. *)
+SubDeclaration ::=
+        'sub' Identifier LPAREN ParameterList? RPAREN ReturnType?
+            EOS
+            Block?
+        EndSub
+
+EndFunction     ::= 'end' 'function' | 'endfunction'
+EndSub          ::= 'end' 'sub' | 'endsub'
+
+(* 'as Type' return-type annotation. *)
+ReturnType      ::= 'as' Type
+
+(*--- 2.4 Parameters --------------------------------------------------------*)
+
+(* Parameters are comma-separated. Each may have a default value and/or an
+   'as Type' annotation. Per docs: once a parameter has a default, all
+   subsequent parameters must also have defaults (a semantic rule, not encoded
+   here). Order within a single parameter: name, then optional '= default',
+   then optional 'as Type'. *)
+ParameterList   ::= Parameter ( COMMA Parameter )*
+Parameter       ::= Identifier ( ASSIGN Expression )? ( 'as' Type )?
+
+(*--- 2.5 Type system -------------------------------------------------------*)
+
+(* Type names used in 'as Type' annotations and parameter types.
+   All are case-insensitive. 'Object' covers component references such as
+   roArray / roAssociativeArray. 'Dynamic' is the unconstrained default. *)
+Type            ::= 'integer'
+                  | 'longinteger'                       (* Roku OS 7.0+ *)
+                  | 'float'
+                  | 'double'
+                  | 'string'
+                  | 'boolean'
+                  | 'object'
+                  | 'function'
+                  | 'interface'
+                  | 'dynamic'
+                  | 'void'
+                  | 'invalid'
+                  | Identifier        (* component / interface type name, e.g.
+                                         a roSGNode subtype; permissive. *)
+
+
+(*===========================================================================*)
+(*  PART 3 - SYNTACTIC GRAMMAR: STATEMENTS                                    *)
+(*===========================================================================*)
+
+(*--- 3.1 Statement blocks & the statement set ------------------------------*)
+
+(* A Block is a sequence of statements separated by statement terminators.
+   Labels and comments may appear interspersed. *)
+Block           ::= ( BlockItem EOS )* BlockItem?
+BlockItem       ::= Statement | Label | Comment | ConditionalCompilation
+
+Statement       ::= AssignmentStatement
+                  | CompoundAssignStatement
+                  | IncDecStatement
+                  | PrintStatement
+                  | IfStatement
+                  | ForStatement
+                  | ForEachStatement
+                  | WhileStatement
+                  | ExitStatement
+                  | ContinueStatement
+                  | ReturnStatement
+                  | DimStatement
+                  | GotoStatement
+                  | StopStatement
+                  | EndStatement
+                  | TryStatement
+                  | ThrowStatement
+                  | FunctionDeclaration   (* nested function defs are allowed *)
+                  | SubDeclaration
+                  | ExpressionStatement
+
+(*--- 3.2 Assignment --------------------------------------------------------*)
+
+(* Plain assignment. The optional leading 'let' keyword is accepted (legacy).
+   The LHS is an assignable l-value: a variable or a member/index target.
+   OPEN QUESTION (pending device verification, see grammar/CLAUDE.md):
+   BrighterScript REJECTS leading 'let' (error BS1081 "Unexpected token
+   'let'"), yet 'let' IS in Roku's reserved-word list. Confirm on a real
+   device whether the BrightScript runtime still accepts 'let x = 5'. *)
+AssignmentStatement ::= 'let'? AssignTarget ASSIGN Expression
+
+AssignTarget    ::= Identifier PostfixSuffix*
+                    (* e.g. x  |  m.count  |  arr[i]  |  obj.list[2].name *)
+
+(* Compound assignment (Roku OS 7.1+). *)
+CompoundAssignStatement ::= AssignTarget CompoundOp Expression
+CompoundOp      ::= PLUS_ASSIGN | MINUS_ASSIGN | STAR_ASSIGN | SLASH_ASSIGN
+                  | BACKSLASH_ASSIGN | SHL_ASSIGN | SHR_ASSIGN
+
+(* Increment / decrement (Roku OS 7.1+). Postfix only. *)
+IncDecStatement ::= AssignTarget ( OP_INCR | OP_DECR )
+
+(*--- 3.3 Print -------------------------------------------------------------*)
+
+(* 'print' or '?' shorthand. Print items are separated by ',' (advance to next
+   tab zone) or ';' (no separator). A trailing separator suppresses the
+   newline. TAB(expr) and POS(expr) are special positional items. Empty print
+   (just newline) is allowed. *)
+PrintStatement  ::= ( 'print' | QUESTION ) PrintItemList?
+
+PrintItemList   ::= PrintItem ( PrintSep PrintItem )* PrintSep?
+PrintItem       ::= TabItem | PosItem | Expression
+PrintSep        ::= SEMI | COMMA
+TabItem         ::= 'tab' LPAREN Expression RPAREN
+PosItem         ::= 'pos' LPAREN Expression RPAREN
+(* NOTE: 'tab' and 'pos' are contextual here; outside print they are reserved
+   words usable only as these positional functions. *)
+
+(*--- 3.4 If ----------------------------------------------------------------*)
+
+(* Two forms:
+     (a) Block IF spanning multiple lines, terminated by 'end if'/'endif'.
+     (b) Single-line IF: statement(s) follow THEN on the same line, optional
+         single-line ELSE. 'then' is optional in both forms.
+   The disambiguation between block and single-line forms is "is there a
+   newline after the (optional THEN) clause?" - handled by the scanner. *)
+
+IfStatement     ::= BlockIf | SingleLineIf
+
+BlockIf         ::= 'if' Expression 'then'? EOS
+                        Block?
+                    ( ElseIfClause )*
+                    ( ElseClause )?
+                    EndIf
+ElseIfClause    ::= ( 'else' 'if' | 'elseif' ) Expression 'then'? EOS
+                        Block?
+ElseClause      ::= 'else' EOS
+                        Block?
+EndIf           ::= 'end' 'if' | 'endif'
+
+SingleLineIf    ::= 'if' Expression 'then'? InlineStatements
+                    ( 'else' InlineStatements )?
+(* InlineStatements = one or more statements joined by ':' on the same line,
+   with no terminating newline before 'else'/end-of-line. *)
+InlineStatements ::= Statement ( COLON Statement )*
+
+(*--- 3.5 For (numeric) -----------------------------------------------------*)
+
+(* counter = start TO end [STEP step]. Terminated by 'end for' or legacy
+   'next' (optionally followed by the counter variable). *)
+ForStatement    ::= 'for' Identifier ASSIGN Expression 'to' Expression
+                        ( 'step' Expression )? EOS
+                        Block?
+                    ForTerminator
+ForTerminator   ::= ( 'end' 'for' ) | 'endfor' | ( 'next' Identifier? )
+
+(*--- 3.6 For Each ----------------------------------------------------------*)
+
+(* Iterates an enumerable object (ifEnum). Terminated by 'end for'; 'next' is
+   NOT permitted for for-each per docs (but legacy parsers tolerate it). *)
+ForEachStatement ::= 'for' 'each' Identifier 'in' Expression EOS
+                        Block?
+                     ( ( 'end' 'for' ) | 'endfor' )
+
+(*--- 3.7 While -------------------------------------------------------------*)
+
+WhileStatement  ::= 'while' Expression EOS
+                        Block?
+                    EndWhile
+EndWhile        ::= ( 'end' 'while' ) | 'endwhile'
+
+(*--- 3.8 Exit / Continue ---------------------------------------------------*)
+
+(* EXIT FOR / EXIT WHILE break out of the nearest enclosing loop. *)
+ExitStatement   ::= ( 'exit' 'for' )
+                  | ( 'exit' 'while' )
+                  | 'exitwhile'                          (* legacy single token *)
+
+(* CONTINUE FOR / CONTINUE WHILE skip to next iteration. *)
+ContinueStatement ::= ( 'continue' 'for' ) | ( 'continue' 'while' )
+
+(*--- 3.9 Return ------------------------------------------------------------*)
+
+ReturnStatement ::= 'return' Expression?
+
+(*--- 3.10 Dim --------------------------------------------------------------*)
+
+(* DIM name[dim1, dim2, ...] - creates an roArray with the given max indices.
+   Both bracket and (per some docs) paren forms appear; brackets are canonical.
+   Each dimension is an expression (max index). *)
+DimStatement    ::= 'dim' Identifier DimBounds
+DimBounds       ::= LBRACKET Expression ( COMMA Expression )* RBRACKET
+                  | LPAREN   Expression ( COMMA Expression )* RPAREN
+
+(*--- 3.11 Goto & Labels ----------------------------------------------------*)
+
+GotoStatement   ::= 'goto' Identifier
+(* A label is an identifier alone on a line followed by ':'. *)
+Label           ::= Identifier COLON
+
+(*--- 3.12 Stop / End -------------------------------------------------------*)
+
+StopStatement   ::= 'stop'                               (* invoke debugger *)
+EndStatement    ::= 'end'                                (* terminate program *)
+(* CAUTION: bare 'end' must be disambiguated from 'end if'/'end for'/etc by the
+   following token. A standalone 'end' (followed by EOS) terminates the program. *)
+
+(*--- 3.13 Try / Catch ------------------------------------------------------*)
+
+TryStatement    ::= 'try' EOS
+                        Block?
+                    'catch' Identifier EOS
+                        Block?
+                    EndTry
+EndTry          ::= ( 'end' 'try' ) | 'endtry'
+
+ThrowStatement  ::= 'throw' Expression
+                    (* Expression is a String message or an AA with fields
+                       like { number: ..., message: ... }. *)
+
+(*--- 3.14 Expression statement --------------------------------------------*)
+
+(* A standalone expression used for its side effects - in practice a function
+   or method call. A bare identifier or member access with no call is NOT a
+   valid statement: the expression's final postfix suffix MUST be a call. *)
+ExpressionStatement ::= CallExpression
+
+(* A Postfix expression whose LAST suffix is a call (plain '(...)' or the
+   optional-call '?(...)'). The "ends in a call" constraint is encoded
+   structurally here so the rule is self-contained for the tree-sitter
+   translation (it mirrors PostfixExpr in Part 5). *)
+CallExpression  ::= Primary PostfixSuffix*
+                    ( CallSuffix | OC_PAREN ArgumentList? RPAREN )
+
+
+(*===========================================================================*)
+(*  PART 4 - CONDITIONAL COMPILATION (PREPROCESSOR DIRECTIVES)               *)
+(*===========================================================================*)
+
+(* Directives begin with '#' and occupy their own logical line. They are
+   resolved at compile time. Constants are boolean (true/false) and may also be
+   supplied by the manifest's bs_const. Note the spacing: '#else if' and
+   '#end if' are written WITH a space (also accepted by some tools without). *)
+
+ConditionalCompilation ::= IfDirectiveBlock | ErrorDirective
+
+ConstDirective  ::= '#const' Identifier ASSIGN CCExpression
+
+IfDirectiveBlock ::=
+        '#if' CCExpression EOS
+            BlockItemsCC?
+        ( '#else' 'if' CCExpression EOS BlockItemsCC? )*
+        ( '#else' EOS BlockItemsCC? )?
+        EndIfDirective
+EndIfDirective  ::= '#end' 'if' | '#endif'
+
+ErrorDirective  ::= '#error' ErrorMessageText
+ErrorMessageText ::= ( Char - LINE_BREAK )*
+
+(* Within a conditional-compilation block, ordinary source lines (any
+   BlockItem) appear and are conditionally included. *)
+BlockItemsCC    ::= ( BlockItem EOS )* BlockItem?
+
+(* The expression in a #if / #else if is a compile-time boolean expression
+   over #const-defined identifiers and boolean literals.
+   OPEN QUESTION (pending device verification, see grammar/CLAUDE.md): the
+   BrighterScript compiler REJECTS 'and'/'or'/'not' inside #if (BS1091 "#if
+   conditionals can only be 'true', 'false', or other #const names"). Roku's
+   conditional compilation may permit only a single #const/boolean, which would
+   make CCOr/CCAnd/CCNot below over-permissive. Confirm on a real device before
+   relying on boolean operators in conditional compilation. *)
+CCExpression    ::= CCOr
+CCOr            ::= CCAnd ( 'or' CCAnd )*
+CCAnd           ::= CCNot ( 'and' CCNot )*
+CCNot           ::= 'not'? CCPrimary
+CCPrimary       ::= BooleanLiteral | Identifier | LPAREN CCExpression RPAREN
+
+
+(*===========================================================================*)
+(*  PART 5 - EXPRESSION GRAMMAR (PRECEDENCE-LAYERED)                          *)
+(*===========================================================================*)
+
+(* Layered lowest-to-highest precedence. Each layer's comment states its
+   associativity. This cascade mirrors the documented precedence table
+   (highest -> lowest):
+       1  ()                       grouping / call
+       2  .                        member
+       3  [ ]                      index
+       4  ?. ?@ ?[ ?(             optional chaining (Roku OS 11+)
+       5  ^                        exponentiation         (right-assoc)
+       6  unary - +                negation               (right-assoc)
+       7  * / mod \               multiplicative         (left-assoc)
+       8  + -                      additive               (left-assoc)
+       9  << >>                    bitshift               (left-assoc)
+      10  < > = <> <= >=           comparison             (left-assoc, non-chaining)
+      11  not                      logical/bitwise NOT    (right-assoc, unary)
+      12  and                      logical/bitwise AND    (left-assoc, short-circuit)
+      13  or                       logical/bitwise OR     (left-assoc, short-circuit)
+   Layers 1-4 (call/member/index/optional-chaining) are grouped as the
+   "Postfix" layer below since they are all left-associative postfix suffixes,
+   tighter than every binary operator. Unary minus/plus binds looser than '^'
+   per the table (so -2^2 = -(2^2)). *)
+
+(* --- Top: Expression is the lowest-precedence layer --- *)
+Expression      ::= OrExpr
+
+(* Level 13: OR. Left-associative, short-circuit. *)
+OrExpr          ::= AndExpr ( OP_OR AndExpr )*
+
+(* Level 12: AND. Left-associative, short-circuit. *)
+AndExpr         ::= NotExpr ( OP_AND NotExpr )*
+
+(* Level 11: NOT (unary). Right-associative (prefix). *)
+NotExpr         ::= OP_NOT NotExpr
+                  | ComparisonExpr
+
+(* Level 10: comparison. Left-associative; non-chaining in practice but the
+   grammar permits chains (the runtime evaluates left to right). *)
+ComparisonExpr  ::= BitshiftExpr ( ComparisonOp BitshiftExpr )*
+ComparisonOp    ::= OP_LE | OP_GE | OP_NE | OP_EQ | OP_LT | OP_GT
+                    (* Multi-char ops (<= >= <>) MUST be matched before the
+                       single-char ops (< > =). *)
+
+(* Level 9: bitshift. Left-associative. *)
+BitshiftExpr    ::= AdditiveExpr ( ( OP_SHL | OP_SHR ) AdditiveExpr )*
+
+(* Level 8: additive. Left-associative. '+' also concatenates strings. *)
+AdditiveExpr    ::= MultiplicativeExpr ( ( OP_PLUS | OP_MINUS ) MultiplicativeExpr )*
+
+(* Level 7: multiplicative. Left-associative. *)
+MultiplicativeExpr ::= UnaryExpr ( MultiplicativeOp UnaryExpr )*
+MultiplicativeOp ::= OP_STAR | OP_SLASH | OP_BACKSLASH | OP_MOD
+
+(* Level 6: unary +/-. Right-associative (prefix). Binds LOOSER than '^'. *)
+UnaryExpr       ::= ( OP_PLUS | OP_MINUS ) UnaryExpr
+                  | PowerExpr
+
+(* Level 5: exponentiation. RIGHT-associative. *)
+PowerExpr       ::= PostfixExpr ( OP_CARET UnaryExpr )?
+                    (* right-assoc: the RHS recurses through UnaryExpr so that
+                       2 ^ -3 and 2 ^ 3 ^ 2 = 2 ^ (3 ^ 2) parse correctly. *)
+
+(* Levels 1-4: postfix call / member / index / attribute / optional chaining.
+   Left-associative; tightest binding. Applied as a chain of suffixes to a
+   primary. *)
+PostfixExpr     ::= Primary PostfixSuffix*
+
+PostfixSuffix   ::= CallSuffix
+                  | IndexSuffix
+                  | MemberSuffix
+                  | AttributeSuffix
+                  | OptChainSuffix
+
+CallSuffix      ::= LPAREN ArgumentList? RPAREN
+IndexSuffix     ::= LBRACKET Expression ( COMMA Expression )* RBRACKET
+                    (* multi-subscript form arr[i, j] for dimmed arrays *)
+MemberSuffix    ::= DOT Identifier
+AttributeSuffix ::= AT Identifier            (* XML attribute access: node@attr *)
+
+(* Optional-chaining suffixes (Roku OS 11.0+). Each short-circuits to invalid
+   if the left side is invalid. *)
+OptChainSuffix  ::= OC_DOT Identifier                          (* ?.member *)
+                  | OC_AT Identifier                           (* ?@attr *)
+                  | OC_BRACKET Expression ( COMMA Expression )* RBRACKET (* ?[i] *)
+                  | OC_PAREN ArgumentList? RPAREN              (* ?(args) *)
+
+ArgumentList    ::= Expression ( COMMA Expression )*
+
+(*--- 5.1 Primary expressions ----------------------------------------------*)
+
+Primary         ::= Literal
+                  | Identifier
+                  | 'm'                       (* the implicit instance AA 'm' *)
+                  | ParenExpr
+                  | ArrayLiteral
+                  | AssocArrayLiteral
+                  | AnonymousFunction
+                  | CreateObjectCall
+                  | BuiltinCall
+
+ParenExpr       ::= LPAREN Expression RPAREN
+
+(*--- 5.2 Literals ----------------------------------------------------------*)
+
+Literal         ::= NumericLiteral
+                  | StringLiteral
+                  | BooleanLiteral
+                  | InvalidLiteral
+                  | LINE_NUM_Literal
+
+LINE_NUM_Literal ::= 'line_num'   (* compiler-substituted current line number *)
+
+(*--- 5.3 Array literal -----------------------------------------------------*)
+
+(* [ ] roArray literal. Elements are expressions. Trailing comma tolerated by
+   the runtime; modeled permissively. Elements may span lines inside [ ]. *)
+ArrayLiteral    ::= LBRACKET EOS?
+                        ( ArrayElement ( ElementSep ArrayElement )* ElementSep? )?
+                    EOS? RBRACKET
+ArrayElement    ::= Expression
+ElementSep      ::= COMMA EOS? | EOS         (* comma and/or newline separate *)
+
+(*--- 5.4 Associative array literal ----------------------------------------*)
+
+(* { } roAssociativeArray literal. Keys are identifiers or string literals;
+   value separated by ':'. Entries separated by ',' and/or newline. *)
+AssocArrayLiteral ::= LBRACE EOS?
+                        ( AAEntry ( ElementSep AAEntry )* ElementSep? )?
+                      EOS? RBRACE
+AAEntry         ::= AAKey COLON Expression
+AAKey           ::= Identifier | StringLiteral
+                    (* A reserved word may be used as an AA key; it is treated
+                       as a name in this position. *)
+
+(*--- 5.5 Anonymous (function expression) -----------------------------------*)
+
+(* function/sub literal assigned/passed as a value. No closures (per docs). *)
+AnonymousFunction ::= AnonFunctionExpr | AnonSubExpr
+AnonFunctionExpr ::= 'function' LPAREN ParameterList? RPAREN ReturnType? EOS
+                        Block?
+                     EndFunction
+AnonSubExpr     ::= 'sub' LPAREN ParameterList? RPAREN ReturnType? EOS
+                        Block?
+                    EndSub
+
+(*--- 5.6 CreateObject and selected built-in pseudo-functions ---------------*)
+
+(* CreateObject is an ordinary global function call but is reserved, so it is
+   modeled explicitly. Treated like a normal call for AST purposes. *)
+CreateObjectCall ::= 'createobject' LPAREN ArgumentList? RPAREN
+
+(* Other reserved built-ins that take call syntax. These are reserved words
+   and so are recognized as calls (not user identifiers). Listed for the
+   implementer; semantically they are ordinary global-function calls. *)
+BuiltinCall     ::= ReservedBuiltinName LPAREN ArgumentList? RPAREN
+ReservedBuiltinName ::= 'getglobalaa' | 'getlastruncompileerror'
+                      | 'getlastrunruntimeerror' | 'eval' | 'objfun'
+                      | 'run' | 'type' | 'box'
+
+
+(*===========================================================================*)
+(*  PART 6 - NOTES FOR THE TREE-SITTER IMPLEMENTER                            *)
+(*===========================================================================*)
+(*
+  These are language quirks that EBNF cannot express cleanly. Address them in
+  the tree-sitter `grammar.js` (and likely an external scanner in C).
+
+  1. CASE-INSENSITIVITY.
+     All keywords, type names, the reserved-word set, hex prefix &h/&H, the
+     E/D exponent markers, and boolean/invalid literals are case-insensitive
+     (FUNCTION == function == Function). EBNF literals above are written
+     lowercase but match any case. In tree-sitter use case-insensitive token
+     regexes (e.g. /[fF][uU][nN][cC][tT][iI][oO][nN]/ or token(prec(...,
+     /function/i))). Identifiers themselves are case-insensitive for binding
+     but preserve their written form in the AST.
+
+  2. SIGNIFICANT NEWLINES / STATEMENT TERMINATION.
+     BrightScript is line-oriented. A statement ends at a NEWLINE or a colon
+     ':'. There is NO line-continuation character (no trailing '_' , no
+     implicit continuation after a trailing operator or comma at top level).
+     EXCEPTION: inside bracket/brace/paren groupings - array literals [ ],
+     AA literals { }, argument lists ( ) - newlines are NOT terminators and
+     may separate elements. An external scanner should track bracket depth and
+     emit a "newline terminator" token only at depth 0. Model NL/EOS as an
+     extern token from the scanner.
+
+  3. LEXER LONGEST-MATCH (MAXIMAL MUNCH) ordering that the scanner must enforce:
+       - '<=' '>=' '<>' before '<' '>' '='.
+       - '<<=' '>>=' before '<<' '>>' before '<' '>'.
+       - '+=' '-=' '*=' '/=' '\=' before '+' '-' '*' '/' '\'.
+       - '++' '--' before '+' '-'.
+       - '?.' '?@' '?[' '?(' (optional chaining) vs '?' (print alias): a '?'
+         is optional-chaining ONLY when immediately (no space) followed by
+         '.', '@', '[', or '('. Otherwise '?' begins a print statement.
+         NOTE the documented BrighterScript ternary caveat: a space is REQUIRED
+         after '?' before '[' or '(' to avoid being parsed as optional chaining.
+       - Numeric literals: Double/Float/LongInteger shapes before plain Integer;
+         the trailing type suffix ('!' '#' '&') and the 'D'/'E' exponent are
+         part of the number token.
+       - Type-designator suffix on identifiers ($ % ! # &) is part of the
+         identifier token; ensure 'count%' lexes as one identifier, not
+         'count' followed by '%' (BrightScript has no standalone '%' operator,
+         which avoids ambiguity, but the scanner must still attach it).
+
+  4. CONTEXTUAL / SOFT KEYWORDS.
+     Several words are keywords only in context and are otherwise usable as
+     identifiers: 'as', 'in', 'each', 'step', 'to', 'then', 'mod', 'tab',
+     'pos', 'continue', the type names ('integer', 'string', etc.). Use
+     tree-sitter precedence and contextual rules rather than reserving them
+     globally. The formal reserved-word list (1.9) is the hard set; the rest
+     are contextual.
+
+  5. 'end X' KEYWORDS - SPACED vs FUSED.
+     Block terminators accept both spaced and fused spellings:
+       'end function' | 'endfunction', 'end sub' | 'endsub',
+       'end if' | 'endif', 'end while' | 'endwhile',
+       'end for' | 'endfor', 'end try' | 'endtry'.
+     Also 'else if' | 'elseif', 'exit while' | 'exitwhile'.
+     A bare 'end' (followed by a terminator) is the program-end statement and
+     must be distinguished from the two-token block terminators by lookahead.
+
+  6. BLOCK-IF vs SINGLE-LINE-IF DISAMBIGUATION.
+     After 'if Expr [then]', if a NEWLINE follows you are in a block-if
+     (terminated by 'end if'); if a statement follows on the same line it is a
+     single-line-if (no 'end if'). The 'then' keyword is optional in both
+     forms, which makes this purely a newline-driven decision - rely on the
+     external scanner's terminator token. ELSE in a single-line-if is also
+     inline; ELSE in a block-if introduces a new block.
+
+  7. PRINT SEPARATORS & POSITIONAL FUNCTIONS.
+     In a print statement, ';' and ',' are item separators (not operators);
+     ',' advances to the next 16-char tab zone, ';' inserts nothing, and a
+     TRAILING ';' or ',' suppresses the newline. TAB(n) and POS(n) are special
+     positional items recognized only inside print. '?' is a full alias for
+     'print'. Do not let the print-statement ';'/',' be parsed as expression
+     operators; print has its own item-list rule.
+
+  8. LABELS vs IDENTIFIER-COLON.
+     A label is 'Identifier :' alone on a line. Distinguish from an AA key
+     'Identifier :' which only occurs inside '{ }'. Bracket-depth context
+     resolves this; at statement position a leading 'Identifier :' is a label.
+
+  9. THE 'm' KEYWORD.
+     'm' is the implicit per-instance associative array (like 'this'/'self').
+     It is an ordinary identifier lexically but is conventionally highlighted
+     and is always in scope inside functions/subs. No special parsing needed
+     beyond optionally tagging it.
+
+ 10. COMMENTS.
+     "'" and "rem" both start a line comment to end-of-line. 'rem' is a
+     reserved word; ensure 'rem' at token start is a comment, while 'rem'
+     appearing where an expression/AA-key is expected is just the keyword
+     (it cannot be a variable name). Comments may appear at end of any line
+     after a statement. Make comments an `extra` in tree-sitter.
+
+ 11. CONDITIONAL COMPILATION DIRECTIVES.
+     '#const', '#if', '#else if', '#else', '#end if', '#error' begin with '#'
+     at (effectively) line start and form their own line. The '#else if' and
+     '#end if' are documented WITH a space; accept fused forms too. These are a
+     compile-time preprocessing layer over boolean #const flags; for parsing
+     purposes model them as statement-level constructs that wrap blocks (as in
+     Part 4). They can appear at top level and inside function bodies.
+
+ 12. INTEGER vs FLOAT DIVISION & MOD.
+     '/' is float division, '\' is integer division, 'mod' is the modulo
+     keyword operator. Keep '\' distinct from any escape handling (BrightScript
+     strings have no backslash escapes, so '\' is unambiguous outside strings).
+
+ 13. EXPONENTIATION ASSOCIATIVITY & UNARY MINUS.
+     '^' is right-associative and binds TIGHTER than unary minus, so '-2^2'
+     parses as '-(2^2)' = -4. Encode '^' with higher precedence than the
+     unary +/- layer (see PowerExpr/UnaryExpr ordering in Part 5).
+
+ 14. OPTIONAL CHAINING & ++/-- & COMPOUND ASSIGN ARE VERSION-GATED.
+     Optional chaining requires Roku OS 11.0+; '++'/'--' and compound
+     assignment require Roku OS 7.1+; 'LongInteger' and '&' suffix require
+     Roku OS 7.0+. They are included in this grammar unconditionally; gating is
+     a target-version concern, not a parse concern.
+*)
+
+(*=== END OF GRAMMAR =========================================================*)
