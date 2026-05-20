@@ -1,0 +1,399 @@
+================================================================================
+namespace with nested members
+================================================================================
+
+namespace Foo.Bar
+    sub greet()
+        print "hi"
+    end sub
+end namespace
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (NamespaceStatement
+    (QualifiedName
+      (Identifier
+        (IdentStart))
+      (Identifier
+        (IdentStart)))
+    (EOS)
+    (NamespaceBody
+      (SubDeclaration
+        (Identifier
+          (IdentStart))
+        (EOS)
+        (Block
+          (PrintStatement
+            (PrintItemList
+              (StringLiteral
+                (StringChar))))
+          (EOS))
+        (EndSub))
+      (EOS)))
+  (EOS))
+
+================================================================================
+nested namespace with const and function
+================================================================================
+
+namespace Outer
+    const VERSION = 1
+    namespace Inner
+        function helper() as integer
+            return 42
+        end function
+    end namespace
+end namespace
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (NamespaceStatement
+    (QualifiedName
+      (Identifier
+        (IdentStart)))
+    (EOS)
+    (NamespaceBody
+      (ConstStatement
+        (Identifier
+          (IdentStart))
+        (IntegerLiteral))
+      (EOS)
+      (NamespaceStatement
+        (QualifiedName
+          (Identifier
+            (IdentStart)))
+        (EOS)
+        (NamespaceBody
+          (FunctionDeclaration
+            (Identifier
+              (IdentStart))
+            (ReturnType
+              (Type
+                (BsTypeUnion
+                  (BsTypePostfix
+                    (QualifiedName
+                      (Identifier
+                        (IdentStart)))))))
+            (EOS)
+            (Block
+              (ReturnStatement
+                (IntegerLiteral))
+              (EOS))
+            (EndFunction))
+          (EOS)))
+      (EOS)))
+  (EOS))
+
+================================================================================
+empty class
+================================================================================
+
+class Empty
+end class
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ClassDeclaration
+    (Identifier
+      (IdentStart))
+    (EOS))
+  (EOS))
+
+================================================================================
+class with typed fields, initializers, access modifiers and optional
+================================================================================
+
+class Account
+    public name as string
+    private balance as float = 0.0
+    protected optional note
+end class
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ClassDeclaration
+    (Identifier
+      (IdentStart))
+    (EOS)
+    (ClassBody
+      (FieldDeclaration
+        (AccessModifier)
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart)))))))
+      (EOS)
+      (FieldDeclaration
+        (AccessModifier)
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart))))))
+        (FloatLiteral))
+      (EOS)
+      (FieldDeclaration
+        (AccessModifier)
+        (Identifier
+          (IdentStart)))
+      (EOS)))
+  (EOS))
+
+================================================================================
+class with extends, override method and a constructor
+================================================================================
+
+class Greeter extends Base
+    sub new()
+        print "ctor"
+    end sub
+    override function greet() as string
+        return "hi"
+    end function
+end class
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ClassDeclaration
+    (Identifier
+      (IdentStart))
+    (QualifiedName
+      (Identifier
+        (IdentStart)))
+    (EOS)
+    (ClassBody
+      (MethodDeclaration
+        (Identifier)
+        (EOS)
+        (Block
+          (PrintStatement
+            (PrintItemList
+              (StringLiteral
+                (StringChar))))
+          (EOS))
+        (EndSub))
+      (EOS)
+      (MethodDeclaration
+        (Identifier
+          (IdentStart))
+        (ReturnType
+          (Type
+            (BsTypeUnion
+              (BsTypePostfix
+                (QualifiedName
+                  (Identifier
+                    (IdentStart)))))))
+        (EOS)
+        (Block
+          (ReturnStatement
+            (StringLiteral
+              (StringChar)))
+          (EOS))
+        (EndFunction))
+      (EOS)))
+  (EOS))
+
+================================================================================
+interface with extends, fields, optional field and method signatures
+================================================================================
+
+interface IShape extends IThing
+    area as float
+    optional label as string
+    function describe() as string
+    sub reset()
+end interface
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (InterfaceDeclaration
+    (Identifier
+      (IdentStart))
+    (QualifiedName
+      (Identifier
+        (IdentStart)))
+    (EOS)
+    (InterfaceBody
+      (InterfaceField
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart)))))))
+      (EOS)
+      (InterfaceField
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart)))))))
+      (EOS)
+      (InterfaceMethod
+        (Identifier
+          (IdentStart))
+        (ReturnType
+          (Type
+            (BsTypeUnion
+              (BsTypePostfix
+                (QualifiedName
+                  (Identifier
+                    (IdentStart))))))))
+      (EOS)
+      (InterfaceMethod
+        (Identifier
+          (IdentStart)))
+      (EOS)))
+  (EOS))
+
+================================================================================
+enum with bare and valued members
+================================================================================
+
+enum Direction
+    north
+    south = 2
+    east
+end enum
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (EnumDeclaration
+    (Identifier
+      (IdentStart))
+    (EOS)
+    (EnumBody
+      (EnumMemberDecl
+        (Identifier
+          (IdentStart)))
+      (EOS)
+      (EnumMemberDecl
+        (Identifier
+          (IdentStart))
+        (IntegerLiteral))
+      (EOS)
+      (EnumMemberDecl
+        (Identifier
+          (IdentStart)))
+      (EOS)))
+  (EOS))
+
+================================================================================
+const statement
+================================================================================
+
+const MAX = 100
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ConstStatement
+    (Identifier
+      (IdentStart))
+    (IntegerLiteral))
+  (EOS))
+
+================================================================================
+import statement
+================================================================================
+
+import "pkg:/source/util.bs"
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ImportStatement
+    (StringLiteral
+      (StringChar)))
+  (EOS))
+
+================================================================================
+typecast statement
+================================================================================
+
+typecast m as Node
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (TypecastStatement
+    (Identifier
+      (IdentStart))
+    (Type
+      (BsTypeUnion
+        (BsTypePostfix
+          (QualifiedName
+            (Identifier
+              (IdentStart)))))))
+  (EOS))
+
+================================================================================
+alias statement
+================================================================================
+
+alias log = logger
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AliasStatement
+    (Identifier
+      (IdentStart))
+    (Identifier
+      (IdentStart)))
+  (EOS))
+
+================================================================================
+type-alias statement
+================================================================================
+
+type StringOrInt = string or integer
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (TypeAliasStatement
+    (Identifier
+      (IdentStart))
+    (Type
+      (BsTypeUnion
+        (BsTypePostfix
+          (QualifiedName
+            (Identifier
+              (IdentStart))))
+        (BsTypePostfix
+          (QualifiedName
+            (Identifier
+              (IdentStart)))))))
+  (EOS))

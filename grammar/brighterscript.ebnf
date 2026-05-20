@@ -292,10 +292,9 @@ TypeAliasStatement ::= 'type' Identifier ASSIGN Type
    src/parser/Parser.ts: expression() (wraps TypeCastExpression),
    anonymousFunction() (wraps Ternary/NullCoalescing), ternaryExpression(),
    nullCoalescingExpression(). All BrighterScript-only. *)
-Expression      ::= TernaryExpr ( 'as' Type )*           (* (1) typecast outermost *)
-TernaryExpr     ::= OrExpr ( TernaryTail | NullCoalesceTail )?   (* (2) *)
-TernaryTail     ::= QUESTION Expression COLON Expression          (* cond ? a : b *)
-NullCoalesceTail ::= OP_NULLCOALESCE Expression                   (* a ?? b *)
+Expression      ::= ( TernaryExpr | NullCoalesceExpr ) ( 'as' Type )*  (* typecast outermost *)
+TernaryExpr     ::= OrExpr ( QUESTION Expression COLON Expression )?   (* cond ? a : b; falls through to OrExpr *)
+NullCoalesceExpr ::= OrExpr OP_NULLCOALESCE Expression                  (* a ?? b *)
 
 (* OVERRIDE of brightscript.ebnf PostfixSuffix: adds the callfunc operator
    `@.method(args)` (transpiles to `.callFunc("method", args)`). The optional-

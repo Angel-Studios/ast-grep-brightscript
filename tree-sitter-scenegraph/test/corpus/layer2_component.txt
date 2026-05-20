@@ -280,3 +280,68 @@ end sub</script></component>
           (ScriptType)))
       (ScriptText
         content: (BrightScriptBody)))))
+
+================================================================================
+script: inline CDATA BrighterScript body (injection point)
+================================================================================
+
+<component name="C"><script type="text/brighterscript"><![CDATA[namespace x : end namespace]]></script></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Script
+      (ScriptAttributeBs
+        (Eq)
+        value: (ScriptTypeBsAttValue
+          (ScriptType)))
+      (ScriptCDataBs
+        content: (BrighterScriptBody)))))
+
+================================================================================
+script: inline bare (non-CDATA) BrighterScript text (injection point)
+================================================================================
+
+<component name="C"><script type="text/brighterscript">namespace x : end namespace</script></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Script
+      (ScriptAttributeBs
+        (Eq)
+        value: (ScriptTypeBsAttValue
+          (ScriptType)))
+      (ScriptTextBs
+        content: (BrighterScriptBody)))))
+
+================================================================================
+script: external uri (no body) BrighterScript type
+================================================================================
+
+<component name="C"><script type="text/brighterscript" uri="pkg:/c.bs" /></component>
+
+--------------------------------------------------------------------------------
+
+(SGDocument
+  (Component
+    (ComponentAttribute
+      (Eq)
+      value: (AttValue))
+    (Script
+      (ScriptExternal
+        (ScriptAttributeBs
+          (Eq)
+          value: (ScriptTypeBsAttValue
+            (ScriptType)))
+        (ScriptAttribute
+          (Eq)
+          value: (AttValue))))))

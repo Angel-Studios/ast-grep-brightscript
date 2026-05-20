@@ -6,11 +6,14 @@ SceneGraph `.xml` files can be searched, linted, and rewritten with ast-grep pat
 
 ## Current status: PARSER BUILT
 
-The parser is **built, validated, and registered**. Both tree-sitter grammars
-(`tree-sitter-brightscript/`, `tree-sitter-scenegraph/`) are authored from the EBNF, compiled to
-`.so`, and registered as ast-grep custom languages in `sgconfig.yml` — with BrightScript injected
-into SceneGraph `<script>` bodies (CDATA and bare inline). The foundation that made this possible
-remains in place and is still the source of truth:
+The parser is **built, validated, and registered**. Three tree-sitter grammars
+(`tree-sitter-brightscript/`, `tree-sitter-scenegraph/`, `tree-sitter-brighterscript/`) are authored
+from the EBNF, compiled to `.so`, and registered as ast-grep custom languages in `sgconfig.yml` —
+with BrightScript injected into SceneGraph `<script>` bodies (CDATA and bare inline). The
+**BrighterScript (`.bs`) superset** grammar EXTENDS the BrightScript grammar via tree-sitter grammar
+inheritance, and its `.bs` is device-validated by transpiling to `.brs` and running on a real Roku
+(roadmap/05; DEVICE_FACTS #18). The foundation that made this possible remains in place and is still
+the source of truth:
 
 1. A reusable **skill** that teaches the full method for building a tree-sitter grammar and
    registering it as an ast-grep custom language.
@@ -47,6 +50,7 @@ ast-grep-brightscript/
 │   └── DEVICE_FACTS.md                        ← device-confirmed language facts (the ground-truth ledger)
 ├── tree-sitter-brightscript/                  ← BrightScript tree-sitter grammar (grammar.js, src/, test/corpus/, compiled .so)
 ├── tree-sitter-scenegraph/                    ← SceneGraph tree-sitter grammar (grammar.js, src/, test/corpus/, compiled .so)
+├── tree-sitter-brighterscript/                ← BrighterScript (.bs) grammar — EXTENDS tree-sitter-brightscript via grammar inheritance (superset)
 ├── rules/                                      ← ast-grep lint rules (ruleDirs in sgconfig.yml; currently empty)
 ├── roku-test-harness/                         ← runnable Roku app: spec exerciser + ast-grep corpus
 │   └── README.md                              ← deploy (npm run roku:deploy) & read the boot-log results

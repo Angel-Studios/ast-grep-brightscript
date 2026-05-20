@@ -499,43 +499,76 @@ FunctionAttribute ::= ( 'name' Eq AttValue )   (* REQUIRED *)
  * 2.3  Script  (BrightScript embedding point)
  * ------------------------------------------------------------------------- *)
 
-(* <script> -- defines or references BrightScript associated with the component.
- * Zero or more per component.
+(* <script> -- defines or references BrightScript (or BrighterScript) associated
+ * with the component. Zero or more per component.
  *
  * Attributes (from RokuSceneGraph.xsd):
- *   type  REQUIRED  FIXED value "text/brightscript".
- *   uri   optional  path to an external .brs file under pkg:/components/;
+ *   type  REQUIRED  the source dialect. The XSD fixes "text/brightscript", but
+ *                   the BrighterScript toolchain also uses "text/brighterscript"
+ *                   for .bs inline / external sources (device-tooling extra, not
+ *                   in the XSD enum; see ScriptTypeBsAttValue / implementer note).
+ *   uri   optional  path to an external .brs (or .bs) file under pkg:/components/;
  *                   relative URIs resolve against the XML file's directory.
  *
- * Two forms:
- *   (a) Inline: a non-empty <script> whose content is BrightScript wrapped in a
- *       CDATA section (recommended) or as bare character data. The BrightScript
- *       grammar is the sibling `brightscript.ebnf` (see `BrightScriptBody`).
- *   (b) External: an empty <script ... uri="..."/> with no body. *)
-Script ::= ScriptInline | ScriptExternal
+ * Three forms (the inline form is split by dialect so each exposes a DISTINCT
+ * injectable body node, BrightScriptBody vs BrighterScriptBody, keeping the two
+ * ast-grep language injections unambiguous):
+ *   (a) Inline BrightScript:    type="text/brightscript",  body -> BrightScriptBody.
+ *   (b) Inline BrighterScript:  type="text/brighterscript", body -> BrighterScriptBody.
+ *   (c) External: an empty <script ... uri="..."/> with no body (either dialect). *)
+Script ::= ScriptInline | ScriptInlineBs | ScriptExternal
 
+(* (a) Plain BrightScript inline script (type="text/brightscript"). *)
 ScriptInline ::=
       '<' 'script' ( S ScriptAttribute )* S? '>'
           ScriptContent
       '</' 'script' S? '>'
 
+(* (b) BrighterScript inline script: requires a BrighterScript type attribute
+ * (ScriptAttributeBs) so the dialect is committed; its body is BrighterScript.
+ * The other attributes (e.g. `uri`) remain ordinary ScriptAttributes and may
+ * appear in any order around the type attribute. *)
+ScriptInlineBs ::=
+      '<' 'script' ( S ScriptAttribute )* S ScriptAttributeBs ( S ScriptAttribute )* S? '>'
+          ScriptContentBs
+      '</' 'script' S? '>'
+
+(* (c) External script: empty element, no body, so the dialect need not be
+ * distinguished -- it accepts either a BrightScript or a BrighterScript type
+ * attribute. *)
 ScriptExternal ::=
-      '<' 'script' ( S ScriptAttribute )* S? '/>'
+      '<' 'script' ( S ( ScriptAttribute | ScriptAttributeBs ) )* S? '/>'
 
 ScriptAttribute ::=
-      ( 'type' Eq ScriptTypeAttValue )    (* REQUIRED, fixed value *)
+      ( 'type' Eq ScriptTypeAttValue )    (* type="text/brightscript" *)
     | ( 'uri'  Eq AttValue )
 
-(* The fixed `type` value. *)
+(* The BrighterScript-selecting type attribute (type="text/brighterscript"). A
+ * separate production from ScriptAttribute so an inline <script> containing it
+ * is unambiguously the BrighterScript dialect. *)
+ScriptAttributeBs ::= 'type' Eq ScriptTypeBsAttValue
+
+(* The BrightScript `type` value. *)
 ScriptTypeAttValue ::= '"' 'text/brightscript' '"'
                      | "'" 'text/brightscript' "'"
 
-(* Inline script content. Conventionally a single CDATA section, but XML also
- * permits bare character data interleaved with comments and whitespace. The
+(* The BrighterScript `type` value. *)
+ScriptTypeBsAttValue ::= '"' 'text/brighterscript' '"'
+                       | "'" 'text/brighterscript' "'"
+
+(* Inline BrightScript content. Conventionally a single CDATA section, but XML
+ * also permits bare character data interleaved with comments and whitespace. The
  * non-whitespace text is BrightScript source. *)
 ScriptContent ::=
       ( Misc | Comment )*
       ( ScriptCData | ScriptText )?
+      ( Misc | Comment )*
+
+(* Inline BrighterScript content (mirrors ScriptContent with BrighterScript-bodied
+ * CDATA / bare-text nodes). *)
+ScriptContentBs ::=
+      ( Misc | Comment )*
+      ( ScriptCDataBs | ScriptTextBs )?
       ( Misc | Comment )*
 
 (* A CDATA section whose body is BrightScript.
@@ -544,6 +577,11 @@ ScriptContent ::=
  *     equivalent). Tree-sitter implementers should inject the BrightScript
  *     grammar here. The XML layer treats the body as opaque CData (Layer 1). <<< *)
 ScriptCData ::= CDStart BrightScriptBody CDEnd
+
+(* A CDATA section whose body is BrighterScript.
+ * >>> LANGUAGE EMBEDDING: same as ScriptCData but the body is injected as the
+ *     BrighterScript grammar (brighterscript.ebnf). <<< *)
+ScriptCDataBs ::= CDStart BrighterScriptBody CDEnd
 
 (* Bare (non-CDATA) inline BrightScript. Discouraged because '<', '>' and '&'
  * must then be XML-escaped, but it is legal XML.
@@ -555,12 +593,23 @@ ScriptCData ::= CDStart BrightScriptBody CDEnd
  * >>> LANGUAGE EMBEDDING: same injection as ScriptCData. <<< *)
 ScriptText  ::= BrightScriptBody
 
+(* Bare (non-CDATA) inline BrighterScript (mirrors ScriptText; same device
+ * caveat). >>> LANGUAGE EMBEDDING: same injection as ScriptCDataBs. <<< *)
+ScriptTextBs ::= BrighterScriptBody
+
 (* The embedded BrightScript body. Defined by `brightscript.ebnf`; referenced
  * here only as the injection boundary. At the XML layer it is opaque text:
  * within a CDATA section it is `CData`; outside, it is `CharData` with
  * XML-escaped delimiters. *)
 BrightScriptBody ::= (* governed by sibling grammar: brightscript.ebnf *)
                      CData
+
+(* The embedded BrighterScript body. Defined by the sibling grammar
+ * `brighterscript.ebnf` (a true superset of brightscript.ebnf); referenced here
+ * only as the injection boundary. Opaque text at the XML layer, exactly like
+ * BrightScriptBody. *)
+BrighterScriptBody ::= (* governed by sibling grammar: brighterscript.ebnf *)
+                       CData
 
 
 (* ----------------------------------------------------------------------------

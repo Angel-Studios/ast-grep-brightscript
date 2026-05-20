@@ -1,0 +1,227 @@
+================================================================================
+bare annotation on a function
+================================================================================
+
+@suite
+function testThings() as void
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AnnotatedItem
+    (Annotation
+      (Identifier
+        (IdentStart)))
+    (EOS)
+    (FunctionDeclaration
+      (Identifier
+        (IdentStart))
+      (ReturnType
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart)))))))
+      (EOS)
+      (EndFunction)))
+  (EOS))
+
+================================================================================
+annotation with string arguments on a sub
+================================================================================
+
+@tags("smoke", "fast")
+sub execute()
+end sub
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AnnotatedItem
+    (Annotation
+      (Identifier
+        (IdentStart))
+      (ArgumentList
+        (StringLiteral
+          (StringChar))
+        (StringLiteral
+          (StringChar))))
+    (EOS)
+    (SubDeclaration
+      (Identifier
+        (IdentStart))
+      (EOS)
+      (EndSub)))
+  (EOS))
+
+================================================================================
+annotation on a class
+================================================================================
+
+@describe("MyClass")
+class MyTests
+end class
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AnnotatedItem
+    (Annotation
+      (Identifier
+        (IdentStart))
+      (ArgumentList
+        (StringLiteral
+          (StringChar))))
+    (EOS)
+    (ClassDeclaration
+      (Identifier
+        (IdentStart))
+      (EOS)))
+  (EOS))
+
+================================================================================
+annotation on a class member
+================================================================================
+
+class Suite
+    @it("does a thing")
+    function testOne() as void
+    end function
+end class
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ClassDeclaration
+    (Identifier
+      (IdentStart))
+    (EOS)
+    (ClassBody
+      (AnnotatedClassMember
+        (Annotation
+          (Identifier
+            (IdentStart))
+          (ArgumentList
+            (StringLiteral
+              (StringChar))))
+        (EOS)
+        (MethodDeclaration
+          (Identifier
+            (IdentStart))
+          (ReturnType
+            (Type
+              (BsTypeUnion
+                (BsTypePostfix
+                  (QualifiedName
+                    (Identifier
+                      (IdentStart)))))))
+          (EOS)
+          (EndFunction)))
+      (EOS)))
+  (EOS))
+
+================================================================================
+annotation on an enum member
+================================================================================
+
+enum Flag
+    @deprecated
+    old = 0
+    recent = 1
+end enum
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (EnumDeclaration
+    (Identifier
+      (IdentStart))
+    (EOS)
+    (EnumBody
+      (AnnotatedEnumMember
+        (Annotation
+          (Identifier
+            (IdentStart)))
+        (EOS)
+        (EnumMemberDecl
+          (Identifier
+            (IdentStart))
+          (IntegerLiteral)))
+      (EOS)
+      (EnumMemberDecl
+        (Identifier
+          (IdentStart))
+        (IntegerLiteral))
+      (EOS)))
+  (EOS))
+
+================================================================================
+stacked rooibos annotations on class and method
+================================================================================
+
+@suite
+@describe("Math")
+class MathTests
+    @it("adds")
+    @tags("unit")
+    function testAdd() as void
+    end function
+end class
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AnnotatedItem
+    (Annotation
+      (Identifier
+        (IdentStart)))
+    (EOS)
+    (Annotation
+      (Identifier
+        (IdentStart))
+      (ArgumentList
+        (StringLiteral
+          (StringChar))))
+    (EOS)
+    (ClassDeclaration
+      (Identifier
+        (IdentStart))
+      (EOS)
+      (ClassBody
+        (AnnotatedClassMember
+          (Annotation
+            (Identifier
+              (IdentStart))
+            (ArgumentList
+              (StringLiteral
+                (StringChar))))
+          (EOS)
+          (Annotation
+            (Identifier
+              (IdentStart))
+            (ArgumentList
+              (StringLiteral
+                (StringChar))))
+          (EOS)
+          (MethodDeclaration
+            (Identifier
+              (IdentStart))
+            (ReturnType
+              (Type
+                (BsTypeUnion
+                  (BsTypePostfix
+                    (QualifiedName
+                      (Identifier
+                        (IdentStart)))))))
+            (EOS)
+            (EndFunction)))
+        (EOS))))
+  (EOS))

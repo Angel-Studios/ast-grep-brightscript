@@ -1744,6 +1744,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "_ScriptInlineBs"
+        },
+        {
+          "type": "SYMBOL",
           "name": "ScriptExternal"
         }
       ]
@@ -1808,7 +1812,7 @@
         }
       ]
     },
-    "ScriptExternal": {
+    "_ScriptInlineBs": {
       "type": "SEQ",
       "members": [
         {
@@ -1824,6 +1828,86 @@
           "content": {
             "type": "SYMBOL",
             "name": "ScriptAttribute"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "ScriptAttributeBs"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "ScriptAttribute"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ">"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "ScriptCDataBs"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "ScriptTextBs"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "Comment"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "PI"
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "</"
+        },
+        {
+          "type": "STRING",
+          "value": "script"
+        },
+        {
+          "type": "STRING",
+          "value": ">"
+        }
+      ]
+    },
+    "ScriptExternal": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "<"
+        },
+        {
+          "type": "STRING",
+          "value": "script"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "ScriptAttribute"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "ScriptAttributeBs"
+              }
+            ]
           }
         },
         {
@@ -1887,6 +1971,31 @@
         }
       ]
     },
+    "ScriptAttributeBs": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "STRING",
+            "value": "type"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "Eq"
+        },
+        {
+          "type": "FIELD",
+          "name": "value",
+          "content": {
+            "type": "SYMBOL",
+            "name": "ScriptTypeBsAttValue"
+          }
+        }
+      ]
+    },
     "ScriptTypeAttValue": {
       "type": "CHOICE",
       "members": [
@@ -1924,6 +2033,55 @@
               "content": {
                 "type": "STRING",
                 "value": "text/brightscript"
+              },
+              "named": true,
+              "value": "ScriptType"
+            },
+            {
+              "type": "STRING",
+              "value": "'"
+            }
+          ]
+        }
+      ]
+    },
+    "ScriptTypeBsAttValue": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "\""
+            },
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "STRING",
+                "value": "text/brighterscript"
+              },
+              "named": true,
+              "value": "ScriptType"
+            },
+            {
+              "type": "STRING",
+              "value": "\""
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "'"
+            },
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "STRING",
+                "value": "text/brighterscript"
               },
               "named": true,
               "value": "ScriptType"
@@ -1999,6 +2157,53 @@
           "type": "PATTERN",
           "value": "[^<]+"
         }
+      }
+    },
+    "ScriptCDataBs": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "<![CDATA["
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "content",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_cdata_body"
+                },
+                "named": true,
+                "value": "BrighterScriptBody"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "]]>"
+        }
+      ]
+    },
+    "ScriptTextBs": {
+      "type": "FIELD",
+      "name": "content",
+      "content": {
+        "type": "ALIAS",
+        "content": {
+          "type": "SYMBOL",
+          "name": "_script_text_body"
+        },
+        "named": true,
+        "value": "BrighterScriptBody"
       }
     },
     "Children": {
@@ -2340,7 +2545,17 @@
       "value": "\\s+"
     }
   ],
-  "conflicts": [],
+  "conflicts": [
+    [
+      "_ScriptInline",
+      "_ScriptInlineBs",
+      "ScriptExternal"
+    ],
+    [
+      "_ScriptInlineBs",
+      "ScriptExternal"
+    ]
+  ],
   "precedences": [],
   "externals": [],
   "inline": [],

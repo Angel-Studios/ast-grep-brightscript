@@ -1,0 +1,199 @@
+================================================================================
+ternary expression
+================================================================================
+
+x = cond ? a : b
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (TernaryExpr
+      (Identifier
+        (IdentStart))
+      (QUESTION)
+      (Identifier
+        (IdentStart))
+      (Identifier
+        (IdentStart))))
+  (EOS))
+
+================================================================================
+null-coalescing expression
+================================================================================
+
+x = a ?? b
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (NullCoalesceExpr
+      (Identifier
+        (IdentStart))
+      (Identifier
+        (IdentStart))))
+  (EOS))
+
+================================================================================
+new expression with arguments
+================================================================================
+
+obj = new Foo(1, 2)
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (NewExpression
+      (QualifiedName
+        (Identifier
+          (IdentStart)))
+      (ArgumentList
+        (IntegerLiteral)
+        (IntegerLiteral))))
+  (EOS))
+
+================================================================================
+callfunc operator
+================================================================================
+
+result = node@.doThing(1, 2)
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PostfixExpr
+      (Identifier
+        (IdentStart))
+      (CallfuncSuffix
+        (Identifier
+          (IdentStart))
+        (ArgumentList
+          (IntegerLiteral)
+          (IntegerLiteral)))))
+  (EOS))
+
+================================================================================
+computed associative-array key
+================================================================================
+
+const K = "x"
+aa = { [K]: 1 }
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ConstStatement
+    (Identifier
+      (IdentStart))
+    (StringLiteral
+      (StringChar)))
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (AssocArrayLiteral
+      (AAEntry
+        (Identifier
+          (IdentStart))
+        (IntegerLiteral))))
+  (EOS))
+
+================================================================================
+template string with interpolation
+================================================================================
+
+greeting = `hi ${name}`
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (TemplateString
+      (TemplateChars)
+      (TemplateInterpolation
+        (Identifier
+          (IdentStart)))))
+  (EOS))
+
+================================================================================
+tagged template string
+================================================================================
+
+out = tag`value ${x}`
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (TaggedTemplate
+      (Identifier
+        (IdentStart))
+      (TemplateString
+        (TemplateChars)
+        (TemplateInterpolation
+          (Identifier
+            (IdentStart))))))
+  (EOS))
+
+================================================================================
+regex literal with flags
+================================================================================
+
+re = /\d+/g
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (RegexLiteral))
+  (EOS))
+
+================================================================================
+BrighterScript source literal
+================================================================================
+
+loc = source_location
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (BsSourceLiteral))
+  (EOS))

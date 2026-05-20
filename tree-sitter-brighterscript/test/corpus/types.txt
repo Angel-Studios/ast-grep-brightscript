@@ -1,0 +1,300 @@
+================================================================================
+typed local assignment
+================================================================================
+
+x as integer = 1
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (Type
+      (BsTypeUnion
+        (BsTypePostfix
+          (QualifiedName
+            (Identifier
+              (IdentStart))))))
+    (IntegerLiteral))
+  (EOS))
+
+================================================================================
+for each with typed loop item
+================================================================================
+
+for each item as Node in items
+    print item
+end for
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ForEachStatement
+    (Identifier
+      (IdentStart))
+    (Type
+      (BsTypeUnion
+        (BsTypePostfix
+          (QualifiedName
+            (Identifier
+              (IdentStart))))))
+    (Identifier
+      (IdentStart))
+    (EOS)
+    (Block
+      (PrintStatement
+        (PrintItemList
+          (Identifier
+            (IdentStart))))
+      (EOS)))
+  (EOS))
+
+================================================================================
+union type
+================================================================================
+
+function f(v as string or integer) as void
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    (Identifier
+      (IdentStart))
+    (ParameterList
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart))))
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart))))))))
+    (ReturnType
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart)))))))
+    (EOS)
+    (EndFunction))
+  (EOS))
+
+================================================================================
+typed array type
+================================================================================
+
+function f(v as integer[]) as void
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    (Identifier
+      (IdentStart))
+    (ParameterList
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart))))))))
+    (ReturnType
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart)))))))
+    (EOS)
+    (EndFunction))
+  (EOS))
+
+================================================================================
+namespaced custom type
+================================================================================
+
+function f(v as pkg.Thing) as void
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    (Identifier
+      (IdentStart))
+    (ParameterList
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart))
+                (Identifier
+                  (IdentStart))))))))
+    (ReturnType
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart)))))))
+    (EOS)
+    (EndFunction))
+  (EOS))
+
+================================================================================
+function type
+================================================================================
+
+function f(cb as function(x as integer) as integer) as void
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    (Identifier
+      (IdentStart))
+    (ParameterList
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (TypedFunctionType
+                (ParameterList
+                  (Parameter
+                    (Identifier
+                      (IdentStart))
+                    (Type
+                      (BsTypeUnion
+                        (BsTypePostfix
+                          (QualifiedName
+                            (Identifier
+                              (IdentStart))))))))
+                (ReturnType
+                  (Type
+                    (BsTypeUnion
+                      (BsTypePostfix
+                        (QualifiedName
+                          (Identifier
+                            (IdentStart)))))))))))))
+    (ReturnType
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart)))))))
+    (EOS)
+    (EndFunction))
+  (EOS))
+
+================================================================================
+inline-interface type
+================================================================================
+
+function f(o as { id as integer }) as void
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    (Identifier
+      (IdentStart))
+    (ParameterList
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (InlineInterfaceType
+                (InlineInterfaceField
+                  (Identifier
+                    (IdentStart))
+                  (Type
+                    (BsTypeUnion
+                      (BsTypePostfix
+                        (QualifiedName
+                          (Identifier
+                            (IdentStart)))))))))))))
+    (ReturnType
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart)))))))
+    (EOS)
+    (EndFunction))
+  (EOS))
+
+================================================================================
+grouped type
+================================================================================
+
+function f(v as (string or integer)) as void
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    (Identifier
+      (IdentStart))
+    (ParameterList
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (GroupedType
+                (Type
+                  (BsTypeUnion
+                    (BsTypePostfix
+                      (QualifiedName
+                        (Identifier
+                          (IdentStart))))
+                    (BsTypePostfix
+                      (QualifiedName
+                        (Identifier
+                          (IdentStart))))))))))))
+    (ReturnType
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart)))))))
+    (EOS)
+    (EndFunction))
+  (EOS))

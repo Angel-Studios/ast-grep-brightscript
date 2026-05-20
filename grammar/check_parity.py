@@ -37,8 +37,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BS_EBNF = ROOT / "grammar" / "brightscript.ebnf"
 SG_EBNF = ROOT / "grammar" / "scenegraph.ebnf"
+BR_EBNF = ROOT / "grammar" / "brighterscript.ebnf"
 BS_NODES = ROOT / "tree-sitter-brightscript" / "src" / "node-types.json"
 SG_NODES = ROOT / "tree-sitter-scenegraph" / "src" / "node-types.json"
+BR_NODES = ROOT / "tree-sitter-brighterscript" / "src" / "node-types.json"
 
 # A production header:  Name ::= ...   (the LHS rule name; comments are stripped
 # first so a `::=` inside a (* ... *) comment can never be mistaken for a rule).
@@ -125,8 +127,46 @@ EBNF_NON_NODE_SG = {
     "content":          "generic element content grouping -> hidden _GenericContent.",
     "Misc":             "grouping (Comment | PI | S); inlined wherever misc content is allowed.",
     "ScriptContent":    "grouping of inline-script content; inlined into _ScriptInline.",
+    "ScriptContentBs":  "grouping of inline-BrighterScript-script content; inlined into _ScriptInlineBs.",
     "ScriptInline":     "alternative of Script -> hidden _ScriptInline in grammar.js.",
+    "ScriptInlineBs":   "alternative of Script -> hidden _ScriptInlineBs in grammar.js.",
     "ComponentContent": "grouping of <component> children -> hidden _ComponentContent choice.",
+}
+
+# brighterscript.ebnf is a true SUPERSET that IMPORTS brightscript.ebnf: it
+# redefines a handful of seam rules and adds the BrighterScript-only productions.
+# Its node-types.json therefore contains ALL the inherited BrightScript kinds
+# (FunctionDeclaration, IfStatement, Block, IntegerLiteral, ...) which are NOT
+# defined in brighterscript.ebnf (they live in the imported brightscript.ebnf).
+# So the brighterscript check is run with imported_rules = the brightscript EBNF
+# rule names; a kind reconciles if it is a LOCAL brighterscript rule, an IMPORTED
+# brightscript rule, or an allowlisted reconciliation kind (see check()).
+#
+# The allowlist below is ONLY for LOCAL brighterscript.ebnf rules that, by design,
+# are not standalone nodes -- groupings / dispatch supertypes (hidden `_X` choice
+# in grammar.js) and lexical fragments folded into a token. The UPPER_SNAKE token
+# rules added by BrighterScript (OP_NULLCOALESCE, OP_CALLFUNC, BACKTICK,
+# DOLLAR_LBRACE) are excluded wholesale by UPPER_SNAKE_RE and are NOT listed here.
+EBNF_NON_NODE_BR = {
+    # --- (b) grouping / dispatch supertypes (hidden `_X` choice in grammar.js) ---
+    "BrighterScriptSourceFile": "EBNF start symbol; the grammar inherits the "
+                  "brightscript SourceFile root, so there is no "
+                  "BrighterScriptSourceFile node.",
+    "TopLevelItem":     "dispatch grouping -> inherited hidden _TopLevelItem "
+                        "choice (overridden in grammar.js).",
+    "AnnotatableDeclaration": "dispatch grouping -> hidden _AnnotatableDeclaration choice.",
+    "NamespaceMember":  "dispatch grouping -> hidden _NamespaceMember choice.",
+    "ClassMember":      "dispatch grouping -> hidden _ClassMember choice.",
+    "InterfaceMember":  "dispatch grouping -> hidden _InterfaceMember choice.",
+    "EnumMember":       "dispatch grouping -> hidden _EnumMember choice.",
+    "Expression":       "dispatch grouping -> hidden _Expression precedence cascade.",
+    "PostfixSuffix":    "grouping of postfix suffixes; inlined into PostfixExpr's choice.",
+    "BsTypeAtom":       "dispatch grouping -> hidden _BsTypeAtom choice.",
+    # --- (a) lexical fragments (folded into a token regex) ---
+    "TemplateContent":  "grouping of template parts; inlined into TemplateString's repeat.",
+    "TemplateEscape":   "lexical fragment folded into the TemplateChars token.",
+    "RegexChar":        "lexical fragment folded into the RegexLiteral token.",
+    "RegexFlags":       "lexical fragment folded into the RegexLiteral token.",
 }
 
 
@@ -149,6 +189,18 @@ KIND_WITHOUT_EBNF_SG = {
                   "match the type value; the EBNF only spells ScriptTypeAttValue.",
 }
 
+# Empty by design: every brighterscript node kind reconciles either by a
+# same-named LOCAL brighterscript.ebnf rule or via an IMPORTED brightscript.ebnf
+# rule (the imported_rules set passed to check()). If the gate reports a leftover
+# kind here, investigate before adding it: it most likely means a
+# brighterscript.ebnf rule name is misspelled vs grammar.js, OR a genuinely new
+# EBNF-less kind was introduced -- in which case add it WITH a justification, but
+# first double-check the EBNF/grammar names actually match.
+KIND_WITHOUT_EBNF_BR: dict[str, str] = {
+    # (none -- every BrighterScript kind has a same-named local brighterscript.ebnf
+    #  rule or reconciles via an imported brightscript.ebnf rule)
+}
+
 
 def ebnf_rule_names(path: Path) -> list[str]:
     """All LHS rule names in an EBNF file (comments stripped first)."""
@@ -167,16 +219,33 @@ def named_kinds(path: Path) -> set[str]:
 
 def check(lang: str, ebnf: Path, nodes: Path,
           ebnf_allow: dict[str, str], kind_allow: dict[str, str],
-          problems: list[str]) -> tuple[int, int]:
+          problems: list[str],
+          imported_rules: set[str] | None = None) -> tuple[int, int]:
+    """Per-language EBNF<->node-types parity.
+
+    `imported_rules` are EBNF rule names defined in an IMPORTED spec (e.g. the
+    brightscript.ebnf rules that brighterscript.ebnf inherits unchanged). They
+    are NOT local rules, so:
+      * Assertion A iterates ONLY the local `rules` (an imported rule has no LHS
+        in this file -- it is not "this spec's responsibility" to map to a kind).
+      * Assertion B treats a kind as reconciled if it is a local rule, an
+        imported rule, OR an allowlisted reconciliation kind -- because an
+        inherited node kind (FunctionDeclaration, IfStatement, ...) is correctly
+        explained by the imported spec, not by a brighterscript drift.
+    For the two non-import languages this is the empty set, so the behavior is
+    identical to before.
+    """
+    imported = set(imported_rules or ())
     rule_list = ebnf_rule_names(ebnf)
-    rules = set(rule_list)
+    rules = set(rule_list)            # LOCAL rules (LHS in this ebnf file)
     kinds = named_kinds(nodes)
+    reconciling = rules | imported    # rules that explain a kind by name
 
     dupes = sorted({r for r in rules if rule_list.count(r) > 1})
     for d in dupes:
         problems.append(f"[{lang}] duplicate EBNF rule definition: {d!r}")
 
-    # ---- A. every EBNF rule -> a kind, or an allowlisted non-node ----------
+    # ---- A. every LOCAL EBNF rule -> a kind, or an allowlisted non-node -----
     rule_no_kind = rules - kinds
     drift_rules = sorted(
         r for r in rule_no_kind
@@ -187,12 +256,13 @@ def check(lang: str, ebnf: Path, nodes: Path,
             f"[{lang}] EBNF rule {r!r} has NO node kind and is not an "
             f"allowlisted lexical helper (possible spec->grammar drift)")
 
-    # ---- B. every kind -> an EBNF rule, or an allowlisted reconciliation ---
-    kind_no_rule = sorted((kinds - rules) - set(kind_allow))
+    # ---- B. every kind -> a (local|imported) EBNF rule, or a reconciliation -
+    kind_no_rule = sorted((kinds - reconciling) - set(kind_allow))
     for k in kind_no_rule:
         problems.append(
-            f"[{lang}] node kind {k!r} has NO EBNF rule and is not an "
-            f"allowlisted reconciliation kind (possible grammar->spec drift)")
+            f"[{lang}] node kind {k!r} has NO EBNF rule (local or imported) and "
+            f"is not an allowlisted reconciliation kind (possible grammar->spec "
+            f"drift)")
 
     # ---- allowlist hygiene: flag stale entries that no longer apply --------
     stale_ebnf = sorted(a for a in ebnf_allow if a not in rule_no_kind)
@@ -200,16 +270,25 @@ def check(lang: str, ebnf: Path, nodes: Path,
         problems.append(
             f"[{lang}] stale EBNF allowlist entry {a!r}: it now maps to a node "
             f"kind (or is no longer a rule) -- remove it from the allowlist")
-    stale_kind = sorted(a for a in kind_allow if a not in (kinds - rules))
+    # A kind allowlist entry is stale unless it is still an unreconciled kind
+    # (a kind with no local AND no imported rule). Using `reconciling` here keeps
+    # the hygiene correct for the import model.
+    unreconciled_kinds = kinds - reconciling
+    stale_kind = sorted(a for a in kind_allow if a not in unreconciled_kinds)
     for a in stale_kind:
         problems.append(
             f"[{lang}] stale kind allowlist entry {a!r}: it now matches an EBNF "
-            f"rule (or is no longer a kind) -- remove it from the allowlist")
+            f"rule (local or imported) or is no longer a kind -- remove it from "
+            f"the allowlist")
 
     snake = sum(1 for r in rule_no_kind if UPPER_SNAKE_RE.match(r))
     matched = len(rules & kinds)
     print(f"{lang}: {len(rules)} EBNF rules, {len(kinds)} node kinds  "
           f"-> {matched} matched by name")
+    if imported:
+        inherited = len((kinds & imported) - rules)
+        print(f"  inherited kinds reconciled via imported EBNF rules: {inherited} "
+              f"(of {len(imported)} imported rules)")
     print(f"  non-node EBNF rules: {snake} UPPER_SNAKE token rules + "
           f"{len(ebnf_allow)} allowlisted helpers")
     print(f"  reconciliation kinds (no EBNF rule): {len(kind_allow)}")
@@ -224,6 +303,13 @@ def main() -> int:
     print()
     check("scenegraph", SG_EBNF, SG_NODES,
           EBNF_NON_NODE_SG, KIND_WITHOUT_EBNF_SG, problems)
+    print()
+    # brighterscript IMPORTS brightscript.ebnf: pass the brightscript rule names
+    # as imported_rules so the inherited kinds in the brighterscript node-types
+    # reconcile against the imported spec instead of looking like drift.
+    check("brighterscript", BR_EBNF, BR_NODES,
+          EBNF_NON_NODE_BR, KIND_WITHOUT_EBNF_BR, problems,
+          imported_rules=set(ebnf_rule_names(BS_EBNF)))
 
     if problems:
         print(f"\n✗ {len(problems)} parity problem(s):")

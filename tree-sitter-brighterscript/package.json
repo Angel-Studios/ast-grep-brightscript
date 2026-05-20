@@ -1,0 +1,14 @@
+{
+  "name": "tree-sitter-brighterscript",
+  "version": "0.0.1",
+  "description": "BrighterScript (.bs) grammar for tree-sitter / ast-grep — a superset of BrightScript",
+  "type": "module",
+  "main": "bindings/node",
+  "license": "MIT",
+  "devDependencies": {
+    "tree-sitter-cli": "^0.26.9"
+  },
+  "peerDependencies": {
+    "tree-sitter": "^0.25.0"
+  }
+}

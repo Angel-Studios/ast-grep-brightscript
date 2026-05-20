@@ -18,7 +18,7 @@ for statement/expression bodies).
 
 ## Status (2026-05-20)
 
-**Phases 0–4 are DONE and DEVICE-CONFIRMED. Phases 5–7 are PENDING.**
+**Phases 0–6 are DONE (Phase 4 DEVICE-CONFIRMED). Phase 7 (grow) is ongoing.**
 
 DONE:
 
@@ -46,14 +46,32 @@ canonical authority. The harness corpus + on-device validation still **start at 
 subset and GROW** (Phase 7). Where the phase bodies below still read "subset-first", read them
 through this lens — the spec/coverage are exhaustive; the runnable/device-validated set grows.
 
-PENDING:
-
-- **Phase 5** — the BrighterScript tree-sitter grammar layer + injection (the `.bs` grammar dialect;
-  inject into SceneGraph `<script>` whose type is brighterscript / `uri` ends `.bs`).
-- **Phase 6** — register/validate ast-grep over `.bs`, and extend `check_grammar` (L3) /
-  `check_parity` (L5) to the brighterscript layer (today they cover only brightscript + scenegraph
-  and naturally skip it).
-- **Phase 7** — grow the runnable/device-validated subset iteratively.
+- **Phase 5** — **DONE.** `tree-sitter-brighterscript/` EXTENDS the brightscript tree-sitter grammar
+  via tree-sitter grammar inheritance (`grammar(base, {...})`) — the same shadow/override model as the
+  EBNF — adding namespace/class/interface/enum/const/import/typecast/alias/type, annotations,
+  ternary/`??`/`new`/callfunc/computed-AA-key, typed forms, templates, regex, and source literals;
+  rule names mirror the EBNF. `src/scanner.c` is a renamed copy of the brightscript scanner (same
+  externals) with the BrighterScript declaration keywords added to the reserved set (the external
+  `IdentStart` wins over the internal keyword token, so a contextual keyword is only recognized where
+  the grammar makes IdentStart invalid — declaration keywords had to be reserved; `new` is re-admitted
+  as the constructor/member name). ABI15, built to `brighterscript.so`. Parses CLEAN: `test_bs.bs`,
+  all 13 parse-only `.bs`, and **52/52 authored `angel-roku` `.bs`**; 38 `test/corpus` tests pass;
+  negatives ERROR; all 42 new `bs.*` kinds present in `node-types.json`. (Expression-level `expr as T`
+  typecast is modeled in the EBNF but deferred in the grammar.)
+- **Phase 6** — **DONE.** `brighterscript` registered as an ast-grep `customLanguage` (`.bs`) in
+  `sgconfig.yml`; all 37 coverage kinds are ast-grep-matchable; angel-roku ast-grep regression passes
+  (52 namespaces / 47 classes / 2257 annotations / 1793 methods). `check_parity` (L5) extended with
+  import-union semantics (inherited kinds reconcile against `brightscript.ebnf`) + a brighterscript
+  allowlist; `check_grammar` (L3) extended to the brighterscript layer. **All 5 gates green.**
+  **SceneGraph `<script>` `.bs` injection — DONE:** the scenegraph grammar now accepts
+  `type="text/brighterscript"` and emits a distinct `BrighterScriptBody` node (parallel to
+  `BrightScriptBody`); `sgconfig.yml` injects `brighterscript` into `BrighterScriptBody`, leaving the
+  existing `BrightScriptBody`→`brightscript` injection unchanged. Verified end-to-end: ast-grep matches
+  a `ClassDeclaration` inside a `text/brighterscript` `<script>`, and the plain-BrightScript injection
+  still matches. (External `uri`-referenced `.bs`/`.brs` scripts both parse; standalone `.bs` needs no
+  injection.) scenegraph grammar rebuilt (88→93 kinds); 36/36 scenegraph corpus tests pass.
+- **Phase 7** — grow the runnable/device-validated subset iteratively (expression-level typecast,
+  callfunc-on-a-node device test, tagged templates, multi-file import, fuller type checking).
 
 ## Locked decisions (from the scoping discussion)
 

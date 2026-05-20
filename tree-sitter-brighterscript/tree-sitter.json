@@ -1,0 +1,19 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "brighterscript",
+      "camelcase": "Brighterscript",
+      "scope": "source.bs",
+      "file-types": ["bs"],
+      "injection-regex": "^bs$"
+    }
+  ],
+  "metadata": {
+    "version": "0.0.1",
+    "license": "MIT",
+    "description": "BrighterScript (.bs) grammar for tree-sitter / ast-grep — a superset of BrightScript",
+    "authors": [{ "name": "ast-grep-brightscript" }]
+  },
+  "bindings": { "c": true, "go": false, "node": true, "python": false, "rust": false, "swift": false }
+}

@@ -58,6 +58,18 @@ export default grammar({
   // through the Name token, so e.g. <componentLibrary> is one Name not a keyword.
   word: $ => $.Name,
 
+  // Genuine, must-be-deferred ambiguity: a <script>'s leading attributes are
+  // consumed before its `type` value (and before its body / closing form) is
+  // seen, so the parser cannot yet tell whether it is a plain BrightScript
+  // inline, a BrighterScript inline, or an external (empty) script. The GLR
+  // parser keeps all three alive until the type literal (ScriptAttributeBs) or
+  // the closing token ('>' vs '/>') disambiguates. The body kind
+  // (BrightScriptBody vs BrighterScriptBody) then follows from the chosen rule.
+  conflicts: $ => [
+    [$._ScriptInline, $._ScriptInlineBs, $.ScriptExternal],
+    [$._ScriptInlineBs, $.ScriptExternal],
+  ],
+
   rules: {
     // ----------------------------------------------------------------------
     // Document root (lenient: SceneGraph component OR generic XML fragment)
@@ -334,28 +346,73 @@ export default grammar({
     FunctionAttribute: $ => seq(field('name', 'name'), $.Eq, field('value', $.AttValue)),
 
     // ----------------------------------------------------------------------
-    // <script> (BrightScript embedding point)
+    // <script> (BrightScript / BrighterScript embedding point)
     // ----------------------------------------------------------------------
-    Script: $ => choice($._ScriptInline, $.ScriptExternal),
+    // A <script> embeds either plain BrightScript (type="text/brightscript",
+    // body injected as `brightscript`) OR BrighterScript (type=
+    // "text/brighterscript", body injected as `brighterscript`). The two are
+    // distinguished by the `type` attribute LITERAL, and each inline form emits
+    // a DISTINCT injectable body node (BrightScriptBody vs BrighterScriptBody)
+    // so the two `languageInjections` entries in sgconfig.yml stay unambiguous.
+    // The dialect is committed by the `type` attribute via a GLR conflict (the
+    // parser keeps both inline branches alive until it lexes the type literal),
+    // which is what lets a later-positioned body inherit the right body kind
+    // even though XML attributes are order-independent.
+    Script: $ => choice(
+      $._ScriptInline,
+      $._ScriptInlineBs,
+      $.ScriptExternal,
+    ),
 
+    // Plain BrightScript inline script (default / text/brightscript).
     _ScriptInline: $ => seq(
       '<', 'script', repeat($.ScriptAttribute), '>',
       repeat(choice($.ScriptCData, $.ScriptText, $.Comment, $.PI)),
       '</', 'script', '>',
     ),
 
-    // External script: empty <script .../> (no body). Coverage kind.
-    ScriptExternal: $ => seq('<', 'script', repeat($.ScriptAttribute), '/>'),
+    // BrighterScript inline script (type="text/brighterscript"). Requires the
+    // BrighterScript type attribute and exposes a BrighterScript body node.
+    _ScriptInlineBs: $ => seq(
+      '<', 'script',
+      repeat($.ScriptAttribute), $.ScriptAttributeBs, repeat($.ScriptAttribute),
+      '>',
+      repeat(choice($.ScriptCDataBs, $.ScriptTextBs, $.Comment, $.PI)),
+      '</', 'script', '>',
+    ),
+
+    // External script: empty <script .../> (no body). Coverage kind. No body to
+    // inject, so the dialect need not be distinguished here — it accepts either a
+    // BrightScript (ScriptAttribute) or a BrighterScript (ScriptAttributeBs) type
+    // attribute via a single repeat (no body, so no body-kind ambiguity).
+    ScriptExternal: $ => seq(
+      '<', 'script', repeat(choice($.ScriptAttribute, $.ScriptAttributeBs)), '/>',
+    ),
 
     ScriptAttribute: $ => choice(
       seq(field('name', 'type'), $.Eq, field('value', $.ScriptTypeAttValue)),
       seq(field('name', 'uri'), $.Eq, field('value', $.AttValue)),
     ),
 
-    // Fixed type="text/brightscript".
+    // The BrighterScript-selecting attribute: type="text/brighterscript". A
+    // separate node from ScriptAttribute so the inline form that contains it is
+    // unambiguously the BrighterScript dialect (and so its body is injected as
+    // `brighterscript`).
+    ScriptAttributeBs: $ => seq(
+      field('name', 'type'), $.Eq, field('value', $.ScriptTypeBsAttValue),
+    ),
+
+    // type="text/brightscript" (the BrighterScript literal is handled solely by
+    // ScriptTypeBsAttValue so the two type values are unambiguous).
     ScriptTypeAttValue: $ => choice(
       seq('"', alias('text/brightscript', $.ScriptType), '"'),
       seq("'", alias('text/brightscript', $.ScriptType), "'"),
+    ),
+
+    // type="text/brighterscript".
+    ScriptTypeBsAttValue: $ => choice(
+      seq('"', alias('text/brighterscript', $.ScriptType), '"'),
+      seq("'", alias('text/brighterscript', $.ScriptType), "'"),
     ),
 
     // CDATA-wrapped BrightScript. The INJECTABLE BrightScript body is the
@@ -372,6 +429,19 @@ export default grammar({
     // field, the raw character-data text of the <script> element.
     ScriptText: $ => field('content', alias($._script_text_body, $.BrightScriptBody)),
     _script_text_body: _ => token(prec(-1, /[^<]+/)),
+
+    // CDATA-wrapped BrighterScript. Mirrors ScriptCData but exposes the body as
+    // a BrighterScriptBody node so ast-grep injects the `brighterscript` grammar
+    // there (sgconfig.yml languageInjections kind: BrighterScriptBody).
+    ScriptCDataBs: $ => seq(
+      '<![CDATA[',
+      optional(field('content', alias($._cdata_body, $.BrighterScriptBody))),
+      ']]>',
+    ),
+
+    // Bare (non-CDATA) inline BrighterScript. Mirrors ScriptText with a
+    // BrighterScriptBody injectable body node.
+    ScriptTextBs: $ => field('content', alias($._script_text_body, $.BrighterScriptBody)),
 
     // ----------------------------------------------------------------------
     // <children> and node elements

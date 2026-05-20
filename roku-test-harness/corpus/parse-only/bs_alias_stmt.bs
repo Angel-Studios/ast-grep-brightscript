@@ -1,4 +1,5 @@
 ' coverage-id: bs.alias.stmt
 ' expect: parse
-' BrighterScript alias statement. In 0.72.2 the alias value is a SINGLE identifier.
-alias log = print
+' BrighterScript alias statement. In 0.72.2 the alias value is a SINGLE identifier
+' (a non-reserved name; `print`/`type`/etc. are reserved keywords, not valid here).
+alias logger = globalLog

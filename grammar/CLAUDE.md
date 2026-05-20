@@ -89,13 +89,16 @@ Layered validation — run from the repo root, keep green when editing:
 | 4 — corpus is real code | `npm run check` | runs BrighterScript (`bsc`) over `../roku-test-harness/`. NOTE: `bsc` is advisory, not authoritative — it both over- and under-rejects vs the device; cross-check any red line against [BSC_DRIFT.md](BSC_DRIFT.md). |
 | 5 — EBNF ↔ grammar parity | `python3 grammar/check_parity.py` | EBNF rule names ↔ `node-types.json` kinds, so the EBNF can't silently drift from the generated grammar. |
 
-Levels 0, 1, 2, 3, and 5 are all green; the tree-sitter grammar is now built (Level 3 is the
-`check_grammar` gate that proves it covers the coverage kinds). Level 4 (`bsc`) is advisory only.
-The **BrighterScript layer** is now covered by L0 (`check_ebnf` validates `brighterscript.ebnf`)
-and L1 (`check_coverage` scans `.bs` corpus/spec sources for the `brighterscript` leaves). L3
-(`check_grammar`) and L5 (`check_parity`) currently validate only the brightscript + scenegraph
-grammars and naturally skip the brighterscript layer; they will extend to it once the BrighterScript
-tree-sitter grammar is built (roadmap/05 Phases 5–6).
+Levels 0, 1, 2, 3, and 5 are all green; all THREE tree-sitter grammars are now built
+(`tree-sitter-brightscript`, `tree-sitter-scenegraph`, and `tree-sitter-brighterscript` — the last
+EXTENDS the brightscript grammar via tree-sitter grammar inheritance). Level 4 (`bsc`) is advisory
+only. The **BrighterScript layer is now covered by ALL applicable gates**: L0 (`check_ebnf` validates
+`brighterscript.ebnf` with `brightscript.ebnf` imported), L1 (`check_coverage` scans `.bs`
+corpus/spec sources), L3 (`check_grammar` checks the brighterscript coverage kinds + parses the
+snippets with the brighterscript grammar), and L5 (`check_parity` compares `brighterscript.ebnf` ↔
+the brighterscript `node-types.json`, with inherited kinds reconciled against the imported
+`brightscript.ebnf`). The grammar is registered as the `brighterscript` ast-grep custom language
+(`.bs`) in `sgconfig.yml`.
 
 Ground truth is the device, recorded in [DEVICE_FACTS.md](DEVICE_FACTS.md); where `bsc` and the
 device disagree, the divergence is logged in [BSC_DRIFT.md](BSC_DRIFT.md) (the device always wins).

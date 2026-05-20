@@ -6,18 +6,29 @@ customLanguages:
   brightscript:
     libraryPath: tree-sitter-brightscript/brightscript.so
     extensions: [brs]
+  brighterscript:
+    libraryPath: tree-sitter-brighterscript/brighterscript.so
+    extensions: [bs]
   scenegraph:
     libraryPath: tree-sitter-scenegraph/scenegraph.so
     extensions: [xml]
 
-# Language injection: BrightScript is embedded in SceneGraph <script> bodies.
-# The scenegraph grammar exposes the injectable BrightScript text as a single
-# `BrightScriptBody` node (the `content` field of ScriptCData / ScriptText), so
-# ast-grep reparses that region with the brightscript grammar — brightscript
-# rules/patterns then match inside SceneGraph .xml <script> blocks.
+# Language injection: BrightScript / BrighterScript are embedded in SceneGraph
+# <script> bodies. The scenegraph grammar exposes the injectable text as a
+# DISTINCT named body node per dialect, chosen by the <script> `type` attribute:
+#   * type="text/brightscript"   -> `BrightScriptBody`   (ScriptCData / ScriptText)
+#   * type="text/brighterscript" -> `BrighterScriptBody` (ScriptCDataBs / ScriptTextBs)
+# so ast-grep reparses each region with the matching grammar — brightscript /
+# brighterscript rules and patterns then match inside SceneGraph .xml <script>
+# blocks. The two body kinds are disjoint, so the two injections never overlap.
 languageInjections:
   - hostLanguage: scenegraph
     rule:
       kind: BrightScriptBody
       pattern: $CONTENT
     injected: brightscript
+  - hostLanguage: scenegraph
+    rule:
+      kind: BrighterScriptBody
+      pattern: $CONTENT
+    injected: brighterscript

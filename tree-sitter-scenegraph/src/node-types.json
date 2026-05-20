@@ -883,7 +883,15 @@
           "named": true
         },
         {
+          "type": "ScriptAttributeBs",
+          "named": true
+        },
+        {
           "type": "ScriptCData",
+          "named": true
+        },
+        {
+          "type": "ScriptCDataBs",
           "named": true
         },
         {
@@ -892,6 +900,10 @@
         },
         {
           "type": "ScriptText",
+          "named": true
+        },
+        {
+          "type": "ScriptTextBs",
           "named": true
         }
       ]
@@ -942,6 +954,42 @@
     }
   },
   {
+    "type": "ScriptAttributeBs",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "ScriptTypeBsAttValue",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "ScriptCData",
     "named": true,
     "fields": {
@@ -958,6 +1006,22 @@
     }
   },
   {
+    "type": "ScriptCDataBs",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "BrighterScriptBody",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "ScriptExternal",
     "named": true,
     "fields": {},
@@ -967,6 +1031,10 @@
       "types": [
         {
           "type": "ScriptAttribute",
+          "named": true
+        },
+        {
+          "type": "ScriptAttributeBs",
           "named": true
         }
       ]
@@ -989,7 +1057,38 @@
     }
   },
   {
+    "type": "ScriptTextBs",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "BrighterScriptBody",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "ScriptTypeAttValue",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "ScriptType",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ScriptTypeBsAttValue",
     "named": true,
     "fields": {},
     "children": {
@@ -1106,6 +1205,10 @@
   },
   {
     "type": "BrightScriptBody",
+    "named": true
+  },
+  {
+    "type": "BrighterScriptBody",
     "named": true
   },
   {
