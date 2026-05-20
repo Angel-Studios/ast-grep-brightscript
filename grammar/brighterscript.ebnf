@@ -1,0 +1,533 @@
+(*=============================================================================
+  BrighterScript Grammar (EBNF)  --  the `.bs` superset layered on BrightScript
+=============================================================================
+
+  WHAT THIS IS
+  ------------
+  A grammar for BrighterScript (`.bs`), the RokuCommunity language superset that
+  transpiles to plain BrightScript (`.brs`). It is authored as a thin DELTA on
+  top of the sibling spec `brightscript.ebnf`: it IMPORTS that grammar and
+  REDEFINES only the handful of "seam" productions that BrighterScript extends
+  (the expression cascade entry, the type grammar, Primary, the postfix-suffix
+  set, associative-array entries, assignment, for-each), then adds the brand-new
+  declaration/expression/type productions on top. Everything BrighterScript
+  shares with BrightScript (statements, the operator-precedence cascade, literals,
+  comments, conditional compilation, blocks, parameters) is referenced by name and
+  inherited unchanged. A locally redefined rule SHADOWS the imported one -- this
+  is true grammar override, so e.g. an inherited `if` condition automatically
+  admits a BrighterScript ternary because `Expression` is overridden here.
+
+  This mirrors the relationship in the project:
+      brightscript.ebnf  --(imported, pristine)-->  brighterscript.ebnf
+  exactly as scenegraph.ebnf embeds brightscript.ebnf -- except SceneGraph embeds
+  BrightScript as an opaque text region (language injection), whereas
+  BrighterScript is a genuine SUPERSET that weaves new alternatives into the base
+  grammar (so it OVERRIDES seam rules rather than treating them as a black box).
+
+  SCOPE  (per the 05 initiative: "spec exhaustive, validation grows")
+  -----
+  This file models the FULL BrighterScript language surface that the compiler
+  accepts -- every BrighterScript-only statement, expression, type form, literal,
+  and annotation -- not just the angel-roku-evidenced subset. The harness corpus
+  and on-device validation start at the real-world subset (namespace / class /
+  annotations / dotted names, which angel-roku uses pervasively) and grow from
+  there; the grammar itself is complete.
+
+  SOURCE / AUTHORITY
+  ------------------
+  The canonical authority for the language is the BrighterScript compiler source
+  (rokucommunity/brighterscript). PINNED VERSION: 0.72.2 -- this is both the
+  installed `bsc` (the syntax ground-truth, `npm run check`) AND the `master`
+  HEAD at authoring time, so the modeled surface is exactly what this `bsc`
+  accepts. Each construct below cites the parser/lexer symbol it was mined from:
+    - Tokens / keyword sets ........ src/lexer/TokenKind.ts
+                                     (Keywords, AllowedProperties,
+                                      AllowedLocalIdentifiers, DeclarableTypes,
+                                      BrighterScriptSourceLiterals, the
+                                      `brighterscript keywords` block)
+    - Lexing (templates, regex, @) . src/lexer/Lexer.ts
+    - Accepted syntax .............. src/parser/Parser.ts (method names cited)
+    - AST node set ................. src/parser/Statement.ts, Expression.ts,
+                                     src/astUtils/reflection.ts
+    - Type spelling ................ src/parser/Parser.ts typeToken(),
+                                     src/util.ts tokenToBscType, src/types/*
+  Real-world usage corpus / regression target: ../angel-roku (52 authored `.bs`
+  rooibos test modules). Constructs it exercises are called out with an
+  "angel-roku:" note in their rule comments below.
+
+  GROUND TRUTH = BOTH (the 05 model):
+    - `bsc` 0.72.2 is the authority for whether `.bs` SYNTAX is accepted.
+    - the Roku DEVICE (transpile `.bs` -> `.brs` -> sideload -> `##SPEC##`) is
+      the authority for whether the lowered code RUNS. Where they disagree the
+      device wins and the drift is logged in BSC_DRIFT.md / DEVICE_FACTS.md.
+
+  Date: 2026-05-20
+
+  EBNF NOTATION  (identical to brightscript.ebnf / scenegraph.ebnf)
+  -------------
+  Name ::= expr | A B alternation | ( ) group | A? opt | A* star | A+ plus
+  'literal'/"literal" terminal (CASE-INSENSITIVE, like BrightScript) ·
+  [a-z] char class · A - B exception · #x000A hex code · block comments use the
+  same delimiter style as the sibling specs.
+  UpperCamelCase = syntactic rule; UPPER_SNAKE = lexical token.
+
+  IMPORTED NAMES  (defined in brightscript.ebnf, referenced but not redefined)
+  --------------
+  Lexical tokens:  Identifier StringLiteral Literal Char LINE_BREAK EOS
+                   AT DOT LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
+                   COMMA COLON ASSIGN QUESTION OP_OR
+  Declarations:    FunctionDeclaration SubDeclaration LibraryStatement
+                   ParameterList ReturnType Block
+  Statements:      Statement Label Comment ConstDirective ConditionalCompilation
+                   AssignTarget
+  Expressions:     OrExpr  (entry into the inherited precedence cascade)
+                   ParenExpr ArrayLiteral AssocArrayLiteral AnonymousFunction
+                   CreateObjectCall BuiltinCall ArgumentList
+                   CallSuffix IndexSuffix MemberSuffix AttributeSuffix
+                   OptChainSuffix AAKey ElementSep
+  The cascade OrExpr -> AndExpr -> ... -> PostfixExpr -> Primary is inherited;
+  because Primary / PostfixSuffix / AAEntry are OVERRIDDEN below, the inherited
+  cascade automatically reaches the BrighterScript primary/postfix forms.
+
+  REDEFINED ("seam") PRODUCTIONS shadowing brightscript.ebnf:
+    TopLevelItem · Expression · Type · Primary · PostfixSuffix · AAEntry ·
+    AssignmentStatement · ForEachStatement
+=============================================================================*)
+
+
+(*===========================================================================*)
+(*  PART 1 - PROGRAM STRUCTURE & TOP-LEVEL ITEMS                              *)
+(*===========================================================================*)
+
+(* A `.bs` source file. Same shape as brightscript SourceFile but the top-level
+   item set is the BrighterScript-extended one (TopLevelItem, redefined below).
+   src/parser/Parser.ts: parse() / body(). *)
+BrighterScriptSourceFile ::= EOS? ( TopLevelItem ( EOS TopLevelItem )* )? EOS?
+
+(* OVERRIDE of brightscript.ebnf TopLevelItem: adds the BrighterScript-only
+   top-level declarations and annotation-prefixed declarations, then falls
+   through to the inherited BrightScript top-level alternatives (referenced by
+   their sub-production names so no `TopLevelItem` self-reference is needed).
+   src/parser/Parser.ts: declaration(). *)
+TopLevelItem    ::= AnnotatedItem
+                  | NamespaceStatement
+                  | ClassDeclaration
+                  | InterfaceDeclaration
+                  | EnumDeclaration
+                  | ConstStatement
+                  | ImportStatement
+                  | TypecastStatement
+                  | AliasStatement
+                  | TypeAliasStatement
+                  (* --- inherited BrightScript top-level alternatives --- *)
+                  | FunctionDeclaration
+                  | SubDeclaration
+                  | LibraryStatement
+                  | ConstDirective
+                  | ConditionalCompilation
+                  | Comment
+                  | Label
+                  | Statement
+
+(*--- 1.1 Annotations ------------------------------------------------------*)
+
+(* `@Name` or `@Name(args)` compile-time metadata attached to the FOLLOWING
+   declaration; stripped on transpile. The arg list is a real call-argument list
+   (any expressions, incl. AA literals). BrighterScript-only.
+   src/parser/Parser.ts: annotationExpression(); src/parser/Expression.ts:
+   AnnotationExpression. angel-roku: @it/@describe/@suite/@tags/@beforeeach.
+   LEXER: the `@` here is the AT token at statement start; mid-expression `@.`
+   is the callfunc operator and `@`/`?@` are XML-attribute access -- see note 2. *)
+AnnotatedItem   ::= ( Annotation EOS )+ AnnotatableDeclaration
+Annotation      ::= AT Identifier ( LPAREN ArgumentList? RPAREN )?
+AnnotatableDeclaration ::= NamespaceStatement
+                  | ClassDeclaration
+                  | InterfaceDeclaration
+                  | EnumDeclaration
+                  | ConstStatement
+                  | FunctionDeclaration
+                  | SubDeclaration
+
+(*--- 1.2 Qualified (dotted / namespaced) names ----------------------------*)
+
+(* A dotted name reference: `a`, `a.b`, `pkg.sub.Thing`. Used for namespace
+   names, `extends` parents, `new` targets, and custom type names. The runtime
+   reference `a.b.c` itself is just an inherited DottedGet chain (MemberSuffix);
+   this production is for the declaration/type positions that require a name.
+   src/parser/Expression.ts: NamespacedVariableNameExpression. angel-roku:
+   `extends rooibos.BaseTestSuite`, `tests.foo()`. *)
+QualifiedName   ::= Identifier ( DOT Identifier )*
+
+
+(*===========================================================================*)
+(*  PART 2 - NAMESPACE / CLASS / INTERFACE / ENUM DECLARATIONS               *)
+(*===========================================================================*)
+
+(*--- 2.1 Namespace --------------------------------------------------------*)
+
+(* `namespace A.B ... end namespace`. Members are namespaced declarations.
+   BrighterScript-only. src/parser/Parser.ts: namespaceStatement().
+   angel-roku: 52/52 authored .bs files open with a namespace. *)
+NamespaceStatement ::= 'namespace' QualifiedName EOS
+                          NamespaceBody?
+                       ( ( 'end' 'namespace' ) | 'endnamespace' )
+NamespaceBody   ::= ( NamespaceMember EOS )* NamespaceMember?
+NamespaceMember ::= AnnotatedItem
+                  | NamespaceStatement
+                  | ClassDeclaration
+                  | InterfaceDeclaration
+                  | EnumDeclaration
+                  | ConstStatement
+                  | FunctionDeclaration
+                  | SubDeclaration
+                  | Comment
+                  | ConditionalCompilation
+
+(*--- 2.2 Class ------------------------------------------------------------*)
+
+(* `class Name [extends Qualified] ... end class`. Members are fields and
+   methods, each optionally annotated and access-modified. BrighterScript-only.
+   src/parser/Parser.ts: classDeclaration(). angel-roku: 47 class decls,
+   15 `super`, 23 `override`, 38 `private`, 25 `protected`. *)
+ClassDeclaration ::= 'class' Identifier ( 'extends' QualifiedName )? EOS
+                        ClassBody?
+                     ( ( 'end' 'class' ) | 'endclass' )
+ClassBody       ::= ( ClassMember EOS )* ClassMember?
+ClassMember     ::= AnnotatedClassMember
+                  | FieldDeclaration
+                  | MethodDeclaration
+                  | Comment
+                  | ConditionalCompilation
+AnnotatedClassMember ::= ( Annotation EOS )+ ( FieldDeclaration | MethodDeclaration )
+
+(* Field: `[access] [optional] name [as Type] [= initializer]`.
+   src/parser/Parser.ts: fieldDeclaration(); Statement.ts: FieldStatement. *)
+FieldDeclaration ::= AccessModifier? 'optional'? Identifier
+                        ( 'as' Type )? ( ASSIGN Expression )?
+
+(* Method: `[access] [override] (function|sub) ...`. Reuses the inherited
+   function/sub declaration (their bodies + params + return type are inherited;
+   `as CustomType` becomes valid via the Type override). The constructor is a
+   method named `new` (`override` is rejected on it -- a semantic, not a parse,
+   rule). src/parser/Parser.ts: classDeclaration() method branch;
+   Statement.ts: MethodStatement. *)
+MethodDeclaration ::= AccessModifier? 'override'? ( FunctionDeclaration | SubDeclaration )
+
+AccessModifier  ::= 'public' | 'protected' | 'private'
+
+(*--- 2.3 Interface --------------------------------------------------------*)
+
+(* `interface Name [extends Qualified] ... end interface`. Members are typed
+   field and method SIGNATURES (no bodies). BrighterScript-only.
+   src/parser/Parser.ts: interfaceDeclaration(),
+   interfaceFieldStatement(), interfaceMethodStatement(). *)
+InterfaceDeclaration ::= 'interface' Identifier ( 'extends' QualifiedName )? EOS
+                            InterfaceBody?
+                         ( ( 'end' 'interface' ) | 'endinterface' )
+InterfaceBody   ::= ( InterfaceMember EOS )* InterfaceMember?
+InterfaceMember ::= AnnotatedInterfaceMember
+                  | InterfaceField
+                  | InterfaceMethod
+                  | Comment
+AnnotatedInterfaceMember ::= ( Annotation EOS )+ ( InterfaceField | InterfaceMethod )
+InterfaceField  ::= 'optional'? Identifier 'as' Type
+InterfaceMethod ::= 'optional'? ( 'function' | 'sub' )
+                        Identifier LPAREN ParameterList? RPAREN ReturnType?
+
+(*--- 2.4 Enum -------------------------------------------------------------*)
+
+(* `enum Name ... end enum`. Members are `Name [= value]`; no backing-type
+   clause in 0.72.2 (enumDeclaration does NOT parse `as Type`).
+   BrighterScript-only. src/parser/Parser.ts: enumDeclaration(),
+   enumMemberStatement(). *)
+EnumDeclaration ::= 'enum' Identifier EOS
+                        EnumBody?
+                    ( ( 'end' 'enum' ) | 'endenum' )
+EnumBody        ::= ( EnumMember EOS )* EnumMember?
+EnumMember      ::= AnnotatedEnumMember | EnumMemberDecl | Comment
+AnnotatedEnumMember ::= ( Annotation EOS )+ EnumMemberDecl
+EnumMemberDecl  ::= Identifier ( ASSIGN Expression )?
+
+
+(*===========================================================================*)
+(*  PART 3 - OTHER BRIGHTERSCRIPT TOP-LEVEL / SCOPE STATEMENTS               *)
+(*===========================================================================*)
+
+(* `const NAME = expression` -- a compile-time constant (value is any
+   expression). src/parser/Parser.ts: constDeclaration(). BrighterScript-only. *)
+ConstStatement  ::= 'const' Identifier ASSIGN Expression
+
+(* `import "pkg:/source/lib.bs"` -- pulls another file into scope.
+   src/parser/Parser.ts: importStatement(). BrighterScript-only. *)
+ImportStatement ::= 'import' StringLiteral
+
+(* `typecast m as Type` -- scope-level assertion of the type of an identifier
+   (typically `m`). The cast target is a single identifier, then `as Type`.
+   src/parser/Parser.ts: typecastStatement(). BrighterScript-only. *)
+TypecastStatement ::= 'typecast' Identifier 'as' Type
+
+(* `alias NAME = VALUE`. NOTE: in 0.72.2 the value is a SINGLE identifier
+   (aliasStatement consumes one identifier, not a dotted name) -- a known
+   limitation of the early alias feature. src/parser/Parser.ts: aliasStatement().
+   BrighterScript-only. *)
+AliasStatement  ::= 'alias' Identifier ASSIGN Identifier
+
+(* `type Name = TypeExpr` -- a type alias (e.g. `type Id = string or integer`).
+   The value is a full BrighterScript type (Type, redefined below, includes
+   unions). src/parser/Parser.ts: typeStatement(). BrighterScript-only. *)
+TypeAliasStatement ::= 'type' Identifier ASSIGN Type
+
+
+(*===========================================================================*)
+(*  PART 4 - EXPRESSION EXTENSIONS (overrides woven into the cascade)         *)
+(*===========================================================================*)
+
+(* OVERRIDE of brightscript.ebnf Expression. The inherited cascade entry is
+   OrExpr (and below). BrighterScript wraps it with, from outermost in:
+     (1) type-cast `expr as Type` (chainable) -- applied last by the compiler;
+     (2) ternary `cond ? a : b` and null-coalescing `a ?? b` (same level).
+   Because this rule shadows the base `Expression`, every inherited position
+   that referenced `Expression` (if/while/return/print/assignment RHS/args/...)
+   now admits these forms automatically.
+   src/parser/Parser.ts: expression() (wraps TypeCastExpression),
+   anonymousFunction() (wraps Ternary/NullCoalescing), ternaryExpression(),
+   nullCoalescingExpression(). All BrighterScript-only. *)
+Expression      ::= TernaryExpr ( 'as' Type )*           (* (1) typecast outermost *)
+TernaryExpr     ::= OrExpr ( TernaryTail | NullCoalesceTail )?   (* (2) *)
+TernaryTail     ::= QUESTION Expression COLON Expression          (* cond ? a : b *)
+NullCoalesceTail ::= OP_NULLCOALESCE Expression                   (* a ?? b *)
+
+(* OVERRIDE of brightscript.ebnf PostfixSuffix: adds the callfunc operator
+   `@.method(args)` (transpiles to `.callFunc("method", args)`). The optional-
+   chaining suffixes (?. ?@ ?[ ?( ) are already in the inherited OptChainSuffix
+   (Roku OS 11+ runtime feature), so they are reused, not re-added.
+   src/parser/Parser.ts: call() callfunc branch; Expression.ts:
+   CallfuncExpression. CallfuncSuffix is BrighterScript-only. *)
+PostfixSuffix   ::= CallSuffix
+                  | IndexSuffix
+                  | MemberSuffix
+                  | AttributeSuffix
+                  | OptChainSuffix
+                  | CallfuncSuffix
+CallfuncSuffix  ::= OP_CALLFUNC Identifier LPAREN ArgumentList? RPAREN
+
+(* OVERRIDE of brightscript.ebnf Primary: adds the BrighterScript primary forms.
+   The inherited alternatives are re-listed so this rule is complete.
+   src/parser/Parser.ts: primary(). *)
+Primary         ::= Literal
+                  | Identifier
+                  | 'm'
+                  | ParenExpr
+                  | ArrayLiteral
+                  | AssocArrayLiteral
+                  | AnonymousFunction
+                  | CreateObjectCall
+                  | BuiltinCall
+                  (* --- BrighterScript-only primary forms --- *)
+                  | NewExpression
+                  | TemplateString
+                  | TaggedTemplate
+                  | RegexLiteral
+                  | BsSourceLiteral
+
+(* `new Qualified( args )` -- class instantiation. Parens are REQUIRED
+   (newExpression consumes LeftParen or QuestionLeftParen). BrighterScript-only.
+   src/parser/Parser.ts: newExpression(); Expression.ts: NewExpression. *)
+NewExpression   ::= 'new' QualifiedName LPAREN ArgumentList? RPAREN
+
+(* OVERRIDE of brightscript.ebnf AAEntry: adds COMPUTED keys `[ expr ]: value`
+   alongside the inherited `key: value`. src/parser/Parser.ts: AA-literal branch
+   of primary(); Expression.ts: AAIndexedMemberExpression. Computed-key form is
+   BrighterScript-only. *)
+AAEntry         ::= AAKey COLON Expression
+                  | LBRACKET Expression RBRACKET COLON Expression
+
+(*--- 4.1 Template strings (BrighterScript-only) ---------------------------*)
+
+(* Backtick-delimited string with `${ expr }` interpolation and escape codes;
+   transpiles to string concatenation / chr() calls. A TAGGED template is an
+   identifier immediately (no space) followed by a template (a tag function).
+   src/lexer/Lexer.ts: templateString(); src/parser/Parser.ts: templateString();
+   Expression.ts: TemplateStringExpression / TaggedTemplateStringExpression. *)
+TemplateString  ::= BACKTICK TemplateContent* BACKTICK
+TemplateContent ::= TemplateChars | TemplateEscape | TemplateInterpolation
+TemplateInterpolation ::= DOLLAR_LBRACE Expression RBRACE
+TemplateChars   ::= ( Char - ( '`' | '\' | '$' ) )+
+                    (* a bare '$' not followed by '{' is literal text -- a lexer
+                       detail; see implementer note 4. *)
+TemplateEscape  ::= '\' Char         (* \n \r \\ \" \cNNN (char code) etc. *)
+TaggedTemplate  ::= Identifier TemplateString
+
+(*--- 4.2 Regex literal (BrighterScript-only) ------------------------------*)
+
+(* `/pattern/flags` -> CreateObject("roRegex", pattern, flags). Lexed only where
+   a `/` cannot be division (start of expression / after an operator) -- a
+   contextual lexer rule; see implementer note 5.
+   src/lexer/Lexer.ts: regexLiteral(); Expression.ts: RegexLiteralExpression. *)
+RegexLiteral    ::= '/' ( RegexChar | '\' Char )* '/' RegexFlags?
+RegexChar       ::= Char - ( '/' | '\' | LINE_BREAK )
+RegexFlags      ::= [a-zA-Z]+
+
+(*--- 4.3 Source literals (BrighterScript-only) ----------------------------*)
+
+(* Compiler-substituted source-position literals (BrighterScriptSourceLiterals,
+   TokenKind.ts). `LINE_NUM` is NOT here -- it is available in plain BrightScript
+   and lives in brightscript.ebnf's Literal. src/parser/Parser.ts: primary()
+   source-literal branch; Expression.ts: SourceLiteralExpression. *)
+BsSourceLiteral ::= 'source_file_path'
+                  | 'source_line_num'
+                  | 'function_name'
+                  | 'source_function_name'
+                  | 'source_namespace_name'
+                  | 'source_namespace_root_name'
+                  | 'source_location'
+                  | 'pkg_path'
+                  | 'pkg_location'
+
+
+(*===========================================================================*)
+(*  PART 5 - STATEMENT EXTENSIONS (typed forms, override seams)               *)
+(*===========================================================================*)
+
+(* OVERRIDE of brightscript.ebnf AssignmentStatement: adds the TYPED assignment
+   `name as Type = value` (BrighterScript-only). The typed form applies to a
+   bare identifier target (a semantic detail); AssignTarget is inherited.
+   src/parser/Parser.ts: assignment(). *)
+AssignmentStatement ::= AssignTarget ( 'as' Type )? ASSIGN Expression
+
+(* OVERRIDE of brightscript.ebnf ForEachStatement: adds the TYPED loop item
+   `for each x as Type in ...` (BrighterScript-only). Otherwise identical to the
+   inherited rule. src/parser/Parser.ts: forEachStatement(). *)
+ForEachStatement ::= 'for' 'each' Identifier ( 'as' Type )? 'in' Expression EOS
+                        Block?
+                     ( ( 'end' 'for' ) | 'endfor' )
+
+
+(*===========================================================================*)
+(*  PART 6 - TYPE GRAMMAR (override -- the BrighterScript `as` type language)  *)
+(*===========================================================================*)
+
+(* OVERRIDE of brightscript.ebnf Type. In plain `.brs` only the intrinsic type
+   set is device-valid in an `as` clause (DEVICE_FACTS #6/#7); BrighterScript
+   permits the full type language and lowers/erases it on transpile. Because
+   this shadows the base `Type`, every inherited `as Type` position
+   (params, return types, fields, typed assignment, typed for-each, casts)
+   gains the BrighterScript type forms automatically.
+   src/parser/Parser.ts: typeToken(); src/util.ts: tokenToBscType; src/types/*.
+
+   Forms (lowest binding first):
+     A or B / A and B      union/intersection types
+     T[]                   typed array (repeatable: T[][])
+     intrinsic | Custom | function(...)-type | { ... } | ( ... )   atoms        *)
+Type            ::= BsTypeUnion
+BsTypeUnion     ::= BsTypePostfix ( ( 'or' | 'and' ) BsTypePostfix )*
+BsTypePostfix   ::= BsTypeAtom ( LBRACKET RBRACKET )*
+BsTypeAtom      ::= IntrinsicType
+                  | QualifiedName            (* custom / namespaced type name *)
+                  | TypedFunctionType
+                  | InlineInterfaceType
+                  | GroupedType
+
+(* The DeclarableTypes set (TokenKind.ts) -- intrinsic types nameable after `as`.
+   These are also Identifiers, so QualifiedName would match them too; they are
+   listed to document the intrinsic set (the compiler resolves the overlap). *)
+IntrinsicType   ::= 'boolean' | 'integer' | 'longinteger' | 'float' | 'double'
+                  | 'string' | 'object' | 'function' | 'dynamic' | 'void'
+                  | 'invalid'
+
+(* Callable type: `function(params) as Ret` / `sub(params) as Ret`.
+   src/parser/Parser.ts: typedFunctionType(). *)
+TypedFunctionType ::= ( 'function' | 'sub' ) LPAREN ParameterList? RPAREN ReturnType?
+
+(* Anonymous (inline) interface type: `{ name as T, optional id as T }`.
+   src/parser/Parser.ts: inlineInterface(). *)
+InlineInterfaceType ::= LBRACE EOS?
+                          ( InlineInterfaceField ( ElementSep InlineInterfaceField )* ElementSep? )?
+                        EOS? RBRACE
+InlineInterfaceField ::= 'optional'? Identifier 'as' Type
+
+(* Parenthesized type: `( string or integer )`.
+   src/parser/Parser.ts: groupedTypeExpression(). *)
+GroupedType     ::= LPAREN Type RPAREN
+
+
+(*===========================================================================*)
+(*  PART 7 - LEXICAL TOKENS ADDED BY BRIGHTERSCRIPT                           *)
+(*===========================================================================*)
+
+(* Operators / punctuation not present in brightscript.ebnf. CASE-INSENSITIVE
+   like all BrightScript tokens. Longest-match ordering vs the inherited tokens
+   is in implementer note 2. src/lexer/TokenKind.ts. *)
+OP_NULLCOALESCE ::= '??'              (* QuestionQuestion *)
+OP_CALLFUNC     ::= '@.'             (* Callfunc -- node@.method(...) *)
+BACKTICK        ::= '`'              (* template-string delimiter *)
+DOLLAR_LBRACE   ::= '${'            (* template interpolation opener *)
+
+
+(*===========================================================================*)
+(*  PART 8 - NOTES FOR THE TREE-SITTER IMPLEMENTER                            *)
+(*===========================================================================*)
+(*
+  These extend brightscript.ebnf's implementer notes; everything there (case-
+  insensitivity, significant newlines / bracket-depth scanner, maximal-munch
+  ordering, the type-suffix lexing) still applies. BrighterScript adds:
+
+  1. SUPERSET / INJECTION SCOPE.
+     A `.bs` file is parsed with the BrighterScript grammar; a `.brs` file with
+     the BrightScript grammar. In SceneGraph, inject the BrighterScript grammar
+     (not just BrightScript) into a <script> whose type is brighterscript / whose
+     `uri` ends in `.bs` (scenegraph.ebnf marks the embedding point; the chosen
+     injected grammar depends on the script's language).
+
+  2. THE `@` TOKEN IS OVERLOADED -- disambiguate by context:
+       - `@.`  callfunc operator   (OP_CALLFUNC), only mid-expression after a
+               value:  node@.doIt(1).
+       - `@Name` annotation        (AT + identifier) at the START of a
+               declaration / statement position.
+       - `@attr` XML-attribute get (inherited AttributeSuffix) mid-expression.
+       - `?@`  optional XML-attribute get (inherited OptChainSuffix).
+     The lexer emits `@.` (callfunc) maximally; a bare `@` is annotation or
+     attribute-get per position. Longest-match: `@.` before `@`.
+
+  3. `as <CustomType>` IS VALID IN `.bs` (unlike `.brs`).
+     brightscript.ebnf restricts the device-valid `as` set to intrinsics
+     (DEVICE_FACTS #6/#7); here Type is overridden to admit custom/namespaced
+     names, `T[]`, unions, function- and inline-interface types. On transpile
+     these are erased/lowered, so the emitted `.brs` only ever carries intrinsic
+     (or no) `as` annotations -- which is what the DEVICE then validates.
+
+  4. TEMPLATE STRINGS need a dedicated lexer mode entered on BACKTICK:
+       - literal runs -> TemplateChars; `${` opens an interpolation that lexes a
+         full nested expression until the matching `}`; backtick closes.
+       - escapes inside: \n \r \\ \" and \cNNN (unicode char code); a physical
+         newline is allowed and becomes a char-code literal.
+       - a `$` not followed by `{` is literal text.
+       - TAGGED template = Identifier immediately (no whitespace) before the
+         opening backtick.
+
+  5. REGEX LITERAL `/.../flags` is CONTEXTUAL: lex a regex (not division) only
+     when the preceding significant token cannot end an expression (start of
+     statement/expression, or right after an operator/`(`/`,`/`return`/etc.).
+     Inside, `\` escapes the next char; the closing `/` ends the body; a
+     trailing run of letters is the flags. (Mirrors src/lexer/Lexer.ts
+     PreceedingRegexTypes.)
+
+  6. CONTEXTUAL KEYWORDS. Most BrighterScript keywords (class, namespace,
+     interface, enum, const, import, typecast, alias, type, new, public,
+     protected, private, optional, override, as) are CONTEXTUAL: they are also
+     valid identifiers / member names / AA keys in other positions
+     (AllowedLocalIdentifiers / AllowedProperties in TokenKind.ts). The grammar
+     treats them as keywords in declaration position and as Identifier elsewhere;
+     a scanner-gated approach (as used for BrightScript keyword disambiguation)
+     is required. In particular `optional` and `override` can themselves be field
+     / member names (the parser uses look-ahead/rewind).
+
+  7. `extends` / `in` / `each` / `override` are matched by literal text in the
+     parser (not all are distinct TokenKinds) -- keep them case-insensitive.
+
+  8. DEVICE VALIDATION IS VIA TRANSPILE. BrighterScript constructs are confirmed
+     on hardware by transpiling `.bs` -> `.brs`, sideloading, and reading
+     `##SPEC##` (see roadmap/05 Phase 4). The grammar models source `.bs`; the
+     thing that RUNS on the Roku is the lowered `.brs` already covered by
+     brightscript.ebnf. Record device-confirmed lowering facts in DEVICE_FACTS.md.
+*)

@@ -1,0 +1,4 @@
+' coverage-id: bs.alias.stmt
+' expect: parse
+' BrighterScript alias statement. In 0.72.2 the alias value is a SINGLE identifier.
+alias log = print

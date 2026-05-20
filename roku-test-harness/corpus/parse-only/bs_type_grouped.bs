@@ -1,0 +1,6 @@
+' coverage-id: bs.type.grouped
+' expect: parse
+' BrighterScript parenthesized (grouped) parameter type.
+function render(value as (string or integer)) as string
+    return value.toStr()
+end function

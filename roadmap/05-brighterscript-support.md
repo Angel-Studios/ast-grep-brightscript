@@ -16,6 +16,45 @@ This is the BrightScript pipeline (`roadmap/03`) extended one layer up the langu
 NOT replace `roadmap/03` — it depends on it (the BrighterScript grammar reuses the BrightScript core
 for statement/expression bodies).
 
+## Status (2026-05-20)
+
+**Phases 0–4 are DONE and DEVICE-CONFIRMED. Phases 5–7 are PENDING.**
+
+DONE:
+
+- **Phase 0** — the plain-BrightScript + SceneGraph gaps the audit proved are closed, already
+  device-run.
+- **Phase 1** — an **exhaustive** `grammar/brighterscript.ebnf` is authored (start
+  `BrighterScriptSourceFile`), and `check_ebnf.py` understands the import+shadow relationship (it
+  imports `brightscript.ebnf` and a locally redefined rule shadows the imported one).
+- **Phase 2** — `coverage.json` gained the `brighterscript` layer (37 leaves: 24 device-testable via
+  transpile + 13 parse-only; total leaves now 657), and `check_coverage.py` now scans `.bs`
+  test/corpus sources too.
+- **Phase 3** — the `.bs` corpus lives in the harness (`source/tests/test_bs.bs` for the 24 runnable
+  specs, 13 parse-only files under `corpus/parse-only/`) and `bsc` is the syntax ground truth via
+  `npm run check`.
+- **Phase 4** — **DEVICE-CONFIRMED.** The deploy build (`bsconfig.deploy.json`, called from
+  `scripts/roku-deploy.ts`) transpiles `.bs`→`.brs`, stages, and packages; the result was sideloaded
+  and ran on a Roku (OS 15.1.4) with a clean `##SPEC## event=run-end pass=497 fail=0` — all 24
+  `bs.*` BrighterScript specs PASS. Recorded as DEVICE_FACTS #18.
+
+**Scope change (note):** the original locked decision was "used-subset-first" (model only what
+`angel-roku` uses today). The user **upgraded the scope to spec-EXHAUSTIVE**: the EBNF + coverage now
+model the **FULL** BrighterScript language surface, authored against the BrighterScript compiler
+source (rokucommunity/brighterscript v0.72.2, the same version as the installed `bsc`) as the
+canonical authority. The harness corpus + on-device validation still **start at the real-world
+subset and GROW** (Phase 7). Where the phase bodies below still read "subset-first", read them
+through this lens — the spec/coverage are exhaustive; the runnable/device-validated set grows.
+
+PENDING:
+
+- **Phase 5** — the BrighterScript tree-sitter grammar layer + injection (the `.bs` grammar dialect;
+  inject into SceneGraph `<script>` whose type is brighterscript / `uri` ends `.bs`).
+- **Phase 6** — register/validate ast-grep over `.bs`, and extend `check_grammar` (L3) /
+  `check_parity` (L5) to the brighterscript layer (today they cover only brightscript + scenegraph
+  and naturally skip it).
+- **Phase 7** — grow the runnable/device-validated subset iteratively.
+
 ## Locked decisions (from the scoping discussion)
 
 - **Scope = used-subset-first, then grow.** Model exactly what real BrighterScript code uses today

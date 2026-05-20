@@ -3,7 +3,8 @@
  * Roku sideload automation for roku-test-harness/.
  *
  * Steps (the full `deploy`):
- *   1. package  roku-test-harness/  ->  out/harness.zip  (manifest at zip root)
+ *   1. build    bsc transpiles BrighterScript .bs -> .brs, stages, and packages
+ *              roku-test-harness/ -> out/harness.zip (manifest at zip root)
  *   2. sideload via the dev Application Installer  (HTTP digest auth)
  *   3. launch the installed dev channel via ECP
  *
@@ -54,17 +55,23 @@ async function preflight() {
 
 async function zip() {
   await run(["mkdir", "-p", resolve(ROOT, "out")]);
-  await run(["rm", "-f", ZIP]);
-  const { code, err } = await run(
-    // corpus/ holds device-REJECTED + non-runnable snippets (negative corpus);
-    // it must never be packaged or the dev installer would try to compile it.
-    ["zip", "-qr", ZIP, ".", "-x", "bsconfig.json", "-x", "README.md", "-x", "*.zip", "-x", "out/*", "-x", "corpus/*"],
-    HARNESS,
+  await run(["rm", "-rf", ZIP, resolve(ROOT, "out/staging")]);
+  // Transpile BrighterScript (.bs) -> BrightScript (.brs), stage the channel, and
+  // PACKAGE it into out/harness.zip via bsc (roku-test-harness/bsconfig.deploy.json).
+  // This is what lets us author specs in .bs and run the LOWERED .brs on hardware.
+  // Only the bsconfig `files` glob is staged, so corpus/ (device-rejected / parse-
+  // only snippets) is naturally excluded -- it must never reach the installer.
+  // bsc fails here on bad .bs syntax; the dev installer then compiles the lowered
+  // .brs on upload, so either layer surfaces a real rejection as ground truth.
+  const bsc = resolve(ROOT, "node_modules/.bin/bsc");
+  const { code, out, err } = await run(
+    [bsc, "--project", "roku-test-harness/bsconfig.deploy.json"],
+    ROOT,
   );
-  if (code !== 0) die(`zip failed: ${err.trim()}`);
+  if (code !== 0) die(`bsc transpile/package failed:\n${(out + err).trim()}`);
   const size = Bun.file(ZIP).size;
-  if (!size) die("zip produced an empty archive");
-  log(`✓ packaged out/harness.zip (${(size / 1024).toFixed(1)} KiB)`);
+  if (!size) die("bsc did not produce out/harness.zip");
+  log(`✓ transpiled .bs + packaged out/harness.zip (${(size / 1024).toFixed(1)} KiB)`);
 }
 
 async function install() {

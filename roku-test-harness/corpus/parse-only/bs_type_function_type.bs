@@ -1,0 +1,6 @@
+' coverage-id: bs.type.function_type
+' expect: parse
+' BrighterScript callable (function) type used as a parameter type.
+function apply(fn as function(x as integer) as integer) as integer
+    return fn(1)
+end function

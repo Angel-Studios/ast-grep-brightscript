@@ -10,6 +10,7 @@ parser is generated from them automatically. They are the human- and AI-readable
 |------|-----------|---------------------|
 | `brightscript.ebnf` | The core BrightScript language: lexical tokens, declarations, statements, the precedence-layered expression grammar, the type system, conditional compilation, exception handling. | [Roku BrightScript Language Reference](https://developer.roku.com/dev/docs/brightscript-language-reference) |
 | `scenegraph.ebnf` | Roku SceneGraph component **XML** files, in two layers: (1) a faithful well-formed-XML subset modeled on W3C XML 1.0, and (2) the SceneGraph constraints (`<component>`, `<interface>`/`<field>`/`<function>`, `<script>`, `<children>`, node elements). | [Roku SceneGraph docs](https://developer.roku.com/dev/docs/scenegraph) + the official [RokuSceneGraph.xsd](https://devtools.web.roku.com/schema/RokuSceneGraph.xsd) |
+| `brighterscript.ebnf` | The BrighterScript `.bs` **superset** of BrightScript: `namespace`/`class`/`interface`/`enum`/`const`/`import`/`typecast`/`alias`/`type`, ternary `?:`, `??`, optional-chaining, template & regex literals, `new`, callfunc `@.`, computed AA keys, typed forms, and annotations. A thin **delta** that imports `brightscript.ebnf` and shadows only the seam productions it extends. | the [BrighterScript compiler](https://github.com/rokucommunity/brighterscript) source (v0.72.2 — the same version as the installed `bsc`) |
 
 ## Notation
 
@@ -30,6 +31,21 @@ Each file documents its own notation in the header — read that header first be
 points and defers to the BrightScript grammar by name. When this becomes a tree-sitter grammar,
 this is implemented as **language injection** (inject the BrightScript parser into `<script>` CDATA
 content). See `../.claude/skills/ast-grep-custom-language/SKILL.md`.
+
+## Key relationship: import + shadow (BrighterScript is a true superset)
+
+`brighterscript.ebnf` relates to `brightscript.ebnf` differently from how `scenegraph.ebnf` does.
+SceneGraph **embeds** BrightScript as opaque text inside `<script>` (language injection — the two
+grammars stay separate and meet only at the injection point). BrighterScript instead **imports and
+overrides** BrightScript: it is a *true superset* in the same language. The delta file IMPORTS
+`brightscript.ebnf` and REDEFINES ("shadows") only the seam productions it extends — `TopLevelItem`,
+`Expression`, `Type`, `Primary`, `PostfixSuffix`, `AAEntry`, `AssignmentStatement`,
+`ForEachStatement` — then adds the new BrighterScript productions (namespace/class/interface/enum/
+const/import/typecast/alias/type, ternary `?:`, `??`, template strings, regex literals, `new`,
+callfunc `@.`, computed AA keys, typed forms, annotations, the BrighterScript type grammar). Start
+symbol: `BrighterScriptSourceFile`. Everything not shadowed is inherited verbatim from the imported
+BrightScript spec. `check_ebnf.py` understands this import+shadow model (a locally redefined rule
+shadows the imported one).
 
 ## How these feed the parser
 
@@ -66,7 +82,7 @@ Layered validation — run from the repo root, keep green when editing:
 
 | Level | Command | Checks |
 |------|---------|--------|
-| 0 — internal consistency | `python3 grammar/check_ebnf.py` | every referenced rule is defined, no duplicates, reachability from the start symbol. |
+| 0 — internal consistency | `python3 grammar/check_ebnf.py` | every referenced rule is defined, no duplicates, reachability from the start symbol. Now also checks `brighterscript.ebnf` (start `BrighterScriptSourceFile`) with `brightscript.ebnf` imported — a locally redefined rule shadows the imported one. |
 | 1 — coverage parity | `python3 grammar/check_coverage.py` | every `coverage.json` leaf is implemented: each `device_testable:true` id has a matching `t.spec("<id>","<kind>",…)` in `roku-test-harness/source/tests/*.brs` (and the kind cross-checks against `coverage.json`); each non-device (`device_testable:false`) id has a tagged corpus file under `roku-test-harness/corpus/`. Flags missing / mis-keyed / orphaned ids. **GREEN.** |
 | 2 — faithful to the XSD | `python3 grammar/check_scenegraph_xsd.py` | `scenegraph.ebnf`'s `FieldType` / `BuiltinNodeClass` / `<field>` attributes match the vendored `RokuSceneGraph.xsd` (`--url` refreshes it). |
 | 3 — grammar matches coverage | `python3 grammar/check_grammar.py` | every coverage `kind` is present in the generated `node-types.json` (both grammars) AND every brightscript/stdlib coverage snippet parses with its kind present / syntax-negatives produce ERROR. |
@@ -75,9 +91,17 @@ Layered validation — run from the repo root, keep green when editing:
 
 Levels 0, 1, 2, 3, and 5 are all green; the tree-sitter grammar is now built (Level 3 is the
 `check_grammar` gate that proves it covers the coverage kinds). Level 4 (`bsc`) is advisory only.
+The **BrighterScript layer** is now covered by L0 (`check_ebnf` validates `brighterscript.ebnf`)
+and L1 (`check_coverage` scans `.bs` corpus/spec sources for the `brighterscript` leaves). L3
+(`check_grammar`) and L5 (`check_parity`) currently validate only the brightscript + scenegraph
+grammars and naturally skip the brighterscript layer; they will extend to it once the BrighterScript
+tree-sitter grammar is built (roadmap/05 Phases 5–6).
 
 Ground truth is the device, recorded in [DEVICE_FACTS.md](DEVICE_FACTS.md); where `bsc` and the
 device disagree, the divergence is logged in [BSC_DRIFT.md](BSC_DRIFT.md) (the device always wins).
+The BrighterScript layer is **device-validated via transpile** — the harness transpiles its `.bs`
+specs to `.brs` before sideload, and all 24 device-testable `bs.*` specs run and pass on hardware
+(DEVICE_FACTS.md #18).
 
 ## ⚠️ Items flagged as unverified (confirm against a device / docs before relying on them)
 

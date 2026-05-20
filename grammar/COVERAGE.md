@@ -701,6 +701,73 @@ produce ERROR nodes) and for ast-grep. All are marked `device_testable: false`, 
 
 ---
 
+## BrighterScript layer (`.bs`, device-validated via transpile)
+
+This layer (taxonomy `layer:"brighterscript"`) models the full BrighterScript language surface from
+[`brighterscript.ebnf`](./brighterscript.ebnf) — the `.bs` superset that transpiles to BrightScript.
+Ground truth here is **BOTH** `bsc` (the authority for whether the `.bs` *syntax* is accepted) and
+the **device** (the authority for whether the transpiled `.brs` *runs*).
+
+- **device-testable leaves** are proven on hardware: their `t.spec` lives in a `.bs` module
+  (`roku-test-harness/source/tests/test_bs.bs`) that the deploy build transpiles to `.brs` before
+  sideload — "device-testable **via transpile**". All **24/24 PASS** in a clean run
+  (`##SPEC## event=run-end pass=497 fail=0`; DEVICE_FACTS #18).
+- **parse-only leaves** are bsc-syntax-only: `bsc` accepts the syntax but there is no runtime signal
+  (the construct is a type/erased on transpile/multi-file/etc.), so they are tagged `.bs` corpus
+  files under `roku-test-harness/corpus/parse-only/` rather than device-run.
+
+The layer adds **37 leaves** (24 device + 13 parse-only), bringing the total `coverage.json` leaves
+to **657**.
+
+### device-testable (via transpile)
+
+| id | kind | mode | dimension |
+|----|------|------|-----------|
+| `bs.namespace.func_call` | `NamespaceStatement` | device (transpile) | namespaced function declaration + dotted call |
+| `bs.class.instantiate` | `ClassDeclaration` | device (transpile) | class declaration; new instance; field read |
+| `bs.class.method` | `MethodDeclaration` | device (transpile) | class instance method call |
+| `bs.class.field_init` | `FieldDeclaration` | device (transpile) | class field with initializer + type |
+| `bs.class.extends_super` | `ClassDeclaration` | device (transpile) | subclass extends + super() constructor chain |
+| `bs.class.override` | `MethodDeclaration` | device (transpile) | override of an inherited method |
+| `bs.class.access.public` | `AccessModifier` | device (transpile) | public field readable outside the class |
+| `bs.class.access.private` | `AccessModifier` | device (transpile) | private field read via a public method of the same class |
+| `bs.class.access.protected` | `AccessModifier` | device (transpile) | protected field read by a subclass method |
+| `bs.enum.member` | `EnumMemberDecl` | device (transpile) | enum member value referenced by dotted name |
+| `bs.const.value` | `ConstStatement` | device (transpile) | const declaration referenced as a value |
+| `bs.expr.ternary` | `TernaryExpr` | device (transpile) | ternary conditional expression cond ? a : b |
+| `bs.expr.nullcoalesce` | `NullCoalesceTail` | device (transpile) | null-coalescing a ?? b (left invalid -> right) |
+| `bs.expr.template` | `TemplateString` | device (transpile) | backtick template string literal |
+| `bs.expr.template_interp` | `TemplateInterpolation` | device (transpile) | template string ${expr} interpolation |
+| `bs.expr.new` | `NewExpression` | device (transpile) | new ClassName(args) with constructor args |
+| `bs.expr.aa_computed_key` | `AAEntry` | device (transpile) | associative-array literal with a computed [const] key (bsc BS1144: key must be a compile-time constant) |
+| `bs.assign.typed` | `AssignmentStatement` | device (transpile) | typed local assignment `name as Type = value` |
+| `bs.foreach.typed` | `ForEachStatement` | device (transpile) | for each with a typed loop item |
+| `bs.type.custom_param` | `Type` | device (transpile) | parameter typed with a custom class type |
+| `bs.type.union` | `BsTypeUnion` | device (transpile) | union type annotation `string or integer` |
+| `bs.type.array` | `BsTypePostfix` | device (transpile) | typed-array annotation `integer[]` |
+| `bs.regex.match` | `RegexLiteral` | device (transpile) | regex literal /.../ -> roRegex; isMatch |
+| `bs.annotation.on_func` | `Annotation` | device (transpile) | @annotation attached to a function declaration (stripped on transpile) |
+
+### parse-only / bsc-syntax-only
+
+| id | kind | mode | dimension |
+|----|------|------|-----------|
+| `bs.interface.decl` | `InterfaceDeclaration` | parse-only (bsc) | interface declaration (a type; no runtime) |
+| `bs.interface.field` | `InterfaceField` | parse-only (bsc) | interface typed field signature |
+| `bs.interface.method` | `InterfaceMethod` | parse-only (bsc) | interface method signature |
+| `bs.type.inline_interface` | `InlineInterfaceType` | parse-only (bsc) | inline (anonymous) interface type annotation |
+| `bs.type.function_type` | `TypedFunctionType` | parse-only (bsc) | callable/function type annotation |
+| `bs.type.grouped` | `GroupedType` | parse-only (bsc) | parenthesized (grouped) type annotation |
+| `bs.typecast.stmt` | `TypecastStatement` | parse-only (bsc) | scope-level typecast statement (erased on transpile) |
+| `bs.alias.stmt` | `AliasStatement` | parse-only (bsc) | alias statement (single-identifier value in 0.72.2) |
+| `bs.type_alias.stmt` | `TypeAliasStatement` | parse-only (bsc) | type alias statement (erased on transpile) |
+| `bs.import.stmt` | `ImportStatement` | parse-only (bsc) | import statement (multi-file; resolved at compile) |
+| `bs.expr.tagged_template` | `TaggedTemplate` | parse-only (bsc) | tagged template string (tag function before backtick) |
+| `bs.expr.callfunc` | `CallfuncSuffix` | parse-only (bsc) | callfunc operator node@.method(args) (transpiles to .callFunc) |
+| `bs.source_literal.function_name` | `BsSourceLiteral` | parse-only (bsc) | BrighterScript source literal (e.g. FUNCTION_NAME) |
+
+---
+
 ## Summary
 
 The same leaves are encoded machine-readably in [`coverage.json`](./coverage.json). See that file's

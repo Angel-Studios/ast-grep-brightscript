@@ -206,22 +206,48 @@ export default grammar({
       seq('<', 'component', repeat($.ComponentAttribute), '/>'),
     ),
 
+    // The child kinds may appear in ANY order / interleaved (real files put
+    // <script> before <interface>, non-XSD order — sg.component.child_order).
     _ComponentContent: $ => choice(
       $.Interface,
       $.Script,
       $.Children,
+      $.Customization,
       $.Comment,
       $.PI,
     ),
 
+    // <customization> — the Instant-Resume element (suspendhandler / resumehandler)
+    // that is NOT in the XSD (sg.component.customization). Parsed as a SceneGraph
+    // child element; its attributes are generic name="value" pairs.
+    Customization: $ => choice(
+      seq(
+        '<', 'customization', repeat($.CustomizationAttribute), '>',
+        repeat(choice($.Comment, $.PI)),
+        '</', 'customization', '>',
+      ),
+      seq('<', 'customization', repeat($.CustomizationAttribute), '/>'),
+    ),
+
+    // <customization> attributes: the Instant-Resume suspend/resume handlers (each
+    // names a BrightScript callback), plus a generic name="value" fallthrough.
+    CustomizationAttribute: $ => choice(
+      seq(field('name', 'suspendhandler'), $.Eq, field('value', $.AttValue)),
+      seq(field('name', 'resumehandler'), $.Eq, field('value', $.AttValue)),
+      seq(field('name', $.Name), $.Eq, field('value', $.AttValue)),
+    ),
+
     // Component attributes. `name` required; `extends` value is captured via
-    // ExtendsValue; others are plain AttValues. Each alternative is a
+    // ExtendsValue; others are plain AttValues. A generic/namespaced attribute
+    // (e.g. xmlns:xsi, xsi:noNamespaceSchemaLocation — sg.component.attr_namespaced)
+    // falls through to the last alternative. Each alternative is a
     // ComponentAttribute node (the coverage kind).
     ComponentAttribute: $ => choice(
       seq(field('name', 'name'), $.Eq, field('value', $.AttValue)),
       seq(field('name', 'extends'), $.Eq, field('value', $.ExtendsAttValue)),
       seq(field('name', 'initialFocus'), $.Eq, field('value', $.AttValue)),
       seq(field('name', 'version'), $.Eq, field('value', $.AttValue)),
+      seq(field('name', $.Name), $.Eq, field('value', $.AttValue)),
     ),
 
     // `extends` value: a built-in node class OR a user component name. Both are

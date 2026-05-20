@@ -25,10 +25,17 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# (filename relative to this script, [start symbols]) for the default run.
+# (filename relative to this script, [start symbols], [imported ebnf files]) for
+# the default run. The optional third element lists sibling .ebnf specs whose
+# rule definitions this target may reference WITHOUT redefining them ("imports").
+# A locally redefined rule SHADOWS the imported one (true grammar override) -- so
+# brighterscript.ebnf layers onto brightscript.ebnf by redefining only the few
+# "seam" productions it extends (Expression, Type, Primary, ...) and referencing
+# everything else, mirroring how a superset language extends its base.
 DEFAULT_TARGETS = [
-    ("brightscript.ebnf", ["SourceFile"]),
-    ("scenegraph.ebnf", ["SGDocument", "document"]),
+    ("brightscript.ebnf", ["SourceFile"], []),
+    ("scenegraph.ebnf", ["SGDocument", "document"], []),
+    ("brighterscript.ebnf", ["BrighterScriptSourceFile"], ["brightscript.ebnf"]),
 ]
 
 
@@ -43,39 +50,59 @@ def strip_noise(text):
     return text
 
 
-def analyze(path, starts):
+def parse_defs(path):
+    """Return (defs list, duplicate names, {name: rhs body}) for one .ebnf file."""
     clean = strip_noise(open(path, encoding="utf-8").read())
     items = list(re.finditer(r"(?m)^\s*([A-Za-z_]\w*)\s*::=", clean))
     defs, dups, bodies = [], [], {}
     for i, m in enumerate(items):
         name = m.group(1)
-        if name in defs:
+        if name in bodies:
             dups.append(name)
         defs.append(name)
         end = items[i + 1].start() if i + 1 < len(items) else len(clean)
         bodies[name] = clean[m.end():end]
+    return defs, dups, bodies
+
+
+def analyze(path, starts, imports=()):
+    defs, dups, bodies = parse_defs(path)
     defined = set(defs)
+
+    # Imported specs contribute defined names + bodies, but a LOCAL definition
+    # shadows an imported one (override). Imported rules are not re-validated
+    # here (their own target does that); we only need them to resolve refs and
+    # to follow reachability into the parts this spec reuses.
+    import_defined, import_bodies = set(), {}
+    for imp in imports:
+        ipath = os.path.join(os.path.dirname(path), imp)
+        idefs, _, ibodies = parse_defs(ipath)
+        import_defined |= set(idefs)
+        for k, v in ibodies.items():
+            import_bodies.setdefault(k, v)
+    known = defined | import_defined
 
     refs = set()
     for body in bodies.values():
         refs |= set(re.findall(r"[A-Za-z_]\w*", body))
-    undefined = sorted(refs - defined)
+    undefined = sorted(refs - known)
 
-    seen, stack = set(), [s for s in starts if s in defined]
+    resolve = {**import_bodies, **bodies}  # local wins -> shadowing
+    seen, stack = set(), [s for s in starts if s in known]
     while stack:
         n = stack.pop()
         if n in seen:
             continue
         seen.add(n)
-        stack += [r for r in re.findall(r"[A-Za-z_]\w*", bodies[n]) if r in defined]
-    unreachable = sorted(defined - seen)
+        stack += [r for r in re.findall(r"[A-Za-z_]\w*", resolve.get(n, "")) if r in known]
+    unreachable = sorted(defined - seen)  # only this spec's own rules
 
     return {
         "defined": len(defined),
         "undefined": undefined,
         "duplicates": sorted(set(dups)),
         "unreachable": unreachable,
-        "missing_start": [s for s in starts if s not in defined],
+        "missing_start": [s for s in starts if s not in known],
     }
 
 
@@ -96,18 +123,22 @@ def report(path, starts, r):
 
 
 def parse_target(arg):
-    path, _, starts = arg.partition(":")
-    return path, [s for s in starts.split(",") if s]
+    # FILE:Start1,Start2[:import1.ebnf,import2.ebnf]
+    path, _, rest = arg.partition(":")
+    starts_part, _, imports_part = rest.partition(":")
+    starts = [s for s in starts_part.split(",") if s]
+    imports = [i for i in imports_part.split(",") if i]
+    return path, starts, imports
 
 
 def main(argv):
     if argv:
         targets = [parse_target(a) for a in argv]
     else:
-        targets = [(os.path.join(HERE, f), s) for f, s in DEFAULT_TARGETS]
+        targets = [(os.path.join(HERE, f), s, imp) for f, s, imp in DEFAULT_TARGETS]
     any_err = False
-    for path, starts in targets:
-        any_err |= report(path, starts, analyze(path, starts))
+    for path, starts, imports in targets:
+        any_err |= report(path, starts, analyze(path, starts, imports))
     print(f"\n{'FAIL: structural errors found.' if any_err else 'PASS: all specs internally consistent.'}")
     return 1 if any_err else 0
 

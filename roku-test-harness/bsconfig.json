@@ -6,7 +6,9 @@
   "files": [
     "manifest",
     "source/**/*.brs",
+    "source/**/*.bs",
     "components/**/*.brs",
+    "components/**/*.bs",
     "components/**/*.xml"
   ],
   "createPackage": false,

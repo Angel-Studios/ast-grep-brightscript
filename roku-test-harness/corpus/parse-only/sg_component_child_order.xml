@@ -1,0 +1,11 @@
+<!-- coverage-id: sg.component.child_order expect: parse -->
+<!-- Relaxed child order: <script> appears BEFORE <interface>, which the XSD's
+     deterministic sequence (interface? script* children?) forbids, but 42 real
+     files in the angel-roku audit do this. ComponentContent is modeled as an
+     unordered repetition so any order / interleaving parses. -->
+<component name="C" extends="Scene">
+  <script type="text/brightscript" uri="pkg:/source/x.brs" />
+  <interface>
+    <field id="a" type="integer" />
+  </interface>
+</component>

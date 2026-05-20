@@ -5,10 +5,15 @@
 This script asserts the test-harness actually implements every leaf:
 
   * device_testable:true  -> a `t.spec("<id>", "<kind>", ...)` call exists in
-    roku-test-harness/source/tests/*.brs, AND the kind matches coverage.json.
+    roku-test-harness/source/tests/*.brs OR *.bs, AND the kind matches
+    coverage.json. (BrighterScript leaves, layer="brighterscript", are
+    "device-testable VIA TRANSPILE": their t.spec lives in a `.bs` module that
+    the build transpiles to `.brs` before sideloading; the lowered code runs on
+    the device exactly like the plain-BrightScript specs.)
   * device_testable:false -> a corpus file under roku-test-harness/corpus/
-    is tagged `coverage-id: <id>` (these can't run on-device; plan 03's
-    tree-sitter grammar asserts ERROR nodes / clean parses against them).
+    is tagged `coverage-id: <id>` (.brs/.bs/.xml; parse-only / bsc-syntax-only
+    leaves that can't run on-device; plan 03/05's tree-sitter grammar asserts
+    ERROR nodes / clean parses against them).
 
 Exit status is non-zero (and a grouped report is printed) if anything is
 missing, mis-keyed, or orphaned. Run from the repo root:
@@ -46,7 +51,10 @@ def scan_specs() -> dict[str, str]:
     """
     specs: dict[str, str] = {}
     dupes: set[str] = set()
-    for brs in sorted(TESTS_DIR.glob("*.brs")):
+    # .brs = plain-BrightScript spec modules; .bs = BrighterScript spec modules
+    # (transpiled into the channel before sideload -> device-tested via transpile).
+    test_files = sorted(TESTS_DIR.glob("*.brs")) + sorted(TESTS_DIR.glob("*.bs"))
+    for brs in test_files:
         for sid, kind in SPEC_RE.findall(brs.read_text()):
             if sid in specs:
                 dupes.add(sid)
@@ -59,7 +67,7 @@ def scan_corpus() -> set[str]:
     ids: set[str] = set()
     if CORPUS_DIR.exists():
         for f in CORPUS_DIR.rglob("*"):
-            if f.is_file() and f.suffix in (".brs", ".xml"):
+            if f.is_file() and f.suffix in (".brs", ".bs", ".xml"):
                 for m in CORPUS_ID_RE.findall(f.read_text()):
                     ids.add(m)
     return ids

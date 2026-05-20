@@ -1,0 +1,6 @@
+' coverage-id: bs.interface.method
+' expect: parse
+' BrighterScript interface containing a method signature.
+interface Region
+    function area() as float
+end interface

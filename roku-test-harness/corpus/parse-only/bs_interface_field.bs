@@ -1,0 +1,6 @@
+' coverage-id: bs.interface.field
+' expect: parse
+' BrighterScript interface containing a typed field signature.
+interface Entity
+    id as integer
+end interface

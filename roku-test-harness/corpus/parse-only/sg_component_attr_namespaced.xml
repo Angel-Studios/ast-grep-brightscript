@@ -1,0 +1,9 @@
+<!-- coverage-id: sg.component.attr_namespaced expect: parse -->
+<!-- Generic / namespaced <component> attributes: the XML-Schema-instance
+     attributes xmlns:xsi and xsi:noNamespaceSchemaLocation appear in real files
+     (14+ in the angel-roku audit). They parse via the generic ComponentAttribute
+     alternative (Name Eq AttValue); no namespace resolution is performed. -->
+<component name="C" extends="Scene"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="RokuSceneGraph.xsd">
+</component>

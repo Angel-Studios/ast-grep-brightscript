@@ -679,11 +679,176 @@
         },
         {
           "type": "SYMBOL",
+          "name": "Customization"
+        },
+        {
+          "type": "SYMBOL",
           "name": "Comment"
         },
         {
           "type": "SYMBOL",
           "name": "PI"
+        }
+      ]
+    },
+    "Customization": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "<"
+            },
+            {
+              "type": "STRING",
+              "value": "customization"
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "SYMBOL",
+                "name": "CustomizationAttribute"
+              }
+            },
+            {
+              "type": "STRING",
+              "value": ">"
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "Comment"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "PI"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "STRING",
+              "value": "</"
+            },
+            {
+              "type": "STRING",
+              "value": "customization"
+            },
+            {
+              "type": "STRING",
+              "value": ">"
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "<"
+            },
+            {
+              "type": "STRING",
+              "value": "customization"
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "SYMBOL",
+                "name": "CustomizationAttribute"
+              }
+            },
+            {
+              "type": "STRING",
+              "value": "/>"
+            }
+          ]
+        }
+      ]
+    },
+    "CustomizationAttribute": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "name",
+              "content": {
+                "type": "STRING",
+                "value": "suspendhandler"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "Eq"
+            },
+            {
+              "type": "FIELD",
+              "name": "value",
+              "content": {
+                "type": "SYMBOL",
+                "name": "AttValue"
+              }
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "name",
+              "content": {
+                "type": "STRING",
+                "value": "resumehandler"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "Eq"
+            },
+            {
+              "type": "FIELD",
+              "name": "value",
+              "content": {
+                "type": "SYMBOL",
+                "name": "AttValue"
+              }
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "name",
+              "content": {
+                "type": "SYMBOL",
+                "name": "Name"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "Eq"
+            },
+            {
+              "type": "FIELD",
+              "name": "value",
+              "content": {
+                "type": "SYMBOL",
+                "name": "AttValue"
+              }
+            }
+          ]
         }
       ]
     },
@@ -774,6 +939,31 @@
               "content": {
                 "type": "STRING",
                 "value": "version"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "Eq"
+            },
+            {
+              "type": "FIELD",
+              "name": "value",
+              "content": {
+                "type": "SYMBOL",
+                "name": "AttValue"
+              }
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "name",
+              "content": {
+                "type": "SYMBOL",
+                "name": "Name"
               }
             },
             {

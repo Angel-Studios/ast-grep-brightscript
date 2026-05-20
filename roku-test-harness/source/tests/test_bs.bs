@@ -1,0 +1,219 @@
+' test_bs.bs - BrighterScript spec module (device-tested VIA TRANSPILE).
+'
+' Authored in BrighterScript (.bs). The build (scripts/roku-deploy.ts ->
+' bsconfig.deploy.json) transpiles this to .brs and stages it BEFORE the harness
+' is sideloaded, so every spec here RUNS on the Roku exactly like the plain-
+' BrightScript modules -- this is the indirect, on-device proof that the modeled
+' BrighterScript constructs are valid (bsc accepts the .bs; the device runs the
+' lowered .brs and emits ##SPEC## status=PASS).
+'
+' Ids/kinds are keyed 1:1 to the layer="brighterscript" leaves in
+' grammar/coverage.json (grammar/check_coverage.py asserts parity, scanning .bs).
+' Registered into the run by source/tests/TestSuite.brs (test_bs_all).
+'
+' Only the device-runnable subset lives here; parse-only / bsc-syntax-only
+' BrighterScript leaves (interface, typecast, alias, import, ...) are tagged
+' corpus files under roku-test-harness/corpus/ (they have no runtime signal).
+
+' ===========================================================================
+' Constructs under test (all top-level -> transpile to mangled globals)
+' ===========================================================================
+
+namespace bsns
+    function answer() as integer
+        return 42
+    end function
+end namespace
+
+class BsCounter
+    x = 7
+end class
+
+class BsInit
+    count as integer = 9
+end class
+
+class BsAdder
+    function add(a, b) as integer
+        return a + b
+    end function
+end class
+
+class BsBase
+    x = 0
+    sub new()
+        m.x = 1
+    end sub
+end class
+
+class BsSub extends BsBase
+    sub new()
+        super()           ' bsc requires super() (not super.new()) and before any m use
+        m.x = m.x + 1
+    end sub
+end class
+
+class BsOvBase
+    function v() as integer
+        return 1
+    end function
+end class
+
+class BsOvSub extends BsOvBase
+    override function v() as integer
+        return 2
+    end function
+end class
+
+class BsPub
+    public n as integer = 3
+end class
+
+class BsPriv
+    private secret as integer = 4
+    public function get() as integer
+        return m.secret
+    end function
+end class
+
+class BsProtBase
+    protected p as integer = 5
+end class
+
+class BsProtSub extends BsProtBase
+    public function get() as integer
+        return m.p
+    end function
+end class
+
+class BsMaker
+    v = 0
+    sub new(a as integer)
+        m.v = a
+    end sub
+end class
+
+class BsHasV
+    v = 6
+end class
+
+enum BsColor
+    red = 5
+    green = 6
+end enum
+
+const BS_K = 11
+const BS_KEY = "x"      ' computed-AA-key must be a compile-time constant (bsc BS1144)
+
+function bsTakesCustom(c as BsHasV) as integer
+    return c.v
+end function
+
+function bsTakesUnion(v as string or integer) as integer
+    return 1
+end function
+
+function bsTakesArray(a as integer[]) as integer
+    return a[0]
+end function
+
+@bsMeta
+function bsAnnotated() as integer
+    return 4
+end function
+
+' ===========================================================================
+' Spec entry point (called by TestSuite_All via the runner)
+' ===========================================================================
+sub test_bs_all(t as Object)
+    ' ----- namespace -------------------------------------------------------
+    t.spec("bs.namespace.func_call", "NamespaceStatement", "namespaced function call")
+    t.assertEqual("bs.namespace.func_call: bsns.answer()", bsns.answer(), 42)
+
+    ' ----- class -----------------------------------------------------------
+    t.spec("bs.class.instantiate", "ClassDeclaration", "new instance + field read")
+    t.assertEqual("bs.class.instantiate: (new BsCounter()).x", (new BsCounter()).x, 7)
+
+    t.spec("bs.class.method", "MethodDeclaration", "instance method call")
+    t.assertEqual("bs.class.method: add(2,3)", (new BsAdder()).add(2, 3), 5)
+
+    t.spec("bs.class.field_init", "FieldDeclaration", "typed field initializer")
+    t.assertEqual("bs.class.field_init: count", (new BsInit()).count, 9)
+
+    t.spec("bs.class.extends_super", "ClassDeclaration", "extends + super() chain")
+    t.assertEqual("bs.class.extends_super: BsSub.x", (new BsSub()).x, 2)
+
+    t.spec("bs.class.override", "MethodDeclaration", "override inherited method")
+    t.assertEqual("bs.class.override: BsOvSub.v()", (new BsOvSub()).v(), 2)
+
+    t.spec("bs.class.access.public", "AccessModifier", "public field read outside")
+    t.assertEqual("bs.class.access.public: BsPub.n", (new BsPub()).n, 3)
+
+    t.spec("bs.class.access.private", "AccessModifier", "private field via public getter")
+    t.assertEqual("bs.class.access.private: BsPriv.get()", (new BsPriv()).get(), 4)
+
+    t.spec("bs.class.access.protected", "AccessModifier", "protected field via subclass")
+    t.assertEqual("bs.class.access.protected: BsProtSub.get()", (new BsProtSub()).get(), 5)
+
+    ' ----- enum / const ----------------------------------------------------
+    t.spec("bs.enum.member", "EnumMemberDecl", "enum member value")
+    t.assertEqual("bs.enum.member: BsColor.red", BsColor.red, 5)
+
+    t.spec("bs.const.value", "ConstStatement", "const value reference")
+    t.assertEqual("bs.const.value: BS_K", BS_K, 11)
+
+    ' ----- expressions -----------------------------------------------------
+    t.spec("bs.expr.ternary", "TernaryExpr", "ternary cond ? a : b")
+    yTern = (1 = 1) ? 3 : 4
+    t.assertEqual("bs.expr.ternary: yTern", yTern, 3)
+
+    t.spec("bs.expr.nullcoalesce", "NullCoalesceTail", "null coalescing a ?? b")
+    aMaybe = invalid
+    yNc = aMaybe ?? 8
+    t.assertEqual("bs.expr.nullcoalesce: yNc", yNc, 8)
+
+    t.spec("bs.expr.template", "TemplateString", "backtick template string")
+    t.assertEqual("bs.expr.template: `abc`", `abc`, "abc")
+
+    t.spec("bs.expr.template_interp", "TemplateInterpolation", "template ${expr} interpolation")
+    nInterp = 2
+    t.assertEqual("bs.expr.template_interp: `v${n}`", `v${nInterp}`, "v2")
+
+    t.spec("bs.expr.new", "NewExpression", "new ClassName(args)")
+    t.assertEqual("bs.expr.new: BsMaker(9).v", (new BsMaker(9)).v, 9)
+
+    t.spec("bs.expr.aa_computed_key", "AAEntry", "AA literal with computed [const] key")
+    aaComputed = { [BS_KEY]: 5 }
+    t.assertEqual("bs.expr.aa_computed_key: aa.x", aaComputed.x, 5)
+
+    ' ----- typed forms -----------------------------------------------------
+    t.spec("bs.assign.typed", "AssignmentStatement", "typed local assignment")
+    xTyped as integer = 12
+    t.assertEqual("bs.assign.typed: xTyped", xTyped, 12)
+
+    t.spec("bs.foreach.typed", "ForEachStatement", "typed for-each loop item")
+    sumTyped = 0
+    for each num as integer in [1, 2, 3]
+        sumTyped = sumTyped + num
+    end for
+    t.assertEqual("bs.foreach.typed: sum", sumTyped, 6)
+
+    ' ----- type annotations ------------------------------------------------
+    t.spec("bs.type.custom_param", "Type", "custom (class) parameter type")
+    t.assertEqual("bs.type.custom_param: bsTakesCustom", bsTakesCustom(new BsHasV()), 6)
+
+    t.spec("bs.type.union", "BsTypeUnion", "union type `string or integer`")
+    t.assertEqual("bs.type.union: bsTakesUnion", bsTakesUnion(2), 1)
+
+    t.spec("bs.type.array", "BsTypePostfix", "typed array `integer[]`")
+    t.assertEqual("bs.type.array: bsTakesArray", bsTakesArray([7]), 7)
+
+    ' ----- regex literal ---------------------------------------------------
+    t.spec("bs.regex.match", "RegexLiteral", "regex literal /.../ -> roRegex.isMatch")
+    rx = /\d+/
+    t.assertTrue("bs.regex.match: isMatch a9", rx.isMatch("a9"))
+
+    ' ----- annotation ------------------------------------------------------
+    t.spec("bs.annotation.on_func", "Annotation", "@annotation on a function declaration")
+    t.assertEqual("bs.annotation.on_func: bsAnnotated()", bsAnnotated(), 4)
+end sub

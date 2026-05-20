@@ -1,0 +1,4 @@
+' coverage-id: bs.type_alias.stmt
+' expect: parse
+' BrighterScript type alias statement.
+type Id = string or integer

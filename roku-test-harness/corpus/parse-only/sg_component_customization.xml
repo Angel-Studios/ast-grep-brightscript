@@ -1,0 +1,7 @@
+<!-- coverage-id: sg.component.customization expect: parse -->
+<!-- Instant-Resume <customization> element: suspendhandler / resumehandler name
+     BrightScript callbacks invoked on app suspend/resume. NOT in RokuSceneGraph.xsd,
+     yet present in real component files. Parsed as a SceneGraph child element. -->
+<component name="C" extends="Scene">
+  <customization suspendhandler="onSuspend" resumehandler="onResume" />
+</component>

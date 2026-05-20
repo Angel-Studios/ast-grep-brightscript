@@ -174,7 +174,11 @@ CDStart    ::= '<![CDATA['
 CData      ::= ( Char* - ( Char* ']]>' Char* ) )
 CDEnd      ::= ']]>'
 
-(* Processing instruction (the XML declaration is handled separately below). *)
+(* Processing instruction (the XML declaration is handled separately below). The
+   PITarget is any Name except 'xml' (case-insensitively), so a NON-xml prolog PI
+   such as `<?rokuml?>` (seen in real component files, with no data after the
+   target) is a valid PI -- it appears in the prolog via `Misc` (Misc ::= ...| PI)
+   ahead of the root <component>. See coverage leaf sg.prolog.rokuml_pi. *)
 PI         ::= '<?' PITarget ( S ( Char* - ( Char* '?>' Char* ) ) )? '?>'
 PITarget   ::= Name - ( ( 'X' | 'x' ) ( 'M' | 'm' ) ( 'L' | 'l' ) )
 
@@ -293,6 +297,13 @@ SGDocument ::= prolog Component Misc*
  *   <interface>?  then  <script>*  then  <children>?
  * Comments / PI / whitespace may be interleaved as ordinary XML content.
  *
+ * RELAXED CHILD ORDER (see implementer note 7): real-world component files put
+ * <script> BEFORE <interface> (42 such files in the angel-roku audit), which the
+ * XSD's deterministic sequence forbids. ComponentContent below therefore models
+ * the children as an UNORDERED repetition of the child kinds, so any order /
+ * interleaving (script-before-interface, etc.) parses. The XSD order is the
+ * normative authoring guidance, not a parse constraint.
+ *
  * Two forms: the normal paired <component>...</component>, and the self-closing
  * EMPTY form <component .../> (an EmptyElemTag specialized to <component>). The
  * empty form declares a component with no interface/script/children; it appears
@@ -302,19 +313,42 @@ Component ::= '<' 'component' ( S ComponentAttribute )* S? '>'
               '</' 'component' S? '>'
             | '<' 'component' ( S ComponentAttribute )* S? '/>'
 
+(* Unordered: the child kinds may appear in any order, repeated, interleaved with
+   Misc/Comment. (XSD order is interface? script* children?; relaxed here -- see
+   the RELAXED CHILD ORDER note above and implementer note 7.) *)
 ComponentContent ::=
-      ( Misc | Comment )*
-      Interface?
-      ( ( Misc | Comment )* Script )*
-      ( ( Misc | Comment )* Children )?
-      ( Misc | Comment )*
+      ( Interface | Script | Children | Customization | Misc | Comment )*
 
-(* Component attributes. `name` is required; order is not significant in XML. *)
+(* <customization> -- the Instant-Resume element carrying `suspendhandler` /
+   `resumehandler` attributes (names of BrightScript callbacks invoked on app
+   suspend/resume). This element is NOT in the RokuSceneGraph.xsd at all, yet
+   appears in real component files; it is modeled here as a SceneGraph child
+   element with generic name="value" attributes. See coverage leaf
+   sg.component.customization. *)
+Customization ::= '<' 'customization' ( S CustomizationAttribute )* S? '>'
+                      ( Misc | Comment )*
+                  '</' 'customization' S? '>'
+                | '<' 'customization' ( S CustomizationAttribute )* S? '/>'
+CustomizationAttribute ::=
+      ( 'suspendhandler' Eq AttValue )    (* names a BrightScript suspend callback *)
+    | ( 'resumehandler'  Eq AttValue )    (* names a BrightScript resume  callback *)
+    | ( Name Eq AttValue )                (* tolerate any other attribute *)
+
+(* Component attributes. `name` is required; order is not significant in XML.
+   The final, GENERIC/NAMESPACED alternative admits any well-formed attribute --
+   notably the namespaced XML-Schema attributes `xmlns:xsi` and
+   `xsi:noNamespaceSchemaLocation` that real files carry (14+ files in the
+   angel-roku audit). The generic `Name` production already permits ':' so a
+   prefixed name tokenizes as one Name (see implementer note 5). This CORRECTS
+   the previous note-5 claim that namespaced names never appear -- they do, and
+   are accepted structurally (no namespace resolution is performed). See coverage
+   leaf sg.component.attr_namespaced. *)
 ComponentAttribute ::=
       ( 'name'         Eq AttValue )      (* REQUIRED *)
     | ( 'extends'      Eq ExtendsAttValue )
     | ( 'initialFocus' Eq AttValue )
     | ( 'version'      Eq AttValue )
+    | ( Name           Eq AttValue )      (* generic / namespaced, e.g. xmlns:xsi *)
 
 (* `extends` value: a built-in node class name OR a user-defined component name.
  * The XSD enumerates the built-in classes (below). User-defined component names
@@ -672,12 +706,21 @@ FieldInitValue ::= AttValue
  *      <script> code, not in markup.
  *
  * 5. NAMESPACES
- *    - SceneGraph component files do NOT use XML namespaces in practice: there is
- *      no default-namespace declaration and no prefixed names in the framework
- *      vocabulary. The generic `Name` production permits a ':' (so prefixed names
- *      parse), but no SceneGraph semantics are attached to namespace prefixes.
- *      Treat any ':' in a Name as an ordinary character; do not implement
- *      namespace resolution.
+ *    - CORRECTED (angel-roku audit, 2026-05-20): real component files DO carry
+ *      namespaced/prefixed attributes -- most commonly the XML-Schema-instance
+ *      attributes on <component>:
+ *          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ *          xsi:noNamespaceSchemaLocation="...xsd"
+ *      (14+ files in the audit). The earlier wording here -- that SceneGraph
+ *      files never use namespaces / never have prefixed names -- was WRONG and
+ *      caused the strict `ComponentAttribute` enumeration to reject these files.
+ *      `ComponentAttribute` now has a generic `Name Eq AttValue` alternative so
+ *      such attributes parse (see sg.component.attr_namespaced).
+ *    - The framework vocabulary itself (component/interface/field/...) is still
+ *      unprefixed, and no SceneGraph SEMANTICS are attached to namespace prefixes.
+ *      The generic `Name` production permits a ':' (so prefixed names tokenize as
+ *      a single Name). Treat any ':' in a Name as an ordinary character; do not
+ *      implement namespace resolution. The prefix is preserved verbatim.
  *
  * 6. PROLOG / DOCTYPE / DTD
  *    - The XML declaration (<?xml ...?>) is optional but conventional; encoding
@@ -690,10 +733,14 @@ FieldInitValue ::= AttValue
  *
  * 7. ELEMENT ORDER
  *    - The XSD imposes a deterministic order within <component>:
- *      <interface>? then <script>* then <children>?. Real-world files generally
- *      follow this, and the grammar above models it. If you want to be lenient
- *      (accept these children in any order, as many editors tolerate), relax
- *      `ComponentContent` to an unordered repetition of the three child kinds.
+ *      <interface>? then <script>* then <children>?. CORRECTED (angel-roku audit,
+ *      2026-05-20): real-world files do NOT always follow this -- 42 audited files
+ *      place <script> BEFORE <interface>. `ComponentContent` is therefore modeled
+ *      as an UNORDERED repetition of the child kinds
+ *      (Interface | Script | Children | Customization | Misc | Comment)* so any
+ *      order / interleaving parses. The XSD order remains the normative authoring
+ *      guidance (and what a strict XSD validator enforces), but it is NOT a parse
+ *      constraint here. See coverage leaf sg.component.child_order.
  *
  * 8. FIELD-TYPE RUNTIME SHAPES (NOT A PARSE CONCERN, RECORDED FOR LINTERS)
  *    - DEVICE-CONFIRMED (DEVICE_FACTS.md #13) on Roku OS 15.1.4: a scalar

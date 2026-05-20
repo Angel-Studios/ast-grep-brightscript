@@ -141,6 +141,14 @@ sub test_stmt_all(t as Object)
     print pos(0)
     t.assertTrue("stmt.print.pos: runs", true)
 
+    ' Whitespace/empty separator between print items: a space alone separates two
+    ' print items (no ';' or ','). Output goes to the console; assert the path ran.
+    t.spec("stmt.print.sep_ws", "PrintItemList", "whitespace/empty separator between print items")
+    pa = "alpha"
+    pb = "beta"
+    print "x " pa " y " pb
+    t.assertTrue("stmt.print.sep_ws: runs", true)
+
     ' ======================================================================
     ' if
     ' ======================================================================
@@ -382,6 +390,16 @@ sub test_stmt_all(t as Object)
     goto sth_after_label
     sth_after_label:
     t.assertTrue("stmt.label.def: runs", true)
+
+    ' Label inside a loop body: a Label is a BlockItem, so it may appear inside a
+    ' for/while body. Run the loop normally; assert it accumulated as expected.
+    t.spec("stmt.label.in_loop", "Label", "label inside a loop body")
+    s = 0
+    for i = 1 to 3
+        sth_loop_label:
+        s = s + i
+    end for
+    t.assertEqual("stmt.label.in_loop: s", s, 6)
 
     t.spec("stmt.goto.basic", "GotoStatement", "goto label jump")
     i = 0

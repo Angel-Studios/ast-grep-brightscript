@@ -7,7 +7,8 @@ A runnable Roku SceneGraph channel that is simultaneously:
    emits a structured `##SPEC##` result line per construct to the debug console
    (consumed by `../roku-listener/`), and hands the results to `MainScene`, which
    renders them as a terse, server-boot-log style view — one
-   `[ ok ]` / `[FAIL] <spec.id>` line per spec (green pass / red fail) in the
+   `<spec.id>` line per spec (green pass / red fail; color is the only status
+   indicator) in the
    bundled **Ubuntu Mono** font, packed into columns under an `n ok  n fail
    (m specs)` summary. Sideload it onto a real Roku and read the result both off
    the TV and off the debug console.
@@ -113,7 +114,7 @@ A compile-only check that needs **no device**: `npm run check` runs BrighterScri
 
 **On the TV.** `MainScene` renders a terse boot-log: a title, an
 `n ok  n fail  (m specs)` **summary** (green when all pass, red if any fail), and
-one `[ ok ]` / `[FAIL] <spec.id>` row per spec laid out in columns that fill down
+one `<spec.id>` row per spec (green pass / red fail) laid out in columns that fill down
 to the bottom of the screen and then wrap to a new column on the right. A failed
 row appends its `detail` after the id. Press **OK** to re-render. Colors: green
 `0x6FCF6FFF`, red `0xE05555FF` (RGBA `0xRRGGBBAA`).

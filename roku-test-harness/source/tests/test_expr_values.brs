@@ -67,6 +67,15 @@ sub test_expr_values_all(t as Object)
     y = mc[0].f()
     t.assertEqual("expr.postfix.mixed_chain", y, 3)
 
+    ' IIFE: a CallSuffix '()' applied to a parenthesized anonymous function. The
+    ' AnonymousFunction is a Primary, so (function()...end function) is a ParenExpr
+    ' (also a Primary), and the trailing () is an ordinary CallSuffix.
+    t.spec("expr.iife.call", "CallSuffix", "IIFE: call suffix on a parenthesized anon function")
+    y = (function()
+        return 7
+    end function)()
+    t.assertEqual("expr.iife.call", y, 7)
+
     ' =====================================================================
     ' OPTIONAL CHAINING  (NO space before '?' or it means print)
     ' =====================================================================
@@ -209,6 +218,15 @@ sub test_expr_values_all(t as Object)
     y = anv.p.q
     t.assertEqual("expr.aa.nested", y, 3)
 
+    ' comma-less, newline-separated AA entries: entries on their own lines with NO
+    ' commas (the bare-EOS ElementSep alternative). value:2 == count().
+    t.spec("expr.aa.newline_sep", "ElementSep", "comma-less, newline-separated AA entries")
+    ans2 = {
+        x: 1
+        y: 2
+    }
+    t.assertEqual("expr.aa.newline_sep", ans2.count(), 2)
+
     ' =====================================================================
     ' ANONYMOUS FUNCTION / SUB EXPRESSIONS
     ' =====================================================================
@@ -244,6 +262,17 @@ sub test_expr_values_all(t as Object)
     end function
     y = obj.go()
     t.assertEqual("expr.anon.in_aa", y, 3)
+
+    ' single-line ':'-joined anonymous-function declarations: two anon functions
+    ' declared (and a follow-up assignment) on one physical line, joined by ':'
+    ' (the EOS terminator). f()+g() == 3.
+    t.spec("decl.anon.singleline_colon", "AnonFunctionExpr", "single-line :-joined anon-function declarations")
+    slf = function()
+        return 1
+    end function : slg = function()
+        return 2
+    end function : y = slf() + slg()
+    t.assertEqual("decl.anon.singleline_colon", y, 3)
 
     ' =====================================================================
     ' LITERAL PRIMARIES

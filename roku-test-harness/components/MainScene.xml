@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- MainScene: the root Scene. Renders a terse, server-boot-log style view of
-     the spec run (one "[ ok ] / [FAIL] <spec.id>" line per registered spec,
-     green for pass / red for fail), laid out in columns on a dark background.
+     the spec run (one "<spec.id>" line per registered spec, green for pass /
+     red for fail - color is the only status indicator), laid out in columns
+     on a dark background.
      The suite itself runs in source/main.brs (Main scope) and hands the per-spec
      results here via the 'specResults' field (see grammar/DEVICE_FACTS.md for why
      component scripts cannot run the suite themselves).
@@ -42,7 +43,7 @@
 
       <!-- Columns are created dynamically in MainScene.brs: each fills down to
            the bottom of the screen, then a new column starts to its right. -->
-      <LayoutGroup id="cols" layoutDirection="horiz" itemSpacings="[16]" translation="[0, 10]" />
+      <LayoutGroup id="cols" layoutDirection="horiz" itemSpacings="[10]" translation="[0, 10]" />
     </LayoutGroup>
 
     <!-- Spec-coverage component, instantiated hidden, to prove it loads. -->

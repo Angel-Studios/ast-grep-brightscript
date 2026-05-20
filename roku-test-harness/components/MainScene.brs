@@ -5,8 +5,8 @@
 ' grammar/DEVICE_FACTS.md). So this scene does NOT run the test suite -
 ' source/main.brs runs it in the Main scope, emits the ##SPEC## protocol, and
 ' hands the per-spec results here via the 'specResults' field. We render them as
-' a terse, server-boot-log style list: one "[ ok ]/[FAIL] <spec.id>" line per
-' spec, GREEN for pass and RED for fail, in three columns.
+' a terse, server-boot-log style list: one "<spec.id>" line per spec, GREEN for
+' pass and RED for fail (color is the only status indicator), in columns.
 
 sub init()
     m.title = m.top.findNode("title")
@@ -63,19 +63,17 @@ sub render()
         ok = sp.passed
         if ok then passed = passed + 1
 
-        mark = "[ ok ]"
-        rowColor = "0x6FCF6FFF"       ' green
-        if not ok then
-            mark = "[FAIL]"
-            rowColor = "0xE05555FF"   ' red
-        end if
+        ' Color IS the pass/fail indicator (green/red) - no "[ ok ]/[FAIL]"
+        ' prefix needed. Failing rows still append the failure detail.
+        rowColor = "0x6FCF6FFF"       ' green = pass
+        if not ok then rowColor = "0xE05555FF"   ' red = fail
 
-        line = mark + " " + sp.id
+        line = sp.id
         if not ok and sp.detail <> "" then line = line + "  " + sp.detail
 
         row = col.createChild("Label")
         row.font = m.bodyFont
-        row.width = 340
+        row.width = 290
         row.wrap = false
         row.text = line
         row.color = rowColor

@@ -1,0 +1,6 @@
+' coverage-id: bs.type.inline_interface
+' expect: parse
+' BrighterScript inline interface used as a parameter type.
+function describe(item as { id as integer }) as integer
+    return item.id
+end function

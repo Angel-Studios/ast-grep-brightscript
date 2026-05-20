@@ -407,7 +407,25 @@ Type            ::= 'integer'                            (* --- VALID intrinsics
 (*--- 3.1 Statement blocks & the statement set ------------------------------*)
 
 (* A Block is a sequence of statements separated by statement terminators.
-   Labels and comments may appear interspersed. *)
+   Labels and comments may appear interspersed.
+
+   SINGLE-LINE ':'-JOINED DECLARATIONS: because EOS = ( NL | ':' )+ (see Part 1),
+   the ':' is itself a statement terminator, so several BlockItems may share one
+   physical line, e.g. a function/anonymous-function value declared then used on
+   one line: `f = function() ... end function : g = function() ... end function`.
+   This is ALREADY grammatical via `( BlockItem EOS )*` with EOS => ':'; no extra
+   rule is needed. (NOTE: this is distinct from InlineStatements in 3.4, which is
+   the ':'-join specifically AFTER `then` in a SingleLineIf.) Confirmed by the
+   angel-roku audit. See coverage leaf decl.anon.singleline_colon.
+
+   LABEL INSIDE A LOOP: a Label is a BlockItem, and a loop body is a Block, so a
+   label may appear inside a for/while body, e.g.
+       for i = 1 to 3
+         retry:
+         ...
+       end for
+   This is ALREADY grammatical (Label is in BlockItem). Confirmed by the
+   angel-roku audit. See coverage leaf stmt.label.in_loop. *)
 Block           ::= ( BlockItem EOS )* BlockItem?
 BlockItem       ::= Statement | Label | Comment | ConditionalCompilation
 
@@ -460,14 +478,26 @@ IncDecStatement ::= AssignTarget ( OP_INCR | OP_DECR )
 (*--- 3.3 Print -------------------------------------------------------------*)
 
 (* 'print' or '?' shorthand. Print items are separated by ',' (advance to next
-   tab zone) or ';' (no separator). A trailing separator suppresses the
+   tab zone), ';' (no separator), OR whitespace alone (an empty/whitespace
+   separator that prints items adjacently). A trailing separator suppresses the
    newline. TAB(expr) and POS(expr) are special positional items. Empty print
    (just newline) is allowed. *)
 PrintStatement  ::= ( 'print' | QUESTION ) PrintItemList?
 
-PrintItemList   ::= PrintItem ( PrintSep PrintItem )* PrintSep?
+(* The separator between two print items is OPTIONAL: a bare run of whitespace
+   acts as a separator (the whitespace/empty alternative of PrintSep). So
+   `? "x " a " y " b` prints four items separated only by spaces, and the
+   `print tab(5) "x"` positional form is just two whitespace-separated items.
+   Real Roku code relies on this (~30 sites in the angel-roku audit). *)
+PrintItemList   ::= PrintItem ( PrintSep? PrintItem )* PrintSep?
 PrintItem       ::= TabItem | PosItem | Expression
 PrintSep        ::= SEMI | COMMA
+                  (* The whitespace/empty separator alternative is modeled by the
+                     PrintSep-optional in PrintItemList above: two adjacent
+                     PrintItems with only whitespace between them are separated by
+                     an "empty" PrintSep. For the tree-sitter implementer:
+                     whitespace lives in `extras`, so an empty separator is just
+                     two items in sequence with no SEMI/COMMA token between them. *)
 TabItem         ::= 'tab' LPAREN Expression RPAREN
 PosItem         ::= 'pos' LPAREN Expression RPAREN
 (* NOTE: 'tab' and 'pos' are contextual here; outside print they are reserved
@@ -713,7 +743,16 @@ PowerExpr       ::= PostfixExpr ( OP_CARET UnaryExpr )?
 
 (* Levels 1-4: postfix call / member / index / attribute / optional chaining.
    Left-associative; tightest binding. Applied as a chain of suffixes to a
-   primary. *)
+   primary.
+
+   IIFE (immediately-invoked function expression), e.g.
+       (function() ... end function)()
+   is ALREADY grammatical here with no special rule: an AnonymousFunction is a
+   Primary, so a parenthesized one `(function() ... end function)` is a ParenExpr
+   (also a Primary), and a trailing CallSuffix `()` is an ordinary PostfixSuffix
+   applied to it. Confirmed: `Primary PostfixSuffix*` with Primary => ParenExpr
+   and PostfixSuffix => CallSuffix covers the IIFE (17 sites in the angel-roku
+   audit). See coverage leaf expr.iife.call. *)
 PostfixExpr     ::= Primary PostfixSuffix*
 
 PostfixSuffix   ::= CallSuffix
@@ -777,7 +816,10 @@ ElementSep      ::= COMMA EOS? | EOS         (* comma and/or newline separate *)
 (*--- 5.4 Associative array literal ----------------------------------------*)
 
 (* { } roAssociativeArray literal. Keys are identifiers or string literals;
-   value separated by ':'. Entries separated by ',' and/or newline. *)
+   value separated by ':'. Entries separated by ',' and/or newline -- the bare-
+   EOS alternative of ElementSep (below) admits the COMMA-LESS, newline-separated
+   form `{ a:1 <NL> b:2 }` (no commas, entries on their own lines), confirmed in
+   real Roku code by the angel-roku audit. See coverage leaf expr.aa.newline_sep. *)
 AssocArrayLiteral ::= LBRACE EOS?
                         ( AAEntry ( ElementSep AAEntry )* ElementSep? )?
                       EOS? RBRACE

@@ -1,0 +1,3 @@
+<!-- coverage-id: sg.prolog.rokuml_pi expect: parse -->
+<?rokuml?>
+<component name="C" extends="Scene" />

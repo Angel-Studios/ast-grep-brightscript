@@ -27,5 +27,11 @@ function TestSuite_All() as Object
         test_lib_string_all
         test_lib_time_regex_all
         test_lib_device_storage_all
+        ' BrighterScript layer (layer="brighterscript" in coverage.json). Authored
+        ' in source/tests/test_bs.bs and TRANSPILED to .brs by the deploy build
+        ' (bsconfig.deploy.json); the lowered global `test_bs_all` runs here in the
+        ' Main scope like any other module -- the on-device proof that the modeled
+        ' BrighterScript constructs transpile and execute.
+        test_bs_all
     ]
 end function

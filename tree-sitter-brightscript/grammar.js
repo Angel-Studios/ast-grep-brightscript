@@ -240,11 +240,15 @@ export default grammar({
     // ---- print ----------------------------------------------------------
     PrintStatement: $ => seq(choice(ci('print'), $.QUESTION), optional($.PrintItemList)),
     QUESTION: _ => '?',
-    // Expression items need a ';'/',' separator, but a positional tab()/pos()
-    // item may be directly followed by one item (e.g. `print tab(5) "x"`).
-    PrintItemList: $ => seq($._PrintItem, repeat(seq($.PrintSep, $._PrintItem)), optional($.PrintSep)),
+    // Items are separated by ';'/',' OR by whitespace alone (an empty/whitespace
+    // separator, e.g. `print "x " a " y " b`, and also `print tab(5) "x"`): the
+    // separator between two items is therefore OPTIONAL. With a whitespace
+    // separator a positional tab()/pos() item is just an ordinary item directly
+    // followed by the next item.
+    PrintItemList: $ => seq($._PrintItem, repeat(seq(optional($.PrintSep), $._PrintItem)), optional($.PrintSep)),
     _PrintItem: $ => choice(
-      seq(choice($.TabItem, $.PosItem), optional($._Expression)),
+      $.TabItem,
+      $.PosItem,
       $._Expression,
     ),
     PrintSep: _ => choice(';', ','),

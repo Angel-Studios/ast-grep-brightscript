@@ -1,0 +1,6 @@
+' coverage-id: bs.interface.decl
+' expect: parse
+' BrighterScript interface declaration with a typed field.
+interface Shape
+    name as string
+end interface

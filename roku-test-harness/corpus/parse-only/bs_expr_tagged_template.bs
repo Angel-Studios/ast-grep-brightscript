@@ -1,0 +1,12 @@
+' coverage-id: bs.expr.tagged_template
+' expect: parse
+' BrighterScript tagged template literal.
+function tag(strings as object, values as object) as string
+    return strings[0]
+end function
+
+function greet() as string
+    name = "world"
+    result = tag`hi ${name}`
+    return result
+end function

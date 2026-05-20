@@ -114,6 +114,10 @@
           "named": true
         },
         {
+          "type": "Customization",
+          "named": true
+        },
+        {
           "type": "Interface",
           "named": true
         },
@@ -136,6 +140,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "Name",
+            "named": true
+          },
           {
             "type": "extends",
             "named": false
@@ -164,6 +172,73 @@
           },
           {
             "type": "ExtendsAttValue",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "Eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "Customization",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "Comment",
+          "named": true
+        },
+        {
+          "type": "CustomizationAttribute",
+          "named": true
+        },
+        {
+          "type": "PI",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "CustomizationAttribute",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "Name",
+            "named": true
+          },
+          {
+            "type": "resumehandler",
+            "named": false
+          },
+          {
+            "type": "suspendhandler",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "AttValue",
             "named": true
           }
         ]
@@ -1094,6 +1169,10 @@
     "named": false
   },
   {
+    "type": "customization",
+    "named": false
+  },
+  {
     "type": "encoding",
     "named": false
   },
@@ -1130,6 +1209,10 @@
     "named": false
   },
   {
+    "type": "resumehandler",
+    "named": false
+  },
+  {
     "type": "role",
     "named": false
   },
@@ -1139,6 +1222,10 @@
   },
   {
     "type": "standalone",
+    "named": false
+  },
+  {
+    "type": "suspendhandler",
     "named": false
   },
   {

@@ -786,8 +786,16 @@
             "type": "SEQ",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "PrintSep"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "PrintSep"
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
               },
               {
                 "type": "SYMBOL",
@@ -814,34 +822,12 @@
       "type": "CHOICE",
       "members": [
         {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "TabItem"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "PosItem"
-                }
-              ]
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "_Expression"
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
-            }
-          ]
+          "type": "SYMBOL",
+          "name": "TabItem"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "PosItem"
         },
         {
           "type": "SYMBOL",

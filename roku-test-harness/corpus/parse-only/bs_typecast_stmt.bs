@@ -1,0 +1,8 @@
+' coverage-id: bs.typecast.stmt
+' expect: parse
+' BrighterScript typecast statement (typecast m as <Type>).
+interface NodeData
+    id as integer
+end interface
+
+typecast m as NodeData

@@ -1,0 +1,24 @@
+{
+  "//": "DEPLOY config: transpiles BrighterScript (.bs) -> BrightScript (.brs),",
+  "//2": "stages the channel, and PACKAGES it into ../out/harness.zip (manifest at",
+  "//3": "zip root). This is what makes the .bs specs runnable on the device:",
+  "//4": "scripts/roku-deploy.ts runs `bsc --project this` then sideloads the zip.",
+  "//5": "retainStagingDir keeps ../out/staging so the lowered .brs is inspectable",
+  "//6": "(evidence for DEVICE_FACTS.md). Paths are relative to this file's dir.",
+  "extends": "bsconfig.json",
+  "rootDir": ".",
+  "files": [
+    "manifest",
+    "source/**/*.brs",
+    "source/**/*.bs",
+    "components/**/*.brs",
+    "components/**/*.bs",
+    "components/**/*.xml",
+    "fonts/**/*"
+  ],
+  "stagingDir": "../out/staging",
+  "retainStagingDir": true,
+  "createPackage": true,
+  "outFile": "../out/harness.zip",
+  "diagnosticLevel": "info"
+}

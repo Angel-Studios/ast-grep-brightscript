@@ -34,6 +34,7 @@ errors appear on the BrightScript debug console (telnet 8085, captured by
 | 15 | BrightScript (stdlib) | `CreateObject("roInt"/"roFloat"/"roString"/"roBoolean"/"roLongInteger", value)` | value arg **IGNORED** | the boxed object is created with the default (0 / "" / false), not the passed value | box an intrinsic WITH its value via `box(v)` (`box(5).GetInt()=5`); `CreateObject("roString")` + `SetString(...)` also works. Harness boxed/string specs use `box()`. |
 | 16 | BrightScript (stdlib) | the `ifString` **`Mid` method** index base | **0-indexed** | `"hello".Mid(2)` → `"llo"`, `"hello".Mid(2,3)` → `"llo"` | the ifString `Mid`/`Instr` METHODS are 0-based, whereas the GLOBAL `Mid()` function is 1-based — a genuine method-vs-global divergence. Harness asserts the 0-based results. |
 | 17 | BrightScript (stdlib) | `roTimespan.Mark()` return | **void** (resets start) | `Mark()` returns nothing; it resets the timer origin | read elapsed time with `TotalMilliseconds()` / `TotalSeconds()`. `lib.timespan.mark` asserts `TotalMilliseconds()` is numeric after `Mark()`. |
+| 18 | BrighterScript (via transpile) | the modeled `.bs` subset — `namespace`, `class` (`extends`/`super()`/`override`/access modifiers/typed field init), `enum`, `const`, ternary `?:`, `??`, template strings + `${}`, `new`, computed AA key, typed assignment/`for each`/params (custom/union/array types), regex literal, `@annotation` | **VALID (runs)** | bsc transpiles `test_bs.bs` → `.brs` (namespace → mangled global fn `bsns_answer()`; class → builder/factory AAs `__BsCounter_builder`/`BsCounter()`; ternary/`??`/templates → expressions/`bslib` helpers; types erased) and the **lowered code runs**: all **24 `bs.*` specs PASS**, clean run `pass=497 fail=0` | authored `roku-test-harness/source/tests/test_bs.bs`; deploy build (`bsconfig.deploy.json`) transpiles before sideload. This is the indirect on-device proof that the BrighterScript subset is valid. |
 
 General rule learned: a SceneGraph field's **type is validated only when a
 `value` is present** (the device attempts the string→type conversion then).
@@ -48,6 +49,28 @@ and `roDeviceInfo`/`roAppInfo`/`roRegistry`/`roFileSystem`. Each stdlib spec is
 internally `try/catch`-guarded so a device-rejected API FAILs only its own spec
 (never aborts the run); facts 15–17 were found exactly this way. Full run:
 **468/468 PASS** (`run-end fail=0`).
+
+## BrighterScript layer (device-validated VIA TRANSPILE)
+
+`coverage.json` carries a `layer:"brighterscript"` taxonomy: **37 leaves** (24
+device-via-transpile + 13 parse-only/bsc-syntax-only). The 24 runnable ones live
+in `roku-test-harness/source/tests/test_bs.bs`, authored in **BrighterScript**.
+The deploy build (`roku-test-harness/bsconfig.deploy.json`, driven by
+`scripts/roku-deploy.ts`) runs **`bsc` to transpile `.bs` → `.brs`** into staging
+and packages that — so what sideloads and runs on the device is the **lowered
+BrightScript**. All 24 `bs.*` specs PASS on Roku OS 15.1.4 (fact #18); the device
+remains the tiebreaker (the lowered `.brs` is the BrightScript the device runs).
+
+Two BrighterScript **language facts** surfaced via `bsc` (the syntax authority,
+0.72.2) while authoring the harness — both are correct compiler rules, not drift:
+
+- A subclass constructor must call **`super()`** (the call form), not
+  `super.new()`, and may **not** use `m` before that call (`BS1100`/`BS1101`).
+- A **computed associative-array key** `{ [k]: v }` must be a **compile-time
+  constant** (a `const` or enum member), not a runtime variable (`BS1144`).
+
+These are recorded in `brighterscript.ebnf`'s implementer notes and the affected
+coverage snippet.
 
 ## Method note: whole-channel compile gating (how facts 5–13 were found)
 
@@ -87,10 +110,12 @@ here so the next person doesn't re-debug them.
   functions.
 
 ## Pipeline status
-deploy automation · console capture · `.brs` compile · SceneGraph component load ·
-`main` run · **test runner reached** — all **WORKING**, end to end. The harness
-now exercises the full taxonomy INCLUDING the standard library: **468/468
-device-testable specs PASS** (`##SPEC## event=run-end pass=468 fail=0`) on Roku
-OS 15.1.4, with 37 non-device leaves (facts 5–14 reclassified there) held in
-`roku-test-harness/corpus/`. `grammar/check_coverage.py` enforces parity between
-`coverage.json` and the implemented specs/corpus.
+deploy automation · **BrighterScript `.bs` → `.brs` transpile** · console capture ·
+`.brs` compile · SceneGraph component load · `main` run · **test runner reached** —
+all **WORKING**, end to end. The harness now exercises the full taxonomy INCLUDING
+the standard library AND the BrighterScript layer: **497/497 device-testable specs
+PASS** (`##SPEC## event=run-end pass=497 fail=0`) on Roku OS 15.1.4 — of which 24
+are transpiled-BrighterScript specs. Non-device leaves (facts 5–14 + the 13
+parse-only BrighterScript constructs) are held in `roku-test-harness/corpus/`.
+`grammar/check_coverage.py` enforces parity between `coverage.json` and the
+implemented specs/corpus (scanning `.brs` and `.bs`).
