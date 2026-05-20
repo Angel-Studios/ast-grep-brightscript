@@ -30,9 +30,24 @@ errors appear on the BrightScript debug console (telnet 8085, captured by
 | 11 | SceneGraph | `type="str"` field-type alias | **INVALID** | runtime: a valued `type="str"` field reads back `Invalid`, while the `type="int"` and `type="bool"` aliases convert correctly and `type="string"` works | `sg.field.type.str_alias` → non-device; `corpus/negative/sg_field_type_str_alias.xml`. `str` is not a recognized spelling; use `string`. |
 | 12 | SceneGraph | bare (non-CDATA) inline `<script>…</script>` | **TOLERATED, NOT EXECUTED** | a component with a bare inline script *loads* (instantiates without error), but its `init()` never runs (the field it would set stays `false`); the identical body wrapped in `<![CDATA[…]]>` *does* execute (probe-confirmed) | `sg.script.inline_text` stays device-testable, but the spec now asserts the construct is **tolerated** and that the bare body did **not** run. Inline BrightScript must be in CDATA (or an external `uri`) to execute. |
 | 13 | SceneGraph | scalar `rect2D` field runtime shape | **roAssociativeArray** | a valued `type="rect2D"` field deserializes to an `roAssociativeArray` (`{x,y,width,height}`), NOT an `roArray`; a `rect2DArray`'s OUTER container IS an `roArray` | `sg.field.type.rect2d` spec asserts `roAssociativeArray` (key count 4); `sg.field.type.rect2darray` asserts the outer `roArray`. |
+| 14 | BrightScript | newline inside a grouping `( )` (e.g. `x = (1 +`⏎`2)`) | **INVALID** | compile error `&h02` (Syntax Error) in `test_lex.brs` | `lex.eos.depth0_paren` → non-device; `corpus/negative/lex_eos_depth0_paren.brs`. Newline-suppression at depth>0 applies to `[ ]` / `{ }` collection literals (and call argument lists) but **not** to a grouping parenthesised expression. |
+| 15 | BrightScript (stdlib) | `CreateObject("roInt"/"roFloat"/"roString"/"roBoolean"/"roLongInteger", value)` | value arg **IGNORED** | the boxed object is created with the default (0 / "" / false), not the passed value | box an intrinsic WITH its value via `box(v)` (`box(5).GetInt()=5`); `CreateObject("roString")` + `SetString(...)` also works. Harness boxed/string specs use `box()`. |
+| 16 | BrightScript (stdlib) | the `ifString` **`Mid` method** index base | **0-indexed** | `"hello".Mid(2)` → `"llo"`, `"hello".Mid(2,3)` → `"llo"` | the ifString `Mid`/`Instr` METHODS are 0-based, whereas the GLOBAL `Mid()` function is 1-based — a genuine method-vs-global divergence. Harness asserts the 0-based results. |
+| 17 | BrightScript (stdlib) | `roTimespan.Mark()` return | **void** (resets start) | `Mark()` returns nothing; it resets the timer origin | read elapsed time with `TotalMilliseconds()` / `TotalSeconds()`. `lib.timespan.mark` asserts `TotalMilliseconds()` is numeric after `Mark()`. |
 
 General rule learned: a SceneGraph field's **type is validated only when a
 `value` is present** (the device attempts the string→type conversion then).
+
+## Standard-library layer (device-validated)
+
+`coverage.json` now carries a `layer:"stdlib"` taxonomy: **191 device-testable
+leaves** exercising the BrightScript standard library — global string/math/utility/
+JSON functions, `roArray`/`roList`/`roByteArray`, `roAssociativeArray` + boxed
+intrinsics, `roString` (ifString/ifStringOps), `roDateTime`/`roTimespan`/`roRegex`,
+and `roDeviceInfo`/`roAppInfo`/`roRegistry`/`roFileSystem`. Each stdlib spec is
+internally `try/catch`-guarded so a device-rejected API FAILs only its own spec
+(never aborts the run); facts 15–17 were found exactly this way. Full run:
+**468/468 PASS** (`run-end fail=0`).
 
 ## Method note: whole-channel compile gating (how facts 5–13 were found)
 
@@ -74,8 +89,8 @@ here so the next person doesn't re-debug them.
 ## Pipeline status
 deploy automation · console capture · `.brs` compile · SceneGraph component load ·
 `main` run · **test runner reached** — all **WORKING**, end to end. The harness
-now exercises the full taxonomy: **274/274 device-testable specs PASS**
-(`##SPEC## event=run-end pass=274 fail=0`) on Roku OS 15.1.4, with the 34
-non-device leaves (6 of them newly device-rejected, facts 5–13) held in
+now exercises the full taxonomy INCLUDING the standard library: **468/468
+device-testable specs PASS** (`##SPEC## event=run-end pass=468 fail=0`) on Roku
+OS 15.1.4, with 37 non-device leaves (facts 5–14 reclassified there) held in
 `roku-test-harness/corpus/`. `grammar/check_coverage.py` enforces parity between
 `coverage.json` and the implemented specs/corpus.

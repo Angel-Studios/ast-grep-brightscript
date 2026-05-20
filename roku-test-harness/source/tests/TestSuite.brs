@@ -17,5 +17,15 @@ function TestSuite_All() as Object
         test_stmt_all
         test_expr_ops_all
         test_expr_values_all
+        ' Standard-library coverage (layer="stdlib" in coverage.json). These run in
+        ' the Main scope (CreateObject for roArray/roAA/roString/roDateTime/roRegex/
+        ' roDeviceInfo/roRegistry/roFileSystem works without a screen). Each spec is
+        ' internally try/catch-guarded so a device-rejected API FAILs only itself.
+        test_lib_global_all
+        test_lib_array_all
+        test_lib_aa_all
+        test_lib_string_all
+        test_lib_time_regex_all
+        test_lib_device_storage_all
     ]
 end function

@@ -300,6 +300,16 @@ sub test_expr_values_all(t as Object)
     gaa = getglobalaa()
     t.assertTrue("expr.builtin.getglobalaa: runs", gaa <> invalid)
 
+    ' reserved getlastruncompileerror() builtin (returns invalid when no Run() error)
+    t.spec("expr.builtin.getlastruncompileerror", "BuiltinCall", "reserved getlastruncompileerror() builtin call")
+    lce = getlastruncompileerror()
+    t.assertTrue("expr.builtin.getlastruncompileerror: runs", true)
+
+    ' reserved getlastrunruntimeerror() builtin (returns the last Run() error code)
+    t.spec("expr.builtin.getlastrunruntimeerror", "BuiltinCall", "reserved getlastrunruntimeerror() builtin call")
+    lre = getlastrunruntimeerror()
+    t.assertTrue("expr.builtin.getlastrunruntimeerror: runs", true)
+
     ' =====================================================================
     ' ARGUMENT LISTS
     ' =====================================================================

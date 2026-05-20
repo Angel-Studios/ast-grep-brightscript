@@ -42,7 +42,22 @@ Implement every **device-testable** leaf in `grammar/coverage.json` as a
 - `corpus/negative/` covers every `negative` / non-device leaf.
 - `check_coverage.py` is green.
 
-## Status: COMPLETE (device-validated on Roku OS 15.1.4)
+## Status: COMPLETE + STDLIB (device-validated on Roku OS 15.1.4)
+
+**Latest: `run-end pass=468 fail=0`** — the harness now also covers the BrightScript
+**standard library** (a `layer:"stdlib"` taxonomy in `coverage.json`, 191 leaves):
+global string/math/utility/JSON functions, `roArray`/`roList`/`roByteArray`,
+`roAssociativeArray` + boxed intrinsics, `roString`, `roDateTime`/`roTimespan`/
+`roRegex`, and `roDeviceInfo`/`roAppInfo`/`roRegistry`/`roFileSystem`. Each stdlib
+spec is `try/catch`-guarded so a device-rejected API FAILs only itself. The device
+loop surfaced more facts (DEVICE_FACTS #14–#17): grouping-paren newline rejected;
+`CreateObject("roInt",v)` ignores the value (use `box(v)`); the ifString `Mid`
+method is 0-indexed (global `Mid()` is 1-indexed); `roTimespan.Mark()` returns void.
+An **EBNF completeness audit** vs the official Roku docs found **no structural
+grammar gaps** (only minor documentary nitpicks; BrighterScript-only constructs
+correctly excluded). Totals: 468 device-testable specs, 37 non-device corpus leaves.
+
+### Original language milestone (below) — also COMPLETE
 
 - **Key drift eliminated.** The old divergent `t.spec` id scheme was dropped;
   every spec id/kind now matches `coverage.json` exactly. Test modules are keyed

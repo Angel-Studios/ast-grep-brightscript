@@ -80,4 +80,12 @@ sub test_cc_all(t as Object)
         x = 1
     #endif
     t.assertEqual("cc.endif.fused", x, 1)
+
+    ' --- #if on a manifest-defined bs_const (manifest: enable_extra_tests=true) -
+    t.spec("cc.manifest_const", "CCExpression", "#if on a manifest-defined bs_const (enable_extra_tests)")
+    x = 0
+    #if enable_extra_tests
+        x = 1
+    #end if
+    t.assertEqual("cc.manifest_const", x, 1)
 end sub

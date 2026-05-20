@@ -33,6 +33,15 @@ on record (do not "fix" them back into the channel):
 - `decl.type.interface` — `as interface` (device `&ha7`, `bsc` BS1044 "invalid type").
 - `decl.type.custom` — `as roSGNode` / component type in `as` (device `&ha7`, `bsc` BS1044).
 - `stmt.dim.paren` — `dim a(n)` paren bounds (device `&h02`, `bsc` BS1119/BS1120).
+- `lex.eos.depth0_paren` — newline inside a grouping `( )` (device `&h02`, `bsc` BS1081). Newline-suppression is `[ ]`/`{ }`/arg-list only, not grouping parens.
+
+## Stricter-but-correct: `bsc` rejects misuse the device merely tolerates
+
+`CreateObject("roInt"/"roFloat"/"roString"/"roBoolean"/"roLongInteger", value)` —
+`bsc` **compile-errors** (BS1130, wrong arg count); the **device compiles it but
+silently ignores the value** (the boxed object keeps its default), DEVICE_FACTS
+#15. Effectively both reject the usage. The harness boxes intrinsics with `box(v)`
+instead, which both accept.
 
 ## How to read the gates
 

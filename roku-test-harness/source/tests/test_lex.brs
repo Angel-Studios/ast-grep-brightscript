@@ -194,4 +194,9 @@ sub test_lex_all(t as Object)
 2]
     t.assertTrue("lex.eos.depth0_only: runs", true)
     t.assertEqual("lex.eos.depth0_only count", x.count(), 2)
+
+    ' NOTE: lex.eos.depth0_paren is DEVICE-REJECTED (compile &h02): a newline inside
+    ' a grouping ( ) DOES terminate - newline-suppression applies to [ ] / { }
+    ' collection literals (and arg lists), NOT to grouping parens. Moved to
+    ' corpus/negative/. See grammar/DEVICE_FACTS.md.
 end sub

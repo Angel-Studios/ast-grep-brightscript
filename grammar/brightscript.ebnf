@@ -87,7 +87,14 @@ NL              ::= LINE_BREAK
 
 (* EOS = "end of statement": a newline, a colon separator, or EOF. A run of
    consecutive terminators (blank lines, stray colons) collapses to one EOS.
-   Used throughout the syntactic grammar to terminate statements. *)
+   Used throughout the syntactic grammar to terminate statements.
+
+   DEVICE-CONFIRMED (DEVICE_FACTS.md #14) on Roku OS 15.1.4: a newline is
+   suppressed (NOT a terminator) only when nested inside the '[ ]' / '{ }'
+   collection literals and inside call ARGUMENT LISTS. A newline inside a
+   grouping '( )' DOES terminate -- 'x = (1 +<NL>2)' is a Syntax Error (&h02).
+   So grouping parens do NOT extend a statement across lines; only []/{} /
+   arg-lists do. See corpus/negative/lex_eos_depth0_paren.brs. *)
 EOS             ::= ( NL | ':' )+
 
 (*--- 1.2 Comments ---------------------------------------------------------*)
