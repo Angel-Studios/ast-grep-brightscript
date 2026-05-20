@@ -41,3 +41,28 @@ Implement every **device-testable** leaf in `grammar/coverage.json` as a
   run reports them all PASS (`run-end fail=0`).
 - `corpus/negative/` covers every `negative` / non-device leaf.
 - `check_coverage.py` is green.
+
+## Status: COMPLETE (device-validated on Roku OS 15.1.4)
+
+- **Key drift eliminated.** The old divergent `t.spec` id scheme was dropped;
+  every spec id/kind now matches `coverage.json` exactly. Test modules are keyed
+  by coverage prefix: `test_lex / test_decl / test_cc / test_stmt /
+  test_expr_ops / test_expr_values` (+ `test_scenegraph`).
+- **Device run: `##SPEC## event=run-end pass=274 fail=0`** — all 274
+  device-testable leaves PASS on hardware. (The full 280 found 6 constructs the
+  device actually REJECTS; see below.)
+- **SceneGraph** (56→55 device leaves): exercised via `SpecShowcase.xml` + helper
+  components (`SpecHelperTask/Extends/InlineText.xml`); `main.brs` runs
+  `test_scenegraph_all(t, scene, showcase)` against the live nodes after
+  `screen.show()` and folds results into the one `##SPEC##` stream.
+- **Negative corpus** (`roku-test-harness/corpus/`, excluded from the zip +
+  bsconfig): 34 non-device leaves = 28 original + **6 newly device-rejected**
+  found by the loop — `decl.function.nested`, `decl.type.interface`,
+  `decl.type.custom`, `stmt.dim.paren`, `stmt.expr.optcall`,
+  `sg.field.type.str_alias` (see `grammar/DEVICE_FACTS.md` #5–#13).
+- **`grammar/check_coverage.py`** added and GREEN (parity of coverage.json ↔
+  specs/corpus, incl. kind match); wired into `grammar/CLAUDE.md`'s validation
+  levels.
+- **bsc drift** captured in `grammar/BSC_DRIFT.md` (e.g. `next i` is device-valid
+  but bsc rejects it; `o.fn?()` / `type="str"` are bsc-accepted but
+  device-rejected).

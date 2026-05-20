@@ -1,0 +1,2 @@
+<!-- coverage-id: sg.xml.empty_elem expect: parse -->
+<a/>

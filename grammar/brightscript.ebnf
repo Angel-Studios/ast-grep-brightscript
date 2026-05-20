@@ -310,7 +310,15 @@ LibraryStatement ::= 'library' StringLiteral
 (*--- 2.3 Function & Sub declarations ---------------------------------------*)
 
 (* A named function. Return type via 'as Type' is optional (defaults Dynamic).
-   'function' ... 'end function' (or 'endfunction'). *)
+   'function' ... 'end function' (or 'endfunction').
+   DEVICE-CONFIRMED (DEVICE_FACTS.md #5) on Roku OS 15.1.4: a named function/sub
+   declaration is a TOP-LEVEL item ONLY. A *nested NAMED* function (a
+   FunctionDeclaration/SubDeclaration appearing inside another function body) is
+   REJECTED at compile time (Syntax Error &h02). Anonymous function VALUES
+   (AnonymousFunction, see 5.5) assigned/passed inside a function ARE valid -- so
+   the rejection is specifically of the named-declaration form in statement
+   position, not of function literals. See Statement (3.1) where nested decls are
+   annotated out. *)
 FunctionDeclaration ::=
         'function' Identifier LPAREN ParameterList? RPAREN ReturnType?
             EOS
@@ -345,7 +353,15 @@ Parameter       ::= Identifier ( ASSIGN Expression )? ( 'as' Type )?
 
 (* Type names used in 'as Type' annotations and parameter types.
    All are case-insensitive. 'Object' covers component references such as
-   roArray / roAssociativeArray. 'Dynamic' is the unconstrained default. *)
+   roArray / roAssociativeArray. 'Dynamic' is the unconstrained default.
+   DEVICE-CONFIRMED (DEVICE_FACTS.md #6, #7) on Roku OS 15.1.4: ONLY the intrinsic
+   type set below is valid in an 'as' clause. 'as interface' is rejected at compile
+   time (&ha7, #6), and 'as <ComponentType>' / any non-intrinsic custom or
+   component type name (e.g. 'as roSGNode') is also rejected (&ha7, #7) -- custom
+   types in 'as' are a BrighterScript transpile feature, not device BrightScript.
+   So 'interface' and the catch-all Identifier alternative are NOT device-valid;
+   they are kept below only as annotated/rejected alternatives (struck through),
+   per this file's convention for device-confirmed items. *)
 Type            ::= 'integer'
                   | 'longinteger'                       (* Roku OS 7.0+ *)
                   | 'float'
@@ -354,12 +370,15 @@ Type            ::= 'integer'
                   | 'boolean'
                   | 'object'
                   | 'function'
-                  | 'interface'
                   | 'dynamic'
                   | 'void'
                   | 'invalid'
-                  | Identifier        (* component / interface type name, e.g.
-                                         a roSGNode subtype; permissive. *)
+              (* --- DEVICE-REJECTED (DEVICE_FACTS.md #6, #7) -- NOT valid in 'as':
+                  | 'interface'       device-rejected &ha7 (#6); see corpus/negative/
+                                      decl_type_interface.brs
+                  | Identifier        component / custom type name, e.g. a roSGNode
+                                      subtype: device-rejected &ha7 (#7); see
+                                      corpus/negative/decl_type_custom.brs --- *)
 
 
 (*===========================================================================*)
@@ -390,9 +409,14 @@ Statement       ::= AssignmentStatement
                   | EndStatement
                   | TryStatement
                   | ThrowStatement
-                  | FunctionDeclaration   (* nested function defs are allowed *)
-                  | SubDeclaration
                   | ExpressionStatement
+                (* DEVICE-CONFIRMED (DEVICE_FACTS.md #5) on Roku OS 15.1.4:
+                   nested NAMED FunctionDeclaration / SubDeclaration are NOT valid
+                   statements -- declaring a named function inside another function
+                   is a Syntax Error (&h02). They are therefore removed from the
+                   Statement set (named declarations are top-level only, see
+                   TopLevelItem in 2.1). To use a function as a value inside a body,
+                   use an AnonymousFunction expression (5.5), which IS valid. *)
 
 (*--- 3.2 Assignment --------------------------------------------------------*)
 
@@ -461,7 +485,13 @@ InlineStatements ::= Statement ( COLON Statement )*
 (*--- 3.5 For (numeric) -----------------------------------------------------*)
 
 (* counter = start TO end [STEP step]. Terminated by 'end for' or legacy
-   'next' (optionally followed by the counter variable). *)
+   'next' (optionally followed by the counter variable).
+   DEVICE-CONFIRMED (DEVICE_FACTS.md #10) on Roku OS 15.1.4: both 'next' and
+   'next <var>' (the counter variable after 'next') are VALID -- the channel
+   compiled and ran with 'next i' present. (Resolves the earlier "next"
+   unverified flag in grammar/CLAUDE.md.) NOTE a bsc-vs-device drift:
+   BrighterScript (bsc) WRONGLY rejects 'next <var>' (BS1039/BS1066); the device
+   accepts it. See grammar/BSC_DRIFT.md. *)
 ForStatement    ::= 'for' Identifier ASSIGN Expression 'to' Expression
                         ( 'step' Expression )? EOS
                         Block?
@@ -500,11 +530,16 @@ ReturnStatement ::= 'return' Expression?
 (*--- 3.10 Dim --------------------------------------------------------------*)
 
 (* DIM name[dim1, dim2, ...] - creates an roArray with the given max indices.
-   Both bracket and (per some docs) paren forms appear; brackets are canonical.
-   Each dimension is an expression (max index). *)
+   Each dimension is an expression (max index).
+   DEVICE-CONFIRMED (DEVICE_FACTS.md #8) on Roku OS 15.1.4: BRACKET bounds
+   'dim a[n]' are REQUIRED; the paren form 'dim a(n)' is a Syntax Error (&h02).
+   (Resolves the earlier "Dim with (...) vs [...]" unverified flag in
+   grammar/CLAUDE.md.) The paren alternative is kept below only as an
+   annotated/rejected form; see corpus/negative/stmt_dim_paren.brs. *)
 DimStatement    ::= 'dim' Identifier DimBounds
 DimBounds       ::= LBRACKET Expression ( COMMA Expression )* RBRACKET
-                  | LPAREN   Expression ( COMMA Expression )* RPAREN
+              (* --- DEVICE-REJECTED (DEVICE_FACTS.md #8) -- paren bounds invalid:
+                  | LPAREN   Expression ( COMMA Expression )* RPAREN --- *)
 
 (*--- 3.11 Goto & Labels ----------------------------------------------------*)
 
@@ -539,12 +574,20 @@ ThrowStatement  ::= 'throw' Expression
    valid statement: the expression's final postfix suffix MUST be a call. *)
 ExpressionStatement ::= CallExpression
 
-(* A Postfix expression whose LAST suffix is a call (plain '(...)' or the
-   optional-call '?(...)'). The "ends in a call" constraint is encoded
-   structurally here so the rule is self-contained for the tree-sitter
-   translation (it mirrors PostfixExpr in Part 5). *)
-CallExpression  ::= Primary PostfixSuffix*
-                    ( CallSuffix | OC_PAREN ArgumentList? RPAREN )
+(* A Postfix expression whose LAST suffix is a plain call '(...)'. The "ends in a
+   call" constraint is encoded structurally here so the rule is self-contained for
+   the tree-sitter translation (it mirrors PostfixExpr in Part 5).
+   DEVICE-CONFIRMED (DEVICE_FACTS.md #9) on Roku OS 15.1.4: an optional-call
+   '?()' as a bare expression-STATEMENT (e.g. 'o.fn?()' on its own line) is a
+   Syntax Error (&h02). It is therefore NOT a legal statement terminus and the
+   OC_PAREN alternative is removed here. The '?()' optional-call IS valid in
+   EXPRESSION position (e.g. 'y = f?()', see OptChainSuffix in Part 5 and the
+   implementer notes). See corpus/negative/stmt_expr_optcall.brs. *)
+CallExpression  ::= Primary PostfixSuffix* CallSuffix
+              (* --- DEVICE-REJECTED (DEVICE_FACTS.md #9): an optional-call cannot
+                  end a statement -- was: ... ( CallSuffix | OC_PAREN ArgumentList?
+                  RPAREN ). The OC_PAREN form is statement-rejected; expression-
+                  only (see OptChainSuffix). --- *)
 
 
 (*===========================================================================*)
@@ -667,11 +710,14 @@ MemberSuffix    ::= DOT Identifier
 AttributeSuffix ::= AT Identifier            (* XML attribute access: node@attr *)
 
 (* Optional-chaining suffixes (Roku OS 11.0+). Each short-circuits to invalid
-   if the left side is invalid. *)
+   if the left side is invalid. DEVICE-CONFIRMED (DEVICE_FACTS.md #9) on Roku OS
+   15.1.4: the OC_PAREN '?(args)' optional-call below is valid HERE, in EXPRESSION
+   position (e.g. 'y = f?()'), but is REJECTED (&h02) as a bare expression
+   statement -- see ExpressionStatement / CallExpression in 3.14. *)
 OptChainSuffix  ::= OC_DOT Identifier                          (* ?.member *)
                   | OC_AT Identifier                           (* ?@attr *)
                   | OC_BRACKET Expression ( COMMA Expression )* RBRACKET (* ?[i] *)
-                  | OC_PAREN ArgumentList? RPAREN              (* ?(args) *)
+                  | OC_PAREN ArgumentList? RPAREN              (* ?(args) -- expr only *)
 
 ArgumentList    ::= Expression ( COMMA Expression )*
 
@@ -865,6 +911,37 @@ ReservedBuiltinName ::= 'getglobalaa' | 'getlastruncompileerror'
      assignment require Roku OS 7.1+; 'LongInteger' and '&' suffix require
      Roku OS 7.0+. They are included in this grammar unconditionally; gating is
      a target-version concern, not a parse concern.
+
+ 15. OPTIONAL-CALL '?()' IS EXPRESSION-ONLY (STATEMENT-VS-EXPRESSION).
+     DEVICE-CONFIRMED (DEVICE_FACTS.md #9) on Roku OS 15.1.4: the optional-call
+     suffix '?(args)' is valid only when it appears in EXPRESSION position
+     (e.g. on the RHS of an assignment, 'y = f?()'). An optional-call used as a
+     bare expression-STATEMENT (a line that is just 'o.fn?()') is a Syntax Error
+     (&h02). The other optional-chaining suffixes ('?.', '?@', '?[') are not
+     affected -- they are not statement termini in the first place. Practically:
+     a plain CallSuffix '(...)' MAY end an ExpressionStatement, but OC_PAREN MAY
+     NOT (see CallExpression in 3.14). The tree-sitter grammar should permit
+     OC_PAREN only inside the PostfixExpr expression cascade (Part 5), not in the
+     statement-level CallExpression rule. (Note this is independent of the
+     '?'-vs-print and BrighterScript-ternary spacing rule in note 3.)
+
+ 16. NESTED NAMED FUNCTION DECLARATIONS ARE REJECTED.
+     DEVICE-CONFIRMED (DEVICE_FACTS.md #5) on Roku OS 15.1.4: a named
+     'function'/'sub' declaration is a TOP-LEVEL construct only. A named function
+     declared inside another function body is a Syntax Error (&h02). Anonymous
+     function VALUES (AnonymousFunction, 5.5) inside a body are fine. So
+     FunctionDeclaration/SubDeclaration must be reachable from TopLevelItem but
+     NOT from the in-body Statement set.
+
+ 17. 'as' TYPES ARE INTRINSIC-ONLY.
+     DEVICE-CONFIRMED (DEVICE_FACTS.md #6, #7) on Roku OS 15.1.4: only the
+     intrinsic type set (integer, longinteger, float, double, string, boolean,
+     object, function, dynamic, void, invalid) is valid after 'as'. 'as interface'
+     (&ha7) and 'as <ComponentType>' / any custom or component type name such as
+     'as roSGNode' (&ha7) are rejected -- the latter are a BrighterScript
+     transpile feature, not device BrightScript. A linter (not the parser) should
+     flag a non-intrinsic 'as' type; the parser may still parse it (so it can be
+     linted) but the spec marks it device-invalid (see the Type rule in 2.5).
 *)
 
 (*=== END OF GRAMMAR =========================================================*)

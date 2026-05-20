@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SpecHelperTask: exists ONLY to cover sg.component.extends_task - a component
+     whose extends= is the built-in Task node class. Minimal and valid: a Task
+     needs no children; its work loop is irrelevant here (we only instantiate it
+     and assert its subtype). No <script> means no .brs file is required. -->
+<component name="SpecHelperTask" extends="Task">
+  <interface>
+    <field id="probe" type="integer" value="1" />
+  </interface>
+</component>

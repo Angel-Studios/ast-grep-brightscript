@@ -6,9 +6,11 @@ A runnable Roku SceneGraph channel that is simultaneously:
    in-process BrightScript test suite (assert-based) in the Main/global scope,
    emits a structured `##SPEC##` result line per construct to the debug console
    (consumed by `../roku-listener/`), and hands the results to `MainScene`, which
-   renders every assertion on screen as a GREEN (pass) or RED (fail) row with a
-   `PASS n / FAIL n` header. It is meant to be sideloaded onto a real Roku device
-   and read both off the TV and off the debug console.
+   renders them as a terse, server-boot-log style view — one
+   `[ ok ]` / `[FAIL] <spec.id>` line per spec (green pass / red fail) in the
+   bundled **Ubuntu Mono** font, packed into columns under an `n ok  n fail
+   (m specs)` summary. Sideload it onto a real Roku and read the result both off
+   the TV and off the debug console.
 2. **A comprehensive language corpus.** The BrightScript and SceneGraph here are
    intentionally exhaustive: they exercise (nearly) every construct of the two
    sibling grammars in `../grammar/brightscript.ebnf` and
@@ -22,11 +24,11 @@ SceneGraph component scripts — SceneGraph component scripts cannot see
 `pkg:/source/**` functions (`&h91 Function is not defined in component's
 namespace`; see `../grammar/DEVICE_FACTS.md`). Main runs the suite, prints the
 protocol, then shows the scene and passes it the pre-computed results via the
-`testResults` field for on-screen rendering.
+`specResults` field for on-screen rendering.
 
 Each construct group registers a stable dotted **id** and an EBNF rule **kind**
 via `t.spec(id, kind, description)` in the test modules; every assertion made
-while that spec is open rolls up into ONE result (PASS iff all its assertions
+while that spec is open rolls up into ONE result (PASS if all its assertions
 passed). The framework (`source/framework/TestRunner.brs`) prints, one per line:
 
 ```
@@ -41,94 +43,106 @@ newlines flattened). This is the exact wire format parsed by
 `../roku-listener/src/parser.ts`. Capture it with `telnet <roku-ip> 8085` or run
 the listener.
 
-> NOTE: This channel was authored without access to Roku hardware. It is
-> syntactically and structurally complete and reviewed against the grammars and
-> Roku conventions, but it has **not been executed or verified on a device**.
+> NOTE: This harness has been **run on real hardware** — Roku Streaming Stick 4K,
+> Roku OS 15.1.4 — and currently reports **97/97 PASS**. Device-confirmed language
+> facts (and the handful of constructs the device rejected) are logged in
+> `../grammar/DEVICE_FACTS.md`.
 
 ## Directory layout
 
 ```
 roku-test-harness/
-├── manifest                         # Roku channel manifest (version, icons, splash, bs_const)
-├── README.md                        # this file
+├── manifest                  # Roku channel manifest (version, icons, splash, bs_const)
+├── bsconfig.json             # brighterscript (bsc) config for `npm run check` (diagnostics, no packaging)
+├── README.md                 # this file
+├── fonts/
+│   └── UbuntuMono-Regular.ttf  # bundled monospace font used by the boot-log UI
 ├── images/
-│   └── README.md                    # required artwork sizes (real PNGs must be supplied)
+│   └── README.md             # required artwork sizes (real PNGs must be supplied)
 ├── source/
-│   ├── main.brs                     # sub Main(): RUNS the suite + emits ##SPEC##, then roSGScreen boilerplate + event loop
+│   ├── main.brs              # sub Main(): RUNS the suite + emits ##SPEC##, then roSGScreen + event loop
 │   ├── framework/
-│   │   └── TestRunner.brs           # assert/test framework + t.spec(id,kind) registration + ##SPEC## emission
+│   │   └── TestRunner.brs    # assert/test framework, t.spec(id,kind) registration, ##SPEC## emission, box-aware ValuesEqual
 │   └── tests/
-│       ├── TestSuite.brs            # aggregates all test functions; 'library'; TestSuite_Run() runs + emits
-│       ├── test_literals.brs        # every literal form
-│       ├── test_operators.brs       # every operator + compound assign + ++/--
-│       ├── test_controlflow.brs     # if/for/while/exit/continue/goto/stop/nesting
-│       ├── test_functions.brs       # function/sub, typed/optional params, anon fns, HOFs
-│       ├── test_collections.brs     # arrays, dim (multi-dim), assoc arrays
-│       ├── test_types.brs           # Type/box/GetInterface/conversions/string fns
-│       ├── test_exceptions.brs      # try/catch/throw
-│       ├── test_conditional_compilation.brs  # #const, #if/#else if/#else/#end if
-│       ├── test_objects.brs         # CreateObject, roDateTime, roDeviceInfo, m-dispatch
-│       ├── test_print.brs           # print/?, ',' ';' separators, TAB/POS
-│       └── test_misc.brs            # plain assignment, GetGlobalAA, optional chaining, @attr/?@
+│       ├── TestSuite.brs     # aggregates the test modules; TestSuite_Run() runs them all
+│       └── test_*.brs        # one module per spec area (literals, operators, control flow, types, …)
 └── components/
-    ├── MainScene.xml                # root Scene; testResults field; external + inline CDATA <script>; <children>
-    ├── MainScene.brs                # RENDERS results from the testResults field (does NOT run the suite), key handling
-    ├── ResultRow.xml                # custom MarkupList row component (per-row coloring)
-    ├── ResultRow.brs                # colors each row GREEN (pass) / RED (fail) from its content
-    ├── SpecShowcase.xml             # one <field> of EVERY field type; alias/onChange/function
-    └── SpecShowcase.brs             # init + interface functions + onChange observer
+    ├── MainScene.xml / .brs      # root Scene: renders the boot-log from the `specResults` field; OK re-renders
+    ├── SpecShowcase.xml / .brs   # one <field> of (nearly) every field type; alias/onChange/function
+    ├── SpecHelper*.xml           # extra component shapes (Task / extends / inline-text) for XML coverage
+    └── ResultRow.xml / .brs      # LEGACY (old MarkupList UI); unused by the current boot-log render
 ```
 
-## How to package & sideload
+## How to deploy
 
-1. **Enable Developer Mode on the Roku.** On the device remote press:
-   `Home Home Home Up Up Right Left Right Left Right`. Accept the agreement, set a
-   developer password, and note the device IP shown on screen. The device now
-   serves the **Development Application Installer** at `http://<roku-ip>`.
+Deployment is automated by `../scripts/roku-deploy.ts` (Bun), run from the repo
+root via the `roku:*` npm scripts. The full `deploy` packages the channel
+(`manifest` at the zip root → `out/harness.zip`), sideloads it over the dev
+installer with HTTP digest auth, and launches it via ECP.
 
-2. **Zip the channel so `manifest` is at the zip ROOT** (do not zip the parent
-   folder — the `manifest` file must be the top-level entry):
+1. **Enable Developer Mode on the Roku.** On the remote press
+   `Home Home Home Up Up Right Left Right Left Right`, accept the agreement, set a
+   developer password, and note the device IP. The device now serves the
+   **Development Application Installer** at `http://<roku-ip>` and the BrightScript
+   debug console on telnet **8085**.
 
-   ```sh
-   cd roku-test-harness
-   zip -r ../spec-harness.zip . -x '*.git*'
-   ```
-
-3. **Upload it.** Either:
-   - Browse to `http://<roku-ip>`, log in (user `rokudev`, your dev password),
-     choose the zip under "Upload" / "Replace", and click **Install**; or
-   - Use `curl` to form-upload:
-
-     ```sh
-     curl -s --user 'rokudev:<password>' --digest \
-       -F 'mysubmit=Install' -F 'archive=@../spec-harness.zip' \
-       http://<roku-ip>/plugin_install
-     ```
-
-4. **Watch the debug console** (optional) for `print` output:
+2. **Configure the device** (once). From the repo root copy the env template and
+   fill in your values:
 
    ```sh
-   telnet <roku-ip> 8085
+   cp .env.example .env
+   # ROKU_HOST=<roku-ip>   ROKU_DEV_USER=rokudev   ROKU_DEV_PASS=<dev-password>
    ```
+
+3. **Deploy.** From the repo root:
+
+   ```sh
+   npm run roku:deploy      # package → sideload (Replace) → ECP launch (/launch/dev)
+   ```
+
+   The sub-steps are also exposed individually: `roku:zip`, `roku:install`,
+   `roku:launch`, `roku:delete`. The dev installer **compiles on upload**, so a
+   sideload failure here is real device feedback (a construct the device rejected),
+   not just a packaging error — that is how the entries in
+   `../grammar/DEVICE_FACTS.md` were found.
+
+A compile-only check that needs **no device**: `npm run check` runs BrighterScript
+(`bsc`) over the harness sources.
 
 ## Reading the results
 
-When the channel launches, `source/main.brs` runs the suite (printing the
-`##SPEC##` protocol to the debug console) and hands the results to `MainScene`,
-which shows:
+**On the TV.** `MainScene` renders a terse boot-log: a title, an
+`n ok  n fail  (m specs)` **summary** (green when all pass, red if any fail), and
+one `[ ok ]` / `[FAIL] <spec.id>` row per spec laid out in columns that fill down
+to the bottom of the screen and then wrap to a new column on the right. A failed
+row appends its `detail` after the id. Press **OK** to re-render. Colors: green
+`0x6FCF6FFF`, red `0xE05555FF` (RGBA `0xRRGGBBAA`).
 
-- A **header**: `PASS n / FAIL n  (total m)`. The header is GREEN when all tests
-  pass and RED if any fail.
-- A **scrolling list** of one row per assertion. Each row is colored GREEN when
-  the assertion passed and RED when it failed (rendered by the `ResultRow`
-  component); failed rows also show a `[detail]` message after the name. Scroll
-  with the remote **Up/Down**; press **OK** to re-render the results.
+**On the debug console.** The same run prints the machine-readable `##SPEC##`
+protocol (above), framed by `run-start` / `run-end`. Capture it raw with
+`telnet <roku-ip> 8085`, or — better — run the listener, which parses the stream
+into a JSON report plus a human summary and exits non-zero on any failure:
 
-Colors used: GREEN `0x00FF00FF`, RED `0xFF0000FF` (RGBA `0xRRGGBBAA`).
+```sh
+bun run --cwd ../roku-listener listen     # live device; or `replay <logfile>` with no device
+```
 
-On the **debug console** (`telnet <roku-ip> 8085`), the same run prints the
-machine-readable `##SPEC##` protocol described above, framed by `run-start` /
-`run-end` events. That stream is the ground truth consumed by `../roku-listener/`.
+That stream is the ground truth consumed by `../roku-listener/` — see its
+`README.md` for the protocol grammar and parsing rules.
+
+**Screenshot the TV over the network (ECP).** To grab the rendered boot-log
+without pointing a camera at the screen, ask the dev installer to capture a
+screenshot (it writes `/pkgs/dev.jpg` on the device), then download it:
+
+```sh
+# 1) capture  → /pkgs/dev.jpg on the device
+curl -s --user "rokudev:<dev-password>" --digest \
+  -F 'mysubmit=Screenshot' -F 'archive=' -F 'passwd=' \
+  "http://<roku-ip>/plugin_inspect"
+# 2) download it
+curl -s --user "rokudev:<dev-password>" --digest \
+  "http://<roku-ip>/pkgs/dev.jpg" -o dev.jpg
+```
 
 ## Images
 
@@ -145,6 +159,6 @@ This is deliberate. Every test module is organized by spec area and favors
 genuine assertions that report real pass/fail. The SceneGraph components cover
 the XML element/attribute/field-type surface. Together they form a corpus that an
 ast-grep custom-language setup (built from the sibling tree-sitter grammar) can
-match patterns against. See the construct-coverage summary at the end of the PR /
-task description.
+match patterns against. The construct-coverage taxonomy and per-rule status live
+in `../grammar/COVERAGE.md` (data in `../grammar/coverage.json`).
 ```

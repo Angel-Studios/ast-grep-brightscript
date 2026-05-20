@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1140" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title    { font-size: 30px; font-weight: 700; fill: #1b2430; }
+      .subtitle { font-size: 16px; fill: #5a6573; }
+      .boxTitle { font-size: 16px; font-weight: 700; fill: #1b2430; }
+      .boxTitleW{ font-size: 16px; font-weight: 700; fill: #ffffff; }
+      .desc     { font-size: 12.5px; fill: #46505c; }
+      .descW    { font-size: 12.5px; fill: #e7f3ec; }
+      .lbl      { font-size: 13px; font-weight: 600; fill: #3a4350; }
+      .small    { font-size: 12px; fill: #6b7682; }
+      .ital     { font-size: 12px; fill: #6b7682; font-style: italic; }
+      .legend   { font-size: 13px; fill: #3a4350; }
+    </style>
+    <marker id="aDark" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L9,4 L0,8 z" fill="#44505f"/>
+    </marker>
+    <marker id="aTeal" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L9,4 L0,8 z" fill="#1f9e8f"/>
+    </marker>
+    <marker id="aBlue" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L9,4 L0,8 z" fill="#3b6fd6"/>
+    </marker>
+    <marker id="aGold" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L9,4 L0,8 z" fill="#d4a017"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1500" height="1140" fill="#f6f7f9"/>
+
+  <!-- ============ TITLE ============ -->
+  <text x="750" y="44" text-anchor="middle" class="title">ast-grep-brightscript &#8212; how the parser is built</text>
+  <text x="750" y="72" text-anchor="middle" class="subtitle">official docs &#8594; EBNF specs &#8594; device-validated corpus &#8594; tree-sitter grammar &#8594; ast-grep custom language</text>
+
+  <!-- ============ SOURCES ============ -->
+  <g>
+    <rect x="235" y="100" width="430" height="54" rx="10" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.5"/>
+    <text x="450" y="132" text-anchor="middle" class="boxTitle">Roku BrightScript Language Reference</text>
+
+    <rect x="835" y="100" width="430" height="54" rx="10" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.5"/>
+    <text x="1050" y="124" text-anchor="middle" class="boxTitle">Roku SceneGraph docs</text>
+    <text x="1050" y="143" text-anchor="middle" class="small">+ official RokuSceneGraph.xsd (vendored)</text>
+  </g>
+
+  <text x="750" y="182" text-anchor="middle" class="ital">derived faithfully from the official docs + XSD</text>
+  <line x1="450" y1="154" x2="450" y2="198" stroke="#44505f" stroke-width="1.6" marker-end="url(#aDark)"/>
+  <line x1="1050" y1="154" x2="1050" y2="198" stroke="#44505f" stroke-width="1.6" marker-end="url(#aDark)"/>
+
+  <!-- ============ EBNF HUB ============ -->
+  <g>
+    <rect x="235" y="200" width="430" height="86" rx="10" fill="#fff4d6" stroke="#e0a800" stroke-width="2"/>
+    <text x="450" y="226" text-anchor="middle" class="boxTitle">grammar/brightscript.ebnf</text>
+    <text x="450" y="248" text-anchor="middle" class="desc">lexis &#183; decls &#183; stmts &#183; precedence-layered expr cascade</text>
+    <text x="450" y="266" text-anchor="middle" class="desc">type system &#183; conditional compilation &#183; try / catch</text>
+
+    <rect x="835" y="200" width="430" height="86" rx="10" fill="#fff4d6" stroke="#e0a800" stroke-width="2"/>
+    <text x="1050" y="226" text-anchor="middle" class="boxTitle">grammar/scenegraph.ebnf</text>
+    <text x="1050" y="248" text-anchor="middle" class="desc">well-formed-XML subset + SceneGraph constraints:</text>
+    <text x="1050" y="266" text-anchor="middle" class="desc">&lt;component&gt; &lt;interface&gt; &lt;field&gt; &lt;script&gt; &lt;children&gt;</text>
+  </g>
+
+  <!-- embeds / injection -->
+  <line x1="665" y1="243" x2="833" y2="243" stroke="#d4a017" stroke-width="2" marker-end="url(#aGold)"/>
+  <text x="749" y="234" text-anchor="middle" class="small">embeds &#8594; language injection</text>
+  <text x="749" y="282" text-anchor="middle" class="small">(BrightScript in &lt;script&gt; CDATA)</text>
+
+  <text x="750" y="307" text-anchor="middle" class="ital">validated by check_ebnf.py (consistency) &#183; check_scenegraph_xsd.py (XSD fidelity)</text>
+
+  <!-- splits to the two pipelines -->
+  <path d="M380,286 C360,320 350,330 340,350" fill="none" stroke="#1f9e8f" stroke-width="2" marker-end="url(#aTeal)"/>
+  <text x="300" y="332" text-anchor="middle" class="lbl">enumerated into</text>
+  <path d="M1120,286 C1140,320 1150,330 1160,350" fill="none" stroke="#3b6fd6" stroke-width="2" marker-end="url(#aBlue)"/>
+  <text x="1205" y="332" text-anchor="middle" class="lbl">translated into</text>
+
+  <!-- column headers -->
+  <text x="340" y="346" text-anchor="middle" class="lbl" fill="#1f9e8f">VALIDATION &#183; DEVICE FEEDBACK LOOP</text>
+  <text x="1160" y="346" text-anchor="middle" class="lbl" fill="#3b6fd6">BUILD PIPELINE (groundwork target)</text>
+
+  <!-- ============ LEFT: FEEDBACK LOOP ============ -->
+  <!-- L1 coverage -->
+  <g>
+    <rect x="105" y="352" width="470" height="92" rx="10" fill="#e3f5f1" stroke="#1f9e8f" stroke-width="1.8"/>
+    <text x="340" y="378" text-anchor="middle" class="boxTitle">grammar/coverage.json + COVERAGE.md</text>
+    <text x="340" y="402" text-anchor="middle" class="desc">EBNF-derived taxonomy, exhaustive over each construct's</text>
+    <text x="340" y="420" text-anchor="middle" class="desc">*dimensionality* &#183; every leaf = id + kind (the EBNF rule name)</text>
+  </g>
+  <line x1="340" y1="444" x2="340" y2="478" stroke="#1f9e8f" stroke-width="2" marker-end="url(#aTeal)"/>
+
+  <!-- L2 harness -->
+  <g>
+    <rect x="105" y="480" width="470" height="100" rx="10" fill="#e3f5f1" stroke="#1f9e8f" stroke-width="1.8"/>
+    <text x="340" y="506" text-anchor="middle" class="boxTitle">roku-test-harness/</text>
+    <text x="340" y="525" text-anchor="middle" class="small">runnable Roku SceneGraph channel</text>
+    <text x="340" y="547" text-anchor="middle" class="desc">exercises every leaf &#183; self-asserting test suite</text>
+    <text x="340" y="565" text-anchor="middle" class="desc">emits ##SPEC## protocol &#183; doubles as the ast-grep corpus</text>
+  </g>
+  <line x1="340" y1="580" x2="340" y2="614" stroke="#1f9e8f" stroke-width="2" marker-end="url(#aTeal)"/>
+
+  <!-- L3 device -->
+  <g>
+    <rect x="105" y="616" width="470" height="84" rx="10" fill="#1f7a4d" stroke="#145c39" stroke-width="2"/>
+    <text x="340" y="643" text-anchor="middle" class="boxTitleW">Roku device &#8212; GROUND TRUTH</text>
+    <text x="340" y="664" text-anchor="middle" class="descW">Streaming Stick 4K &#183; OS 15.1.4</text>
+    <text x="340" y="682" text-anchor="middle" class="descW">npm run roku:deploy sideloads; installer compiles on upload</text>
+  </g>
+  <line x1="340" y1="700" x2="340" y2="734" stroke="#1f9e8f" stroke-width="2" marker-end="url(#aTeal)"/>
+
+  <!-- L4 listener -->
+  <g>
+    <rect x="105" y="736" width="470" height="92" rx="10" fill="#e3f5f1" stroke="#1f9e8f" stroke-width="1.8"/>
+    <text x="340" y="762" text-anchor="middle" class="boxTitle">telnet 8085 console &#8594; roku-listener/</text>
+    <text x="340" y="786" text-anchor="middle" class="desc">parser.ts reads ##SPEC## (run-start / PASS|FAIL / run-end)</text>
+    <text x="340" y="804" text-anchor="middle" class="desc">and aggregates pass + fail counts</text>
+  </g>
+  <line x1="340" y1="828" x2="340" y2="862" stroke="#1f9e8f" stroke-width="2" marker-end="url(#aTeal)"/>
+
+  <!-- L5 device facts -->
+  <g>
+    <rect x="105" y="864" width="470" height="92" rx="10" fill="#d9efe9" stroke="#1f9e8f" stroke-width="1.8"/>
+    <text x="340" y="890" text-anchor="middle" class="boxTitle">grammar/DEVICE_FACTS.md &#8212; ground-truth ledger</text>
+    <text x="340" y="914" text-anchor="middle" class="desc">each device verdict + error code &#8594; a spec / harness fix</text>
+    <text x="340" y="932" text-anchor="middle" class="desc">e.g. let &amp;h02 &#183; #if and/or/not &amp;h93 &#183; stringarray quoting</text>
+  </g>
+
+  <!-- the loop back to EBNF -->
+  <path d="M105,910 L48,910 Q30,910 30,892 L30,261 Q30,243 48,243 L233,243"
+        fill="none" stroke="#1f9e8f" stroke-width="2.4" stroke-dasharray="7,5" marker-end="url(#aTeal)"/>
+  <text x="18" y="585" text-anchor="middle" class="lbl" fill="#1f9e8f" transform="rotate(-90 18 585)">device-confirmed corrections &#8594; back into EBNF + harness</text>
+
+  <!-- ============ RIGHT: BUILD PIPELINE ============ -->
+  <!-- R1 grammar.js -->
+  <g>
+    <rect x="925" y="352" width="470" height="100" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8" stroke-dasharray="6,5"/>
+    <text x="1160" y="378" text-anchor="middle" class="boxTitle">tree-sitter-brightscript/ grammar.js</text>
+    <text x="1160" y="397" text-anchor="middle" class="small">to be authored</text>
+    <text x="1160" y="419" text-anchor="middle" class="desc">translate EBNF &#8594; DSL &#183; expr cascade &#8594; prec.left/right</text>
+    <text x="1160" y="437" text-anchor="middle" class="desc">field() the parts &#183; inject BrightScript into &lt;script&gt; CDATA</text>
+  </g>
+  <line x1="1160" y1="452" x2="1160" y2="486" stroke="#3b6fd6" stroke-width="2" marker-end="url(#aBlue)"/>
+
+  <!-- R2 generate / C parser -->
+  <g>
+    <rect x="925" y="488" width="470" height="80" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8" stroke-dasharray="6,5"/>
+    <text x="1160" y="516" text-anchor="middle" class="boxTitle">tree-sitter generate &#8594; src/ C parser</text>
+    <text x="1160" y="540" text-anchor="middle" class="desc">+ test/corpus/ cases captured from parsing the harness</text>
+    <text x="1160" y="558" text-anchor="middle" class="desc">inspect S-expression trees; keep corpus green</text>
+  </g>
+  <line x1="1160" y1="568" x2="1160" y2="602" stroke="#3b6fd6" stroke-width="2" marker-end="url(#aBlue)"/>
+
+  <!-- R3 .so -->
+  <g>
+    <rect x="925" y="604" width="470" height="60" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8" stroke-dasharray="6,5"/>
+    <text x="1160" y="640" text-anchor="middle" class="boxTitle">compile &#8594; libtree-sitter-brightscript.so</text>
+  </g>
+  <line x1="1160" y1="664" x2="1160" y2="698" stroke="#3b6fd6" stroke-width="2" marker-end="url(#aBlue)"/>
+
+  <!-- R4 sgconfig -->
+  <g>
+    <rect x="925" y="700" width="470" height="84" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8" stroke-dasharray="6,5"/>
+    <text x="1160" y="727" text-anchor="middle" class="boxTitle">sgconfig.yml &#8594; customLanguages</text>
+    <text x="1160" y="751" text-anchor="middle" class="desc">register the .so &#183; map .brs / SceneGraph .xml extensions</text>
+    <text x="1160" y="769" text-anchor="middle" class="desc">expose node kinds + fields to patterns</text>
+  </g>
+  <line x1="1160" y1="784" x2="1160" y2="818" stroke="#3b6fd6" stroke-width="2" marker-end="url(#aBlue)"/>
+
+  <!-- R5 ast-grep -->
+  <g>
+    <rect x="925" y="820" width="470" height="96" rx="10" fill="#efe6fb" stroke="#7a3fd6" stroke-width="2" stroke-dasharray="6,5"/>
+    <text x="1160" y="850" text-anchor="middle" class="boxTitle">ast-grep custom language</text>
+    <text x="1160" y="874" text-anchor="middle" class="desc">structurally search &#183; lint &#183; rewrite</text>
+    <text x="1160" y="892" text-anchor="middle" class="desc">.brs and SceneGraph .xml with patterns &amp; rules</text>
+    <text x="1160" y="910" text-anchor="middle" class="desc">(match on kind / field)</text>
+  </g>
+
+  <!-- cross-link: harness corpus feeds the build pipeline -->
+  <path d="M575,529 C720,529 760,528 923,528" fill="none" stroke="#7a8694" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#aDark)"/>
+  <text x="749" y="513" text-anchor="middle" class="small">same source files = ast-grep test corpus</text>
+  <text x="749" y="552" text-anchor="middle" class="small">(&#8594; test/corpus/ cases)</text>
+
+  <!-- ============ WHY THE EBNF? ============ -->
+  <rect x="583" y="600" width="336" height="306" rx="12" fill="#fffaf0" stroke="#e0a800" stroke-width="2"/>
+  <text x="751" y="628" text-anchor="middle" font-size="15" font-weight="700" fill="#8a6d00">WHY THE EBNF?</text>
+  <text x="751" y="647" text-anchor="middle" class="ital">it is the hub everything else derives from</text>
+
+  <!-- bullet 1 -->
+  <rect x="600" y="666" width="7" height="7" fill="#e0a800"/>
+  <text x="614" y="673" font-size="11" fill="#4a4030" font-weight="600">Single source of truth &#8212; corpus and grammar</text>
+  <text x="614" y="688" font-size="11" fill="#4a4030">both derive from it, so they never drift apart.</text>
+  <!-- bullet 2 -->
+  <rect x="600" y="708" width="7" height="7" fill="#e0a800"/>
+  <text x="614" y="715" font-size="11" fill="#4a4030" font-weight="600">Distills scattered docs + XSD into one precise,</text>
+  <text x="614" y="730" font-size="11" fill="#4a4030">machine-checkable spec you can author from.</text>
+  <!-- bullet 3 -->
+  <rect x="600" y="750" width="7" height="7" fill="#e0a800"/>
+  <text x="614" y="757" font-size="11" fill="#4a4030" font-weight="600">Its precedence-layered expr cascade maps 1:1</text>
+  <text x="614" y="772" font-size="11" fill="#4a4030">onto tree-sitter prec levels &#8212; hardest part, solved.</text>
+  <!-- bullet 4 -->
+  <rect x="600" y="792" width="7" height="7" fill="#e0a800"/>
+  <text x="614" y="799" font-size="11" fill="#4a4030" font-weight="600">Its rule names are the shared kind vocabulary:</text>
+  <text x="614" y="814" font-size="11" fill="#4a4030">coverage &#8594; tree-sitter nodes &#8594; ast-grep kinds.</text>
+  <!-- bullet 5 -->
+  <rect x="600" y="834" width="7" height="7" fill="#e0a800"/>
+  <text x="614" y="841" font-size="11" fill="#4a4030" font-weight="600">Verifiable alone (check_ebnf.py / XSD) and</text>
+  <text x="614" y="856" font-size="11" fill="#4a4030">fixed by the device loop &#8212; proven before any</text>
+  <text x="614" y="871" font-size="11" fill="#4a4030">parser code is written.</text>
+  <text x="751" y="895" text-anchor="middle" class="ital">without it, grammar.js would be guesswork over prose docs</text>
+
+  <!-- ============ KIND CALLOUT ============ -->
+  <rect x="430" y="978" width="640" height="56" rx="10" fill="#fff8e1" stroke="#d4a017" stroke-width="1.6"/>
+  <text x="750" y="1002" text-anchor="middle" class="lbl">&#9733; One identifier flows end-to-end</text>
+  <text x="750" y="1023" text-anchor="middle" class="desc">an EBNF rule name &#8594; the tree-sitter node kind &#8594; the ast-grep `kind` you match on</text>
+
+  <!-- ============ LEGEND ============ -->
+  <rect x="105" y="1054" width="1290" height="62" rx="10" fill="#ffffff" stroke="#ccd2da" stroke-width="1.4"/>
+  <text x="130" y="1078" class="lbl">Legend</text>
+
+  <rect x="130" y="1092" width="24" height="15" rx="3" fill="#e3f5f1" stroke="#1f9e8f" stroke-width="1.6"/>
+  <text x="162" y="1104" class="legend">exists today</text>
+
+  <rect x="300" y="1092" width="24" height="15" rx="3" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.6" stroke-dasharray="4,3"/>
+  <text x="332" y="1104" class="legend">groundwork target (not built yet)</text>
+
+  <line x1="610" y1="1099" x2="650" y2="1099" stroke="#1f9e8f" stroke-width="2.4" stroke-dasharray="7,5" marker-end="url(#aTeal)"/>
+  <text x="658" y="1104" class="legend">device feedback loop (ground truth)</text>
+
+  <line x1="940" y1="1099" x2="980" y2="1099" stroke="#3b6fd6" stroke-width="2.4" marker-end="url(#aBlue)"/>
+  <text x="988" y="1104" class="legend">build pipeline</text>
+
+  <line x1="1140" y1="1099" x2="1180" y2="1099" stroke="#44505f" stroke-width="2.4" marker-end="url(#aDark)"/>
+  <text x="1188" y="1104" class="legend">derives / generates</text>
+</svg>

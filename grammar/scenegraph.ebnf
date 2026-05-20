@@ -393,8 +393,13 @@ FieldTypeAttValue ::= '"' FieldType '"' | "'" FieldType "'"
  *
  * NOTE on aliased spellings: the XSD encodes several types as a single
  * comma-joined enumeration token ("Boolean, bool", "integer, int",
- * "string, str"). Per the docs these are ALIASES -- either spelling is a valid
- * standalone value. They are listed here as the individual accepted spellings.
+ * "string, str"). The XSD lists these as ALIASES, BUT they do not all hold up on
+ * device. DEVICE-CONFIRMED (DEVICE_FACTS.md #11) on Roku OS 15.1.4: the 'int' and
+ * 'bool' aliases convert correctly, but the 'str' alias does NOT -- a valued
+ * type="str" field reads back Invalid (use 'string' instead). 'str' is kept below
+ * (it IS in the XSD, so removing it would make check_scenegraph_xsd.py report it
+ * as MISSING) but annotated DEVICE-REJECTED. See corpus/negative/
+ * sg_field_type_str_alias.xml.
  * The XSD lists only "array" for the generic array type, but "roArray" is
  * DEVICE-CONFIRMED valid on Roku OS 15.1.4 (a valued type="roArray" field
  * converts to an array exactly like "array"); kept here as a device-confirmed
@@ -403,7 +408,11 @@ FieldType ::=
       'integer'   | 'int'                 (* BrightScript integer *)
     | 'longinteger'                        (* BrightScript longinteger *)
     | 'float'                              (* BrightScript float *)
-    | 'string'    | 'str'                 (* BrightScript string *)
+    | 'string'    | 'str'                 (* BrightScript string. NOTE: the 'str'
+                                             alias is DEVICE-REJECTED
+                                             (DEVICE_FACTS.md #11) -- a valued
+                                             type="str" field reads Invalid; use
+                                             'string'. Kept only for XSD parity. *)
     | 'Boolean'   | 'bool'                (* BrightScript Boolean *)
     | 'vector2d'                           (* [x, y] coordinate array *)
     | 'color'                              (* color (0xRRGGBBAA / #RRGGBB) *)
@@ -422,8 +431,14 @@ FieldType ::=
     | 'array'     | 'roArray'             (* generic array of objects. 'roArray'
                                              is device-valid but NOT in the XSD
                                              (see note above + DEVICE_FACTS.md). *)
-    | 'rect2D'                             (* assocarray {x,y,width,height} *)
-    | 'rect2DArray'                        (* array of rect2D *)
+    | 'rect2D'                             (* DEVICE-CONFIRMED (DEVICE_FACTS.md
+                                             #13): a scalar rect2D deserializes to
+                                             an roAssociativeArray {x,y,width,
+                                             height}, NOT an roArray. See note 8. *)
+    | 'rect2DArray'                        (* array of rect2D. DEVICE-CONFIRMED
+                                             (DEVICE_FACTS.md #13): the OUTER
+                                             container IS an roArray (of rect2D
+                                             assocarrays). See note 8. *)
 
 (* `alias` micro-syntax: "node.field" (the XSD describes it as _node_._field_). *)
 AliasAttValue ::= '"' Name '.' Name '"' | "'" Name '.' Name "'"
@@ -492,6 +507,11 @@ ScriptCData ::= CDStart BrightScriptBody CDEnd
 
 (* Bare (non-CDATA) inline BrightScript. Discouraged because '<', '>' and '&'
  * must then be XML-escaped, but it is legal XML.
+ * DEVICE-CONFIRMED (DEVICE_FACTS.md #12) on Roku OS 15.1.4: a bare (non-CDATA)
+ * inline <script> is TOLERATED (the component loads/instantiates without error)
+ * but is NOT EXECUTED -- its init() never runs. To execute, the inline body MUST
+ * be wrapped in a CDATA section (ScriptCData) or supplied via an external `uri`
+ * (ScriptExternal). See note 3 and corpus.
  * >>> LANGUAGE EMBEDDING: same injection as ScriptCData. <<< *)
 ScriptText  ::= BrightScriptBody
 
@@ -615,6 +635,13 @@ FieldInitValue ::= AttValue
  *    - For EXTERNAL scripts (<script uri="...">), there is no body to inject;
  *      the referenced .brs file is parsed as a standalone BrightScript file by
  *      `brightscript.ebnf`.
+ *    - EXECUTION CAVEAT (DEVICE-CONFIRMED, DEVICE_FACTS.md #12): only CDATA-
+ *      wrapped inline scripts (`ScriptCData`) and external `uri` scripts
+ *      (`ScriptExternal`) actually RUN on device (Roku OS 15.1.4). A bare
+ *      (non-CDATA) inline script (`ScriptText`) is TOLERATED -- the component
+ *      loads without error -- but its body is NOT EXECUTED (init() never runs).
+ *      Parsing is unaffected (still inject BrightScript into the bare body for
+ *      tooling), but a linter should warn that a bare inline script will not run.
  *    - BrightScript identifiers also appear as ATTRIBUTE VALUES: the <field>
  *      `onChange` value names a BrightScript callback function, and <function>
  *      `name` names a BrightScript function. These are plain strings at the XML
@@ -661,6 +688,20 @@ FieldInitValue ::= AttValue
  *      follow this, and the grammar above models it. If you want to be lenient
  *      (accept these children in any order, as many editors tolerate), relax
  *      `ComponentContent` to an unordered repetition of the three child kinds.
+ *
+ * 8. FIELD-TYPE RUNTIME SHAPES (NOT A PARSE CONCERN, RECORDED FOR LINTERS)
+ *    - DEVICE-CONFIRMED (DEVICE_FACTS.md #13) on Roku OS 15.1.4: a scalar
+ *      `rect2D` field deserializes at runtime to an **roAssociativeArray** with
+ *      keys {x, y, width, height} (key count 4) -- NOT an roArray, despite the
+ *      "[ x, y, w, h ]" attribute micro-syntax (note 4) looking array-shaped. A
+ *      `rect2DArray`'s OUTER container IS an roArray (whose elements are those
+ *      rect2D assocarrays). Likewise `vector2d`/`array`/`roArray` are roArray-
+ *      shaped. These are runtime semantics, irrelevant to parsing, but a
+ *      semantic linter that reasons about field values should model them.
+ *    - DEVICE-CONFIRMED (DEVICE_FACTS.md #11): the `str` field-type alias is
+ *      NOT honored at runtime (a valued type="str" field reads Invalid), even
+ *      though the XSD lists "string, str" as aliases. Use `string`. ('int' and
+ *      'bool' aliases DO work.) See the FieldType note in Layer 2.
  *
  * ============================================================================
  *)

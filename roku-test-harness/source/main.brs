@@ -1,17 +1,20 @@
 ' main.brs - channel entry point.
 '
-' Standard roSGScreen boilerplate: create the screen, wire a message port,
-' instantiate the root Scene, show it, and run the event loop until the screen
-' is closed.
+' Drives ONE TestRunner across both layers of the coverage taxonomy
+' (grammar/coverage.json) and emits a single ##SPEC## stream:
 '
-' SCOPING: the BrightScript construct test suite (TestSuite_Run / the test
-' modules / the TestRunner framework) all live under pkg:/source/** which Roku
-' compiles into the GLOBAL scope. SceneGraph component scripts (MainScene.brs)
-' do NOT see those functions ("&h91 Function is not defined in component's
-' namespace"; see grammar/DEVICE_FACTS.md). The Main scope, however, CAN see
-' everything under pkg:/source/**, so we run the suite HERE - before showing the
-' scene - and emit the ##SPEC## protocol from this scope. The results are then
-' handed to MainScene via a field, which only renders them (no cross-scope call).
+'   1. BrightScript specs (lex/decl/cc/stmt/expr) run in the Main (global) scope
+'      via TestSuite_All() - these are pkg:/source/** functions, which Roku
+'      compiles into the global scope.
+'   2. SceneGraph specs run AFTER the scene is shown: test_scenegraph_all()
+'      inspects the live root Scene and the hidden SpecShowcase child node and
+'      folds its results into the SAME runner.
+'
+' SCOPING: SceneGraph component scripts do NOT see pkg:/source/** functions
+' ("&h91 Function is not defined in component's namespace"; see
+' grammar/DEVICE_FACTS.md). The Main scope CAN see everything under
+' pkg:/source/**, so the whole suite is driven HERE; the scene only RENDERS the
+' per-spec results it is handed via the 'specResults' field.
 
 sub Main(args as Dynamic)
     ' Demonstrate reading the launch arguments (supports_input_launch=1 in the
@@ -22,36 +25,42 @@ sub Main(args as Dynamic)
         end if
     end if
 
-    ' --- Run the BrightScript spec suite from the Main (global) scope --------
-    ' TestSuite_Run() runs every test module, prints the ##SPEC## protocol lines
-    ' (run-start framing, one line per registered spec, run-end framing) to the
-    ' debug console, and returns the results + summary for on-screen rendering.
-    outcome = TestSuite_Run()
-    print "Spec suite finished: PASS "; outcome.summary.passed; " / FAIL "; outcome.summary.failed; " (total "; outcome.summary.total; ")"
+    ' --- 1. BrightScript spec modules (Main/global scope) -------------------
+    runner = TestRunner_Create()
+    runner.runAll(TestSuite_All())
 
     ' --- Standard roSGScreen setup -----------------------------------------
     screen = CreateObject("roSGScreen")
     port = CreateObject("roMessagePort")
     screen.setMessagePort(port)
-
-    ' Create the root scene declared by components/MainScene.xml.
     scene = screen.CreateScene("MainScene")
     screen.show()
 
-    ' Hand the launch parameters AND the pre-computed test results to the scene
-    ' via its interface. MainScene renders these without re-running the suite (it
-    ' cannot - the suite functions are not in the component's namespace).
-    ' Set the counts FIRST, then testResults LAST: setting testResults fires the
-    ' scene's onTestResultsChanged observer, which renders using the counts, so
-    ' the counts must already be in place.
+    ' --- 2. SceneGraph specs against the live scene + showcase node ---------
+    ' The hidden <SpecShowcase id="showcase"> child declares one field of every
+    ' documented type plus alias/onChange/role/script/children forms; the root
+    ' scene proves the extends="Scene" case. Both are inspected here and folded
+    ' into the same runner so the ##SPEC## stream covers both layers.
+    showcase = scene.findNode("showcase")
+    test_scenegraph_all(runner, scene, showcase)
+
+    ' --- Emit the unified ##SPEC## protocol --------------------------------
+    ' run-start framing, one line per registered spec (BrightScript + SceneGraph),
+    ' run-end framing - all from the Main scope, captured over telnet by
+    ' roku-listener/.
+    runner.emitSpecLines()
+
+    summary = runner.summarize(runner.results)
+    print "Spec suite finished: PASS "; summary.passed; " / FAIL "; summary.failed; " (total "; summary.total; ")"
+
+    ' --- Hand launch args + per-spec results to the scene to render ---------
     scene.setField("launchArgs", args)
-    scene.setField("specResults", outcome.specs)
+    scene.setField("specResults", runner.specs)
 
     ' --- Standard event loop ------------------------------------------------
     while true
         msg = wait(0, port)
-        msgType = Type(msg)
-        if msgType = "roSGScreenEvent" then
+        if Type(msg) = "roSGScreenEvent" then
             if msg.isScreenClosed() then
                 return
             end if

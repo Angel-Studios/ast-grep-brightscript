@@ -21,6 +21,15 @@ sub init()
     childNode.text = "node-field-target"
     m.top.nodeField = childNode
 
+    ' Populate the remaining value-less fields so their declared runtime types
+    ' are observable to the SceneGraph spec tests (a field's stored value takes
+    ' the field's declared type).
+    m.top.timeField = 12.5
+    m.top.timeArray = [0.0, 1.5, 2.0]
+    nodeA = CreateObject("roSGNode", "Node")
+    nodeB = CreateObject("roSGNode", "Node")
+    m.top.nodeArray = [nodeA, nodeB]
+
     ' Keep the caption in sync with the (aliased / observed) title text.
     m.top.titleText = "SpecShowcase " + showcaseVersionTag()
 end sub

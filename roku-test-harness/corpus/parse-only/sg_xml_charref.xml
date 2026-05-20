@@ -1,0 +1,2 @@
+<!-- coverage-id: sg.xml.charref expect: parse -->
+<Label text="&#65;" />

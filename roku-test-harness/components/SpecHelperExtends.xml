@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SpecHelperExtends: a single minimal component that covers FOUR structural
+     leaves at once -
+       sg.component.extends_custom : extends= a USER-DEFINED component (SpecShowcase)
+       sg.component.initialfocus   : carries the initialFocus= attribute
+       sg.interface.empty          : declares an EMPTY <interface/>
+       sg.children.empty           : declares an EMPTY <children/>
+     The component version= attribute is also present (a second witness for
+     sg.component.version alongside SpecShowcase). It needs no <script>, so no
+     .brs file. initialFocus names a node that does not exist here; that is
+     resolved at runtime (not at compile/load), so the component still loads. -->
+<component name="SpecHelperExtends" extends="SpecShowcase" version="2.0" initialFocus="bgRect">
+  <interface />
+  <children />
+</component>

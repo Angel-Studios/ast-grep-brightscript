@@ -56,7 +56,9 @@ async function zip() {
   await run(["mkdir", "-p", resolve(ROOT, "out")]);
   await run(["rm", "-f", ZIP]);
   const { code, err } = await run(
-    ["zip", "-qr", ZIP, ".", "-x", "bsconfig.json", "-x", "README.md", "-x", "*.zip", "-x", "out/*"],
+    // corpus/ holds device-REJECTED + non-runnable snippets (negative corpus);
+    // it must never be packaged or the dev installer would try to compile it.
+    ["zip", "-qr", ZIP, ".", "-x", "bsconfig.json", "-x", "README.md", "-x", "*.zip", "-x", "out/*", "-x", "corpus/*"],
     HARNESS,
   );
   if (code !== 0) die(`zip failed: ${err.trim()}`);

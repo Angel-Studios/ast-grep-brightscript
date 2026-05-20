@@ -1,0 +1,2 @@
+<!-- coverage-id: neg.sg.stringarray_unquoted expect: error -->
+<field id="a" type="stringarray" value="[a, b, c]" />

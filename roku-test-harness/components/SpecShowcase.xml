@@ -20,9 +20,13 @@
     <!-- float -->
     <field id="floatField"    type="float"       value="3.14159" />
 
-    <!-- string (and the 'str' alias spelling). titleText carries an onChange
-         observer AND alwaysNotify so set-without-change still notifies. -->
+    <!-- string. titleText carries an onChange observer AND alwaysNotify so
+         set-without-change still notifies. -->
     <field id="stringField"   type="string"      value="hello" />
+    <!-- DEVICE FACT (DEVICE_FACTS.md #11): unlike the 'int'/'bool' aliases, 'str'
+         is NOT a recognized field-type spelling - a valued type="str" field reads
+         back Invalid. Kept here only to document the rejection; sg.field.type.str_alias
+         is now a non-device leaf (corpus/negative/). Use type="string". -->
     <field id="strAliasField" type="str"         value="world" />
     <field id="titleText"     type="string"      value="Spec Showcase"
                               onChange="onTitleTextChanged" alwaysNotify="true" />

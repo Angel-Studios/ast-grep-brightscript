@@ -1,0 +1,2 @@
+<!-- coverage-id: sg.xml.cdata expect: parse -->
+<![CDATA[ raw < & > ]]>

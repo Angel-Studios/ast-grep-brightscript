@@ -67,30 +67,39 @@ Layered validation — run from the repo root, keep green when editing:
 | Level | Command | Checks |
 |------|---------|--------|
 | 0 — internal consistency | `python3 grammar/check_ebnf.py` | every referenced rule is defined, no duplicates, reachability from the start symbol. |
+| 1 — coverage parity | `python3 grammar/check_coverage.py` | every `coverage.json` leaf is implemented: each `device_testable:true` id has a matching `t.spec("<id>","<kind>",…)` in `roku-test-harness/source/tests/*.brs` (and the kind cross-checks against `coverage.json`); each non-device (`device_testable:false`) id has a tagged corpus file under `roku-test-harness/corpus/`. Flags missing / mis-keyed / orphaned ids. **GREEN.** |
 | 2 — faithful to the XSD | `python3 grammar/check_scenegraph_xsd.py` | `scenegraph.ebnf`'s `FieldType` / `BuiltinNodeClass` / `<field>` attributes match the vendored `RokuSceneGraph.xsd` (`--url` refreshes it). |
-| 4 — corpus is real code | `npm run check` | runs BrighterScript (`bsc`) over `../roku-test-harness/`. NOTE: currently trips on the open-question constructs below (`let`, `#if and/or/not`) — those are pending the device loop, not green yet. |
+| 4 — corpus is real code | `npm run check` | runs BrighterScript (`bsc`) over `../roku-test-harness/`. NOTE: `bsc` is advisory, not authoritative — it both over- and under-rejects vs the device; cross-check any red line against [BSC_DRIFT.md](BSC_DRIFT.md). |
 
-Levels 0 and 2 are green. Level 3 (build the tree-sitter grammar, parse the corpus) and the
+Levels 0, 1, and 2 are green. Level 3 (build the tree-sitter grammar, parse the corpus) and the
 device-as-ground-truth loop are tracked in `../roku-test-harness/`.
+
+Ground truth is the device, recorded in [DEVICE_FACTS.md](DEVICE_FACTS.md); where `bsc` and the
+device disagree, the divergence is logged in [BSC_DRIFT.md](BSC_DRIFT.md) (the device always wins).
 
 ## ⚠️ Items flagged as unverified (confirm against a device / docs before relying on them)
 
 These were called out by the spec authors as uncertain. Verify before treating as ground truth:
 
 **BrightScript:**
-- `Dim` with `(…)` vs `[…]` bounds — both allowed in the spec; confirm runtime acceptance.
-- `for each` termination: docs say `end for` only (not `next`); legacy parsers tolerate `next`.
 - Fused vs spaced keywords (`endwhile`/`end while`, `exitfor`/`exit for`) — fused `exitfor`/`endfor` are weakly documented.
 - Line continuation: modeled as **none** (BrightScript has no continuation char; newlines are only non-significant inside `() [] {}`). Not stated in one canonical doc line.
 - Trailing commas in `[]`/`{}` literals — modeled permissively; runtime tolerance not documented.
 - Reserved built-ins (`Eval`, `Run`, `Type`, `Box`, `GetGlobalAA`, `Line_Num`, …) — call signatures not fully spec'd.
-- Optional-chaining `?.`/`?[` vs print `?` disambiguation (space sensitivity) — validate against device behavior.
+- ~~`Dim` with `(…)` vs `[…]` bounds~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #8)**: bracket bounds `dim a[n]` are required; the paren form `dim a(n)` is a Syntax Error (&h02). `DimBounds` keeps only the bracket form; the paren alternative is annotated device-rejected.
+- ~~`for each` / `for` termination via `next`~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #10)**: `next` and `next <var>` are device-valid (the channel compiled and ran with `next i`). `ForTerminator` keeps the `next Identifier?` form. NOTE bsc-vs-device drift: `bsc` wrongly rejects `next <var>` (see [BSC_DRIFT.md](BSC_DRIFT.md)).
+- ~~Optional-chaining `?.`/`?[`/`?(` vs print `?` & statement-vs-expression~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #9)**: the optional-call `?()` is valid only in **expression** position (`y = f?()`); a bare optional-call **statement** (`o.fn?()`) is a Syntax Error (&h02). `CallExpression` drops the `OC_PAREN` terminus; implementer note 15 records the disambiguation. (The `?`-vs-print spacing rule itself is still per the docs/note 3.)
+- ~~Nested **named** function declarations~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #5)**: a named `function`/`sub` declared inside another function body is a Syntax Error (&h02). Removed from the in-body `Statement` set (top-level only); anonymous function **values** inside a body remain valid.
+- ~~`as interface` / `as <CustomType>` (e.g. `as roSGNode`)~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #6, #7)**: only the intrinsic type set is valid in an `as` clause; `as interface` and any custom/component type name are compile errors (&ha7). `Type` keeps only the intrinsics device-valid; `interface`/`Identifier` annotated device-rejected. (Custom types in `as` are a BrighterScript transpile feature.)
 - ~~Optional leading `let` on assignment~~ — **RESOLVED (device, see [DEVICE_FACTS.md](DEVICE_FACTS.md) #2)**: Roku OS 15.1.4 rejects `let x = 5` (Syntax Error &h02). `let` stays reserved but the LET-assignment form is unsupported; removed from `AssignmentStatement`.
 - ~~Boolean operators (`and`/`or`/`not`) inside `#if`~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #1)**: rejected (compile error &h93). `CCExpression` reduced to a single boolean/const; negation via `#else`, conjunction via nested `#if`.
 
 **SceneGraph:**
 - ~~`array` vs `roArray` spelling~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #4)**: a valued `type="roArray"` field converts to an array exactly like `array` (a bogus type stays `Invalid`), so `roArray` is device-valid despite being absent from the XSD. Restored to `FieldType`; `check_scenegraph_xsd.py` allowlists it as a device-confirmed extra.
 - **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #3)**: a `stringarray` initial value needs quoted elements — `value='["a","b","c"]'`; `[a, b, c]` is rejected. (Array field-init values are validated only when a `value` is present.)
+- ~~`type="str"` field-type alias~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #11)**: `str` is NOT device-valid (a valued `type="str"` field reads `Invalid`), unlike the `int`/`bool` aliases which work; use `string`. `str` is kept in `FieldType` (it is in the XSD, so `check_scenegraph_xsd.py` would flag its removal) but annotated device-rejected.
+- ~~bare (non-CDATA) inline `<script>` execution~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #12)**: a bare inline script is tolerated (component loads) but NOT executed (`init()` never runs); CDATA or external `uri` scripts execute. Recorded in implementer note 3 / `ScriptText`.
+- ~~scalar `rect2D` runtime shape~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #13)**: a scalar `rect2D` deserializes to an `roAssociativeArray` `{x,y,width,height}`, not an `roArray`; a `rect2DArray`'s outer container IS an `roArray`. Recorded in implementer note 8.
 - Color string formats beyond `0xRRGGBBAA` (e.g. `#RRGGBB`) — only `0xRRGGBBAA` confirmed.
 - Node-reference attribute micro-syntax (e.g. `"dictionary:SomeId"`) — from an example, not a formal spec.
 - `AnimationBase`/`ArrayGrid` in the `extends` enumeration — present in the XSD but base-ish; instantiability unverified.

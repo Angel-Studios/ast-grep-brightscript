@@ -19,10 +19,15 @@ patterns and rules.
 
 ## The pipeline
 
+![ast-grep-brightscript — how the parser is built: EBNF specs → tree-sitter grammar → C parser → .so → ast-grep custom language, with a Roku-device feedback loop validating the specs](docs/pipeline.svg)
+
 ```
 grammar/*.ebnf  ─►  tree-sitter grammar.js  ─►  C parser  ─►  .so  ─►  ast-grep customLanguage
                     (BrightScript injected into SceneGraph <script> CDATA)
 ```
+
+The device-as-ground-truth loop (sideload the harness → read its `##SPEC##` results →
+record confirmed facts) is the validation feedback shown in the diagram above.
 
 ## Building the parser (next steps)
 

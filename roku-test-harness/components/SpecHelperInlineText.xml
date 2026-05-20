@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SpecHelperInlineText: covers sg.script.inline_text - an inline <script> whose
+     BrightScript body is BARE text (NOT wrapped in <![CDATA[ ... ]]>). This is the
+     non-CDATA inline embedding form. The body uses no XML-special characters
+     (no <, >, &) so it is well-formed without CDATA. We only instantiate this
+     component and assert it loaded, which proves the bare inline script compiled.
+     init() sets a field so there is observable runtime behaviour. -->
+<component name="SpecHelperInlineText" extends="Group">
+  <interface>
+    <field id="loaded" type="boolean" value="false" />
+  </interface>
+  <script type="text/brightscript">
+    sub init()
+        m.top.loaded = true
+    end sub
+  </script>
+</component>

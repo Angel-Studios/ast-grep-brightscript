@@ -6,9 +6,10 @@
      results here via the 'specResults' field (see grammar/DEVICE_FACTS.md for why
      component scripts cannot run the suite themselves).
 
-     NOTE: text uses the built-in default font deliberately (no <Font> node) -
-     a small, monospace-ish system font fits the terse boot-log aesthetic and
-     renders reliably. -->
+     NOTE: text is rendered in the bundled Ubuntu Mono TTF
+     (pkg:/fonts/UbuntuMono-Regular.ttf) at ~half the default size - a small
+     monospace font fits the terse boot-log aesthetic and packs many specs per
+     screen. The Font nodes are built in MainScene.brs (MakeFont). -->
 <component name="MainScene" extends="Scene">
 
   <interface>

@@ -1,0 +1,9 @@
+<!-- coverage-id: sg.field.type.str_alias expect: error -->
+<!-- Device-confirmed REJECTED (SEMANTIC, not a syntax error): the field-type
+     spelling "str" is NOT recognized on Roku OS 15.1.4. Unlike the "int" and
+     "bool" aliases (which ARE accepted), a valued type="str" field is not
+     converted and reads back Invalid (use the full spelling "string"). The XML
+     itself is well-formed and parses cleanly; a tree-sitter grammar would parse
+     it without an ERROR node, so plan 03 should flag this with a field-type LINT
+     rule rather than a parse-ERROR assertion. See grammar/DEVICE_FACTS.md. -->
+<field id="a" type="str" value="hi" />

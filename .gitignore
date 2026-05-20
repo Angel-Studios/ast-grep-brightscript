@@ -2,6 +2,9 @@
 target/
 .DS_Store
 *.swp
+.playwright-mcp/
+# Raster preview render of docs/pipeline.svg (the SVG is the tracked source).
+pipeline-preview.png
 
 # tree-sitter grammar build artifacts (for the future tree-sitter-brightscript/ project)
 node_modules/

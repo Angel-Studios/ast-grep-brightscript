@@ -1,0 +1,2 @@
+<!-- coverage-id: sg.xml.content_chardata expect: parse -->
+<a>hello</a>

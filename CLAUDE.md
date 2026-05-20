@@ -23,17 +23,32 @@ When you build the parser, do not start from scratch — start from these specs 
 ```
 ast-grep-brightscript/
 ├── CLAUDE.md                                  ← you are here (orientation)
-├── README.md
+├── README.md                                  ← project overview + the architecture diagram
+├── package.json                               ← npm scripts: check/lint (bsc) + roku:deploy/zip/install/launch/delete
+├── .env.example                               ← Roku device config template (copy to .env; .env is gitignored)
+├── docs/
+│   └── pipeline.svg                           ← architecture diagram (embedded in README.md)
 ├── .claude/
 │   └── skills/
 │       └── ast-grep-custom-language/
 │           └── SKILL.md                       ← HOW to build the parser (tree-sitter → ast-grep)
-├── grammar/
+├── grammar/                                   ← language specs + their validators (source of truth)
 │   ├── CLAUDE.md                              ← guide to the grammar specs
 │   ├── brightscript.ebnf                      ← WHAT to parse: BrightScript language spec
-│   └── scenegraph.ebnf                        ← WHAT to parse: SceneGraph XML (embeds BrightScript)
-└── roku-test-harness/                         ← runnable Roku app: spec exerciser + ast-grep corpus
-    └── README.md                              ← how to package/sideload & read the green/red results
+│   ├── scenegraph.ebnf                        ← WHAT to parse: SceneGraph XML (embeds BrightScript)
+│   ├── RokuSceneGraph.xsd                     ← vendored official SceneGraph XSD (authority for the SG enums)
+│   ├── check_ebnf.py                          ← validator: EBNF internal consistency (rules defined + reachable)
+│   ├── check_scenegraph_xsd.py               ← validator: scenegraph.ebnf enums vs the XSD
+│   ├── COVERAGE.md + coverage.json            ← construct-coverage taxonomy + per-rule status
+│   └── DEVICE_FACTS.md                        ← device-confirmed language facts (the ground-truth ledger)
+├── roku-test-harness/                         ← runnable Roku app: spec exerciser + ast-grep corpus
+│   └── README.md                              ← deploy (npm run roku:deploy) & read the boot-log results
+├── roku-listener/                             ← Bun/TS tool: parses the device's ##SPEC## debug stream → JSON report
+│   └── README.md                              ← the ##SPEC## protocol + live/replay usage
+├── scripts/
+│   └── roku-deploy.ts                         ← package → digest-auth sideload → ECP launch automation
+└── roadmap/                                   ← next-step plans (expand coverage, roArray, tree-sitter, housekeeping)
+    └── README.md
 ```
 
 Not yet present (the work this groundwork enables):
@@ -53,6 +68,9 @@ grammar/scenegraph.ebnf  ──┘   (+ BrightScript injected into SceneGraph <s
 `scenegraph.ebnf` embeds `brightscript.ebnf` (BrightScript lives in `<script>` CDATA and external
 `uri` scripts); in tree-sitter terms this is **language injection**.
 
+For the same pipeline drawn out — including the device-as-ground-truth feedback loop — see the
+architecture diagram [`docs/pipeline.svg`](docs/pipeline.svg) (also embedded in `README.md`).
+
 ## How to work in this repo
 
 - **Building or changing the parser?** Read `.claude/skills/ast-grep-custom-language/SKILL.md` first
@@ -65,10 +83,15 @@ grammar/scenegraph.ebnf  ──┘   (+ BrightScript injected into SceneGraph <s
   and confirm them before relying on them.
 - **Validating the parser?** Use `roku-test-harness/` as real-world input — it is intentionally
   exhaustive over the specs. Parse those files, inspect the S-expression trees, and write
-  `test/corpus/` cases from them. The harness can also be sideloaded onto a Roku to confirm the
-  BrightScript/SceneGraph itself is valid (green = pass, red = fail).
-- **Keep specs, harness, and (eventual) grammar in sync.** A construct added in one should be
-  reflected in the others.
+  `test/corpus/` cases from them.
+- **Validating against the device (ground truth)?** `npm run roku:deploy` packages the harness,
+  sideloads it (the dev installer compiles on upload, so rejects are immediate), and launches it;
+  the harness emits a `##SPEC##` result line per construct on the debug console (telnet 8085), which
+  `roku-listener/` parses into a pass/fail report. Whatever the device decides is authoritative —
+  record confirmed facts in `grammar/DEVICE_FACTS.md`. See `roku-test-harness/README.md` and
+  `roku-listener/README.md`.
+- **Keep specs, harness, validators, and (eventual) grammar in sync.** A construct added in one
+  should be reflected in the others; keep `grammar/check_ebnf.py` and `check_scenegraph_xsd.py` green.
 
 ## Conventions
 
