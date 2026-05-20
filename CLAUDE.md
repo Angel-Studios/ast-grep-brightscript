@@ -4,10 +4,13 @@ The goal of this repository is a **full ast-grep parser for BrightScript** (and 
 delivered as a custom tree-sitter grammar registered with ast-grep so that BrightScript `.brs` and
 SceneGraph `.xml` files can be searched, linted, and rewritten with ast-grep patterns and rules.
 
-## Current status: GROUNDWORK
+## Current status: PARSER BUILT
 
-The parser is **not written yet** — this is deliberate. What exists now is the foundation that lets
-the parser be authored well (by a human or an AI agent):
+The parser is **built, validated, and registered**. Both tree-sitter grammars
+(`tree-sitter-brightscript/`, `tree-sitter-scenegraph/`) are authored from the EBNF, compiled to
+`.so`, and registered as ast-grep custom languages in `sgconfig.yml` — with BrightScript injected
+into SceneGraph `<script>` bodies (CDATA and bare inline). The foundation that made this possible
+remains in place and is still the source of truth:
 
 1. A reusable **skill** that teaches the full method for building a tree-sitter grammar and
    registering it as an ast-grep custom language.
@@ -16,7 +19,7 @@ the parser be authored well (by a human or an AI agent):
 3. A runnable **Roku test-harness app** that exercises every construct in those grammars — it both
    self-validates on a real device and serves as the ast-grep test corpus.
 
-When you build the parser, do not start from scratch — start from these specs and the skill.
+When you change the parser, do not start from scratch — work from these specs and the skill.
 
 ## Repository map
 
@@ -25,6 +28,7 @@ ast-grep-brightscript/
 ├── CLAUDE.md                                  ← you are here (orientation)
 ├── README.md                                  ← project overview + the architecture diagram
 ├── package.json                               ← npm scripts: check/lint (bsc) + roku:deploy/zip/install/launch/delete
+├── sgconfig.yml                               ← ast-grep config: registers the customLanguages + languageInjections
 ├── .env.example                               ← Roku device config template (copy to .env; .env is gitignored)
 ├── docs/
 │   └── pipeline.svg                           ← architecture diagram (embedded in README.md)
@@ -41,6 +45,9 @@ ast-grep-brightscript/
 │   ├── check_scenegraph_xsd.py               ← validator: scenegraph.ebnf enums vs the XSD
 │   ├── COVERAGE.md + coverage.json            ← construct-coverage taxonomy + per-rule status
 │   └── DEVICE_FACTS.md                        ← device-confirmed language facts (the ground-truth ledger)
+├── tree-sitter-brightscript/                  ← BrightScript tree-sitter grammar (grammar.js, src/, test/corpus/, compiled .so)
+├── tree-sitter-scenegraph/                    ← SceneGraph tree-sitter grammar (grammar.js, src/, test/corpus/, compiled .so)
+├── rules/                                      ← ast-grep lint rules (ruleDirs in sgconfig.yml; currently empty)
 ├── roku-test-harness/                         ← runnable Roku app: spec exerciser + ast-grep corpus
 │   └── README.md                              ← deploy (npm run roku:deploy) & read the boot-log results
 ├── roku-listener/                             ← Bun/TS tool: parses the device's ##SPEC## debug stream → JSON report
@@ -51,11 +58,7 @@ ast-grep-brightscript/
     └── README.md
 ```
 
-Not yet present (the work this groundwork enables):
-- `tree-sitter-brightscript/` — the tree-sitter grammar project (`grammar.js`, `src/`, `test/corpus/`, the compiled `.so`).
-- `sgconfig.yml` — the ast-grep config registering the compiled grammar under `customLanguages`.
-
-## The intended pipeline
+## The pipeline
 
 ```
 grammar/brightscript.ebnf ─┐
@@ -66,7 +69,9 @@ grammar/scenegraph.ebnf  ──┘   (+ BrightScript injected into SceneGraph <s
 ```
 
 `scenegraph.ebnf` embeds `brightscript.ebnf` (BrightScript lives in `<script>` CDATA and external
-`uri` scripts); in tree-sitter terms this is **language injection**.
+`uri` scripts); in tree-sitter terms this is **language injection** — now implemented and verified:
+`sgconfig.yml` injects the BrightScript parser into SceneGraph `<script>` bodies (CDATA and bare
+inline), so ast-grep's BrightScript rules match inside `.xml` `<script>` content.
 
 For the same pipeline drawn out — including the device-as-ground-truth feedback loop — see the
 architecture diagram [`docs/pipeline.svg`](docs/pipeline.svg) (also embedded in `README.md`).
@@ -82,16 +87,17 @@ architecture diagram [`docs/pipeline.svg`](docs/pipeline.svg) (also embedded in 
   Several grammar items are flagged as unverified — see the warning section in `grammar/CLAUDE.md`
   and confirm them before relying on them.
 - **Validating the parser?** Use `roku-test-harness/` as real-world input — it is intentionally
-  exhaustive over the specs. Parse those files, inspect the S-expression trees, and write
-  `test/corpus/` cases from them.
+  exhaustive over the specs. Parse those files, inspect the S-expression trees, and extend the
+  `test/corpus/` cases (already present under each `tree-sitter-*/test/corpus/`) from them.
 - **Validating against the device (ground truth)?** `npm run roku:deploy` packages the harness,
   sideloads it (the dev installer compiles on upload, so rejects are immediate), and launches it;
   the harness emits a `##SPEC##` result line per construct on the debug console (telnet 8085), which
   `roku-listener/` parses into a pass/fail report. Whatever the device decides is authoritative —
   record confirmed facts in `grammar/DEVICE_FACTS.md`. See `roku-test-harness/README.md` and
   `roku-listener/README.md`.
-- **Keep specs, harness, validators, and (eventual) grammar in sync.** A construct added in one
-  should be reflected in the others; keep `grammar/check_ebnf.py` and `check_scenegraph_xsd.py` green.
+- **Keep specs, harness, validators, and grammar in sync.** A construct added in one should be
+  reflected in the others; keep all validation gates green (`grammar/check_ebnf.py`,
+  `check_coverage.py`, `check_scenegraph_xsd.py`, `check_grammar.py`, `check_parity.py`).
 
 ## Conventions
 

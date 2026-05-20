@@ -361,18 +361,27 @@ Parameter       ::= Identifier ( ASSIGN Expression )? ( 'as' Type )?
 (* Type names used in 'as Type' annotations and parameter types.
    All are case-insensitive. 'Object' covers component references such as
    roArray / roAssociativeArray. 'Dynamic' is the unconstrained default.
+
+   PARSE vs LINT (implementer note): structurally, Type is ANY identifier -- the
+   'as' clause accepts any name and PARSES it cleanly. The intrinsic type set
+   below is therefore the set of VALID types, enforced by a LINT/SEMANTIC rule,
+   NOT by the grammar. Restricting Type to the enum at parse time would turn
+   device-invalid annotations into ERROR nodes; instead the parser accepts them so
+   a linter can flag them. (The intrinsic names, being non-reserved words, already
+   match the `Identifier` alternative; only the two reserved keywords 'function'
+   and 'invalid' need their own alternatives so they parse as a Type at all.)
+
    DEVICE-CONFIRMED (DEVICE_FACTS.md #6, #7) on Roku OS 15.1.4: ONLY the intrinsic
    type set below is valid in an 'as' clause. 'as interface' is rejected at compile
    time (&ha7, #6), and 'as <ComponentType>' / any non-intrinsic custom or
    component type name (e.g. 'as roSGNode') is also rejected (&ha7, #7) -- custom
    types in 'as' are a BrighterScript transpile feature, not device BrightScript.
-   So 'interface' and the catch-all Identifier alternative are NOT device-valid;
-   they are kept below only as annotated/rejected alternatives (struck through),
-   per this file's convention for device-confirmed items. *)
-Type            ::= 'integer'
+   These DEVICE-INVALID names still PARSE (via the `Identifier` alternative); the
+   intrinsic-only restriction is a lint check, not a parse constraint. *)
+Type            ::= 'integer'                            (* --- VALID intrinsics: the *)
                   | 'longinteger'                       (* Roku OS 7.0+ *)
-                  | 'float'
-                  | 'double'
+                  | 'float'                              (* device-accepted type set, *)
+                  | 'double'                             (* enforced by LINT not parse *)
                   | 'string'
                   | 'boolean'
                   | 'object'
@@ -380,12 +389,15 @@ Type            ::= 'integer'
                   | 'dynamic'
                   | 'void'
                   | 'invalid'
-              (* --- DEVICE-REJECTED (DEVICE_FACTS.md #6, #7) -- NOT valid in 'as':
-                  | 'interface'       device-rejected &ha7 (#6); see corpus/negative/
-                                      decl_type_interface.brs
-                  | Identifier        component / custom type name, e.g. a roSGNode
-                                      subtype: device-rejected &ha7 (#7); see
-                                      corpus/negative/decl_type_custom.brs --- *)
+                  | Identifier  (* parse-level catch-all: any identifier (custom /
+                                   component type name, e.g. roSGNode, or 'interface')
+                                   PARSES here so it can be LINTED. Such non-intrinsic
+                                   names are DEVICE-REJECTED &ha7 (DEVICE_FACTS.md #6,
+                                   #7) -- see corpus/negative/decl_type_interface.brs
+                                   and corpus/negative/decl_type_custom.brs. The
+                                   intrinsic literals above are listed only to
+                                   document the lint-valid set; being non-reserved,
+                                   they also match this Identifier alternative. *)
 
 
 (*===========================================================================*)
@@ -940,7 +952,10 @@ ReservedBuiltinName ::= 'getglobalaa' | 'getlastruncompileerror'
      FunctionDeclaration/SubDeclaration must be reachable from TopLevelItem but
      NOT from the in-body Statement set.
 
- 17. 'as' TYPES ARE INTRINSIC-ONLY.
+ 17. 'as' TYPES ARE INTRINSIC-ONLY (a LINT rule, not a PARSE constraint).
+     Structurally Type is ANY identifier: 'as <anything>' parses cleanly (see the
+     Type rule's `Identifier` alternative in 2.5). The intrinsic-only restriction
+     is enforced by a linter, not the grammar.
      DEVICE-CONFIRMED (DEVICE_FACTS.md #6, #7) on Roku OS 15.1.4: only the
      intrinsic type set (integer, longinteger, float, double, string, boolean,
      object, function, dynamic, void, invalid) is valid after 'as'. 'as interface'

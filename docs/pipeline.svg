@@ -74,7 +74,7 @@
 
   <!-- column headers -->
   <text x="340" y="346" text-anchor="middle" class="lbl" fill="#1f9e8f">VALIDATION &#183; DEVICE FEEDBACK LOOP</text>
-  <text x="1160" y="346" text-anchor="middle" class="lbl" fill="#3b6fd6">BUILD PIPELINE (groundwork target)</text>
+  <text x="1160" y="346" text-anchor="middle" class="lbl" fill="#3b6fd6">BUILD PIPELINE (built &#183; registered)</text>
 
   <!-- ============ LEFT: FEEDBACK LOOP ============ -->
   <!-- L1 coverage -->
@@ -130,9 +130,9 @@
   <!-- ============ RIGHT: BUILD PIPELINE ============ -->
   <!-- R1 grammar.js -->
   <g>
-    <rect x="925" y="352" width="470" height="100" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8" stroke-dasharray="6,5"/>
+    <rect x="925" y="352" width="470" height="100" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8"/>
     <text x="1160" y="378" text-anchor="middle" class="boxTitle">tree-sitter-brightscript/ grammar.js</text>
-    <text x="1160" y="397" text-anchor="middle" class="small">to be authored</text>
+    <text x="1160" y="397" text-anchor="middle" class="small">authored from EBNF (brightscript + scenegraph)</text>
     <text x="1160" y="419" text-anchor="middle" class="desc">translate EBNF &#8594; DSL &#183; expr cascade &#8594; prec.left/right</text>
     <text x="1160" y="437" text-anchor="middle" class="desc">field() the parts &#183; inject BrightScript into &lt;script&gt; CDATA</text>
   </g>
@@ -140,7 +140,7 @@
 
   <!-- R2 generate / C parser -->
   <g>
-    <rect x="925" y="488" width="470" height="80" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8" stroke-dasharray="6,5"/>
+    <rect x="925" y="488" width="470" height="80" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8"/>
     <text x="1160" y="516" text-anchor="middle" class="boxTitle">tree-sitter generate &#8594; src/ C parser</text>
     <text x="1160" y="540" text-anchor="middle" class="desc">+ test/corpus/ cases captured from parsing the harness</text>
     <text x="1160" y="558" text-anchor="middle" class="desc">inspect S-expression trees; keep corpus green</text>
@@ -149,23 +149,23 @@
 
   <!-- R3 .so -->
   <g>
-    <rect x="925" y="604" width="470" height="60" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8" stroke-dasharray="6,5"/>
-    <text x="1160" y="640" text-anchor="middle" class="boxTitle">compile &#8594; libtree-sitter-brightscript.so</text>
+    <rect x="925" y="604" width="470" height="60" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8"/>
+    <text x="1160" y="640" text-anchor="middle" class="boxTitle">compile &#8594; brightscript.so + scenegraph.so</text>
   </g>
   <line x1="1160" y1="664" x2="1160" y2="698" stroke="#3b6fd6" stroke-width="2" marker-end="url(#aBlue)"/>
 
   <!-- R4 sgconfig -->
   <g>
-    <rect x="925" y="700" width="470" height="84" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8" stroke-dasharray="6,5"/>
+    <rect x="925" y="700" width="470" height="84" rx="10" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.8"/>
     <text x="1160" y="727" text-anchor="middle" class="boxTitle">sgconfig.yml &#8594; customLanguages</text>
-    <text x="1160" y="751" text-anchor="middle" class="desc">register the .so &#183; map .brs / SceneGraph .xml extensions</text>
-    <text x="1160" y="769" text-anchor="middle" class="desc">expose node kinds + fields to patterns</text>
+    <text x="1160" y="751" text-anchor="middle" class="desc">register both .so &#183; map .brs / SceneGraph .xml extensions</text>
+    <text x="1160" y="769" text-anchor="middle" class="desc">+ languageInjections: BrightScript inside &lt;script&gt;</text>
   </g>
   <line x1="1160" y1="784" x2="1160" y2="818" stroke="#3b6fd6" stroke-width="2" marker-end="url(#aBlue)"/>
 
   <!-- R5 ast-grep -->
   <g>
-    <rect x="925" y="820" width="470" height="96" rx="10" fill="#efe6fb" stroke="#7a3fd6" stroke-width="2" stroke-dasharray="6,5"/>
+    <rect x="925" y="820" width="470" height="96" rx="10" fill="#efe6fb" stroke="#7a3fd6" stroke-width="2"/>
     <text x="1160" y="850" text-anchor="middle" class="boxTitle">ast-grep custom language</text>
     <text x="1160" y="874" text-anchor="middle" class="desc">structurally search &#183; lint &#183; rewrite</text>
     <text x="1160" y="892" text-anchor="middle" class="desc">.brs and SceneGraph .xml with patterns &amp; rules</text>
@@ -215,10 +215,10 @@
   <text x="130" y="1078" class="lbl">Legend</text>
 
   <rect x="130" y="1092" width="24" height="15" rx="3" fill="#e3f5f1" stroke="#1f9e8f" stroke-width="1.6"/>
-  <text x="162" y="1104" class="legend">exists today</text>
+  <text x="162" y="1104" class="legend">validation / device loop</text>
 
-  <rect x="300" y="1092" width="24" height="15" rx="3" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.6" stroke-dasharray="4,3"/>
-  <text x="332" y="1104" class="legend">groundwork target (not built yet)</text>
+  <rect x="300" y="1092" width="24" height="15" rx="3" fill="#e6edfb" stroke="#3b6fd6" stroke-width="1.6"/>
+  <text x="332" y="1104" class="legend">build pipeline (built)</text>
 
   <line x1="610" y1="1099" x2="650" y2="1099" stroke="#1f9e8f" stroke-width="2.4" stroke-dasharray="7,5" marker-end="url(#aTeal)"/>
   <text x="658" y="1104" class="legend">device feedback loop (ground truth)</text>

@@ -122,3 +122,13 @@ usage) via the custom language; the device-validated harness corpus parses clean
 produce ERROR (semantic cases parse clean, flagged by lint rules); all 136 coverage
 `kind`s are represented; both parity checks are green. The Roku device remains the
 tiebreaker for any construct the grammar and the docs disagree on.
+
+## Status: COMPLETE
+All acceptance criteria are met. The harness parses with zero ERROR; `corpus/parse-only/`
+is clean; negatives behave (syntax → ERROR, semantic → clean). Every coverage `kind` is
+represented in `node-types.json` AND matchable by ast-grep — the live sweep confirmed all
+**129 (language, kind) pairs** (95 brightscript + 34 scenegraph) match (0 rejected, 0 missing).
+Both custom languages are registered in `sgconfig.yml` and load (ABI 15 ↔ ast-grep 0.42.3);
+BrightScript-into-SceneGraph language injection is wired and verified (CDATA + bare inline
+`<script>`). `check_coverage.py`, `check_grammar.py`, and `check_parity.py` are all GREEN, and
+`tree-sitter test` is GREEN (53 brightscript + 33 scenegraph corpus tests).

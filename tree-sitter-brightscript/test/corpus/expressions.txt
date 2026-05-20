@@ -1,0 +1,179 @@
+================================================================================
+exponent binds tighter than unary minus (-2 ^ 2 = -(2 ^ 2))
+================================================================================
+
+y = -2 ^ 2
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (UnaryExpr
+      (PowerExpr
+        (IntegerLiteral)
+        (IntegerLiteral))))
+  (EOS))
+
+================================================================================
+exponent is right associative (2 ^ 3 ^ 2 = 2 ^ (3 ^ 2))
+================================================================================
+
+y = 2 ^ 3 ^ 2
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PowerExpr
+      (IntegerLiteral)
+      (PowerExpr
+        (IntegerLiteral)
+        (IntegerLiteral))))
+  (EOS))
+
+================================================================================
+multiplication binds tighter than addition
+================================================================================
+
+y = 1 + 2 * 3
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (AdditiveExpr
+      (IntegerLiteral)
+      (MultiplicativeExpr
+        (IntegerLiteral)
+        (MultiplicativeOp)
+        (IntegerLiteral))))
+  (EOS))
+
+================================================================================
+or is looser than and (a and b or c = (a and b) or c)
+================================================================================
+
+y = a and b or c
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (OrExpr
+      (AndExpr
+        (Identifier
+          (IdentStart))
+        (Identifier
+          (IdentStart)))
+      (Identifier
+        (IdentStart))))
+  (EOS))
+
+================================================================================
+logical not
+================================================================================
+
+y = not a
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (NotExpr
+      (Identifier
+        (IdentStart))))
+  (EOS))
+
+================================================================================
+comparison operators
+================================================================================
+
+y = a <> b and c >= d
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (AndExpr
+      (ComparisonExpr
+        (Identifier
+          (IdentStart))
+        (ComparisonOp)
+        (Identifier
+          (IdentStart)))
+      (ComparisonExpr
+        (Identifier
+          (IdentStart))
+        (ComparisonOp)
+        (Identifier
+          (IdentStart)))))
+  (EOS))
+
+================================================================================
+bitwise mod operator
+================================================================================
+
+y = a mod b
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (MultiplicativeExpr
+      (Identifier
+        (IdentStart))
+      (MultiplicativeOp)
+      (Identifier
+        (IdentStart))))
+  (EOS))
+
+================================================================================
+grouped expression
+================================================================================
+
+y = (1 + 2) * 3
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (MultiplicativeExpr
+      (ParenExpr
+        (AdditiveExpr
+          (IntegerLiteral)
+          (IntegerLiteral)))
+      (MultiplicativeOp)
+      (IntegerLiteral)))
+  (EOS))

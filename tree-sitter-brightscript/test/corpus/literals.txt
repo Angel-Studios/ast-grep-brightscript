@@ -1,0 +1,192 @@
+================================================================================
+integer literal
+================================================================================
+
+x = 42
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (IntegerLiteral))
+  (EOS))
+
+================================================================================
+float literal
+================================================================================
+
+x = 3.14
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (FloatLiteral))
+  (EOS))
+
+================================================================================
+double literal (# type designator)
+================================================================================
+
+x = 2.5#
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (DoubleLiteral))
+  (EOS))
+
+================================================================================
+long integer literal (& type designator)
+================================================================================
+
+x = 255&
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (LongIntegerLiteral))
+  (EOS))
+
+================================================================================
+hex literal
+================================================================================
+
+x = &hFF
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (HexLiteral))
+  (EOS))
+
+================================================================================
+string literal with "" escape
+================================================================================
+
+x = "say ""hi"""
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (StringLiteral
+      (StringChar)
+      (EscapedQuote)
+      (StringChar)
+      (EscapedQuote)))
+  (EOS))
+
+================================================================================
+boolean literal
+================================================================================
+
+x = true
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (BooleanLiteral))
+  (EOS))
+
+================================================================================
+invalid literal
+================================================================================
+
+x = invalid
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (InvalidLiteral))
+  (EOS))
+
+================================================================================
+array literal
+================================================================================
+
+x = [1, 2, 3]
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (ArrayLiteral
+      (ArrayElement
+        (IntegerLiteral))
+      (ElementSep)
+      (ArrayElement
+        (IntegerLiteral))
+      (ElementSep)
+      (ArrayElement
+        (IntegerLiteral))))
+  (EOS))
+
+================================================================================
+associative array literal
+================================================================================
+
+x = { a: 1, b: 2 }
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (AssocArrayLiteral
+      (AAEntry
+        (AAKey
+          (Identifier
+            (IdentStart)))
+        (IntegerLiteral))
+      (ElementSep)
+      (AAEntry
+        (AAKey
+          (Identifier
+            (IdentStart)))
+        (IntegerLiteral))))
+  (EOS))

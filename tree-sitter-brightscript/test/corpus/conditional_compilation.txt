@@ -1,0 +1,74 @@
+================================================================================
+const directive
+================================================================================
+
+#const DEBUG = true
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ConstDirective
+    (Identifier
+      (IdentStart))
+    (CCExpression
+      (BooleanLiteral)))
+  (EOS))
+
+================================================================================
+conditional compilation if / else / end if
+================================================================================
+
+#if DEBUG
+    print "debug"
+#else
+    print "release"
+#end if
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (IfDirectiveBlock
+    (CCExpression
+      (Identifier
+        (IdentStart)))
+    (EOS)
+    (Block
+      (PrintStatement
+        (PrintItemList
+          (StringLiteral
+            (StringChar))))
+      (EOS))
+    (EOS)
+    (Block
+      (PrintStatement
+        (PrintItemList
+          (StringLiteral
+            (StringChar))))
+      (EOS))
+    (EndIfDirective))
+  (EOS))
+
+================================================================================
+conditional compilation error directive
+================================================================================
+
+#if FOO
+#error build broke
+#end if
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (IfDirectiveBlock
+    (CCExpression
+      (Identifier
+        (IdentStart)))
+    (EOS)
+    (Block
+      (ErrorDirective)
+      (EOS))
+    (EndIfDirective))
+  (EOS))

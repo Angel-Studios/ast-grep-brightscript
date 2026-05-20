@@ -1,0 +1,225 @@
+================================================================================
+member access chain
+================================================================================
+
+x = a.b.c
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PostfixExpr
+      (PostfixExpr
+        (Identifier
+          (IdentStart))
+        (MemberSuffix
+          (Identifier
+            (IdentStart))))
+      (MemberSuffix
+        (Identifier
+          (IdentStart)))))
+  (EOS))
+
+================================================================================
+index access
+================================================================================
+
+x = a[0]
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PostfixExpr
+      (Identifier
+        (IdentStart))
+      (IndexSuffix
+        (IntegerLiteral))))
+  (EOS))
+
+================================================================================
+call expression
+================================================================================
+
+foo(1, 2)
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ExpressionStatement
+    (CallExpression
+      (Identifier
+        (IdentStart))
+      (CallSuffix
+        (ArgumentList
+          (IntegerLiteral)
+          (IntegerLiteral)))))
+  (EOS))
+
+================================================================================
+mixed postfix chain ending in member (call then index then member)
+================================================================================
+
+x = f(x)[0].c
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PostfixExpr
+      (PostfixExpr
+        (CallExpression
+          (Identifier
+            (IdentStart))
+          (CallSuffix
+            (ArgumentList
+              (Identifier
+                (IdentStart)))))
+        (IndexSuffix
+          (IntegerLiteral)))
+      (MemberSuffix
+        (Identifier
+          (IdentStart)))))
+  (EOS))
+
+================================================================================
+attribute access (@)
+================================================================================
+
+x = node@id
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PostfixExpr
+      (Identifier
+        (IdentStart))
+      (AttributeSuffix
+        (Identifier
+          (IdentStart)))))
+  (EOS))
+
+================================================================================
+optional chaining dot
+================================================================================
+
+x = a?.b
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PostfixExpr
+      (Identifier
+        (IdentStart))
+      (OC_DOT
+        (Identifier
+          (IdentStart)))))
+  (EOS))
+
+================================================================================
+optional chaining index
+================================================================================
+
+x = a?[0]
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PostfixExpr
+      (Identifier
+        (IdentStart))
+      (OC_BRACKET
+        (IntegerLiteral))))
+  (EOS))
+
+================================================================================
+optional chaining call in expression position (device-confirmed #9)
+================================================================================
+
+x = f?()
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PostfixExpr
+      (Identifier
+        (IdentStart))
+      (OC_PAREN)))
+  (EOS))
+
+================================================================================
+optional chaining attribute (?@)
+================================================================================
+
+x = node?@id
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (PostfixExpr
+      (Identifier
+        (IdentStart))
+      (OC_AT
+        (Identifier
+          (IdentStart)))))
+  (EOS))
+
+================================================================================
+CreateObject call
+================================================================================
+
+o = CreateObject("roArray", 10, true)
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (CreateObjectCall
+      (ArgumentList
+        (StringLiteral
+          (StringChar))
+        (IntegerLiteral)
+        (BooleanLiteral))))
+  (EOS))

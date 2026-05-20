@@ -6,13 +6,20 @@ target/
 # Raster preview render of docs/pipeline.svg (the SVG is the tracked source).
 pipeline-preview.png
 
-# tree-sitter grammar build artifacts (for the future tree-sitter-brightscript/ project)
+# tree-sitter grammar build artifacts. NOTE: the generated src/ (parser.c,
+# node-types.json, grammar.json) IS committed on purpose — the validators read
+# src/node-types.json, and the standard tree-sitter layout ships src/. Only the
+# compiled library and intermediate build dirs are ignored.
 node_modules/
 *.so
 *.dylib
 *.dll
 *.wasm
 parser.c.log
+
+# Python validator bytecode cache
+__pycache__/
+*.pyc
 
 # Roku packaging output
 *.zip

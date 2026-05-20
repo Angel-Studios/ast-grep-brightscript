@@ -1,0 +1,179 @@
+================================================================================
+function with typed params and return type
+================================================================================
+
+function add(a as Integer, b as Integer) as Integer
+    return a + b
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    (Identifier
+      (IdentStart))
+    (ParameterList
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Type
+          (Identifier
+            (IdentStart))))
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Type
+          (Identifier
+            (IdentStart)))))
+    (ReturnType
+      (Type
+        (Identifier
+          (IdentStart))))
+    (EOS)
+    (Block
+      (ReturnStatement
+        (AdditiveExpr
+          (Identifier
+            (IdentStart))
+          (Identifier
+            (IdentStart))))
+      (EOS))
+    (EndFunction))
+  (EOS))
+
+================================================================================
+sub declaration
+================================================================================
+
+sub main()
+    print "hi"
+end sub
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (SubDeclaration
+    (Identifier
+      (IdentStart))
+    (EOS)
+    (Block
+      (PrintStatement
+        (PrintItemList
+          (StringLiteral
+            (StringChar))))
+      (EOS))
+    (EndSub))
+  (EOS))
+
+================================================================================
+function with default parameter value
+================================================================================
+
+function f(a as Integer, b = 5 as Integer) as Integer
+    return a + b
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    (Identifier
+      (IdentStart))
+    (ParameterList
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Type
+          (Identifier
+            (IdentStart))))
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (IntegerLiteral)
+        (Type
+          (Identifier
+            (IdentStart)))))
+    (ReturnType
+      (Type
+        (Identifier
+          (IdentStart))))
+    (EOS)
+    (Block
+      (ReturnStatement
+        (AdditiveExpr
+          (Identifier
+            (IdentStart))
+          (Identifier
+            (IdentStart))))
+      (EOS))
+    (EndFunction))
+  (EOS))
+
+================================================================================
+anonymous function value
+================================================================================
+
+cb = function(p as Integer) as Integer
+    return p * 2
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (AnonFunctionExpr
+      (ParameterList
+        (Parameter
+          (Identifier
+            (IdentStart))
+          (Type
+            (Identifier
+              (IdentStart)))))
+      (ReturnType
+        (Type
+          (Identifier
+            (IdentStart))))
+      (EOS)
+      (Block
+        (ReturnStatement
+          (MultiplicativeExpr
+            (Identifier
+              (IdentStart))
+            (MultiplicativeOp)
+            (IntegerLiteral)))
+        (EOS))
+      (EndFunction)))
+  (EOS))
+
+================================================================================
+anonymous sub value
+================================================================================
+
+cb = sub()
+    print 1
+end sub
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (AnonSubExpr
+      (EOS)
+      (Block
+        (PrintStatement
+          (PrintItemList
+            (IntegerLiteral)))
+        (EOS))
+      (EndSub)))
+  (EOS))

@@ -9,3 +9,15 @@ customLanguages:
   scenegraph:
     libraryPath: tree-sitter-scenegraph/scenegraph.so
     extensions: [xml]
+
+# Language injection: BrightScript is embedded in SceneGraph <script> bodies.
+# The scenegraph grammar exposes the injectable BrightScript text as a single
+# `BrightScriptBody` node (the `content` field of ScriptCData / ScriptText), so
+# ast-grep reparses that region with the brightscript grammar — brightscript
+# rules/patterns then match inside SceneGraph .xml <script> blocks.
+languageInjections:
+  - hostLanguage: scenegraph
+    rule:
+      kind: BrightScriptBody
+      pattern: $CONTENT
+    injected: brightscript

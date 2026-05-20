@@ -291,10 +291,16 @@ SGDocument ::= prolog Component Misc*
  *
  * Child elements (XSD sequence, all optional, in this order for XSD validity):
  *   <interface>?  then  <script>*  then  <children>?
- * Comments / PI / whitespace may be interleaved as ordinary XML content. *)
+ * Comments / PI / whitespace may be interleaved as ordinary XML content.
+ *
+ * Two forms: the normal paired <component>...</component>, and the self-closing
+ * EMPTY form <component .../> (an EmptyElemTag specialized to <component>). The
+ * empty form declares a component with no interface/script/children; it appears
+ * in real files and in the parse-only corpus (e.g. <component name="C" />). *)
 Component ::= '<' 'component' ( S ComponentAttribute )* S? '>'
                  ComponentContent
               '</' 'component' S? '>'
+            | '<' 'component' ( S ComponentAttribute )* S? '/>'
 
 ComponentContent ::=
       ( Misc | Comment )*

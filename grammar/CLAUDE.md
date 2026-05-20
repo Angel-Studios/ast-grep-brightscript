@@ -69,10 +69,12 @@ Layered validation — run from the repo root, keep green when editing:
 | 0 — internal consistency | `python3 grammar/check_ebnf.py` | every referenced rule is defined, no duplicates, reachability from the start symbol. |
 | 1 — coverage parity | `python3 grammar/check_coverage.py` | every `coverage.json` leaf is implemented: each `device_testable:true` id has a matching `t.spec("<id>","<kind>",…)` in `roku-test-harness/source/tests/*.brs` (and the kind cross-checks against `coverage.json`); each non-device (`device_testable:false`) id has a tagged corpus file under `roku-test-harness/corpus/`. Flags missing / mis-keyed / orphaned ids. **GREEN.** |
 | 2 — faithful to the XSD | `python3 grammar/check_scenegraph_xsd.py` | `scenegraph.ebnf`'s `FieldType` / `BuiltinNodeClass` / `<field>` attributes match the vendored `RokuSceneGraph.xsd` (`--url` refreshes it). |
+| 3 — grammar matches coverage | `python3 grammar/check_grammar.py` | every coverage `kind` is present in the generated `node-types.json` (both grammars) AND every brightscript/stdlib coverage snippet parses with its kind present / syntax-negatives produce ERROR. |
 | 4 — corpus is real code | `npm run check` | runs BrighterScript (`bsc`) over `../roku-test-harness/`. NOTE: `bsc` is advisory, not authoritative — it both over- and under-rejects vs the device; cross-check any red line against [BSC_DRIFT.md](BSC_DRIFT.md). |
+| 5 — EBNF ↔ grammar parity | `python3 grammar/check_parity.py` | EBNF rule names ↔ `node-types.json` kinds, so the EBNF can't silently drift from the generated grammar. |
 
-Levels 0, 1, and 2 are green. Level 3 (build the tree-sitter grammar, parse the corpus) and the
-device-as-ground-truth loop are tracked in `../roku-test-harness/`.
+Levels 0, 1, 2, 3, and 5 are all green; the tree-sitter grammar is now built (Level 3 is the
+`check_grammar` gate that proves it covers the coverage kinds). Level 4 (`bsc`) is advisory only.
 
 Ground truth is the device, recorded in [DEVICE_FACTS.md](DEVICE_FACTS.md); where `bsc` and the
 device disagree, the divergence is logged in [BSC_DRIFT.md](BSC_DRIFT.md) (the device always wins).

@@ -4,9 +4,11 @@ A full [ast-grep](https://ast-grep.github.io/) parser for **Roku BrightScript** 
 so you can structurally search, lint, and rewrite `.brs` and SceneGraph `.xml` files with ast-grep
 patterns and rules.
 
-> **Status: groundwork.** The parser itself is not written yet. This repo currently contains the
-> foundation needed to author it well: the build methodology, the language specifications, and a
-> runnable test corpus. See [`CLAUDE.md`](./CLAUDE.md) for the full orientation.
+> **Status: parser built.** Both tree-sitter grammars (BrightScript + SceneGraph) are authored from
+> the EBNF, compiled, validated against the device-corrected harness, and registered as ast-grep
+> custom languages — with BrightScript injected into SceneGraph `<script>` bodies. The foundation
+> that made this possible (build methodology, language specifications, runnable test corpus) remains.
+> See [`CLAUDE.md`](./CLAUDE.md) for the full orientation.
 
 ## What's here
 
@@ -16,6 +18,8 @@ patterns and rules.
 | [`grammar/brightscript.ebnf`](./grammar/brightscript.ebnf) | Authoritative EBNF spec for the BrightScript language, from the official Roku reference. |
 | [`grammar/scenegraph.ebnf`](./grammar/scenegraph.ebnf) | Authoritative EBNF spec for SceneGraph component XML (embeds BrightScript via `<script>`), from the Roku docs + the official XSD. |
 | [`roku-test-harness/`](./roku-test-harness/) | A runnable Roku app that exercises every construct in the specs, self-reporting pass/fail (green/red) on a real device — and serving as the ast-grep test corpus. |
+| [`tree-sitter-brightscript/`](./tree-sitter-brightscript/) · [`tree-sitter-scenegraph/`](./tree-sitter-scenegraph/) | The built tree-sitter grammars (`grammar.js`, `src/`, `test/corpus/`, compiled `.so`) for BrightScript and SceneGraph. |
+| [`sgconfig.yml`](./sgconfig.yml) | The ast-grep config that registers both grammars under `customLanguages` and injects BrightScript into SceneGraph `<script>` bodies via `languageInjections`. |
 
 ## The pipeline
 
@@ -26,15 +30,18 @@ grammar/*.ebnf  ─►  tree-sitter grammar.js  ─►  C parser  ─►  .so  �
                     (BrightScript injected into SceneGraph <script> CDATA)
 ```
 
-The device-as-ground-truth loop (sideload the harness → read its `##SPEC##` results →
-record confirmed facts) is the validation feedback shown in the diagram above.
+This pipeline is now built end to end: the BrightScript injection into SceneGraph `<script>` bodies
+is implemented in `sgconfig.yml` (`languageInjections`) and verified. The device-as-ground-truth
+loop (sideload the harness → read its `##SPEC##` results → record confirmed facts) is the validation
+feedback shown in the diagram above.
 
-## Building the parser (next steps)
+## How the parser was built
 
 1. Read the [skill](./.claude/skills/ast-grep-custom-language/SKILL.md) — it's the method.
-2. Translate [`grammar/`](./grammar/) into a `tree-sitter-brightscript/` grammar project.
+2. Translate [`grammar/`](./grammar/) into the `tree-sitter-brightscript/` + `tree-sitter-scenegraph/`
+   grammar projects.
 3. Validate against [`roku-test-harness/`](./roku-test-harness/) source; capture `test/corpus/` cases.
-4. Build the dynamic library and register it in `sgconfig.yml` under `customLanguages`.
+4. Build the dynamic libraries and register them in `sgconfig.yml` under `customLanguages`.
 
 ## References
 

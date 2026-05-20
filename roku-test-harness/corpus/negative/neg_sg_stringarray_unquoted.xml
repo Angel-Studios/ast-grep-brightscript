@@ -1,2 +1,11 @@
 <!-- coverage-id: neg.sg.stringarray_unquoted expect: error -->
+<!-- Device-confirmed REJECTED (SEMANTIC, not a syntax error): a stringarray
+     initial value needs QUOTED elements (value='["a","b","c"]'); the unquoted
+     form value="[a, b, c]" is rejected on Roku OS 15.1.4 (DEVICE_FACTS.md #3).
+     But the value="..." attribute is an OPAQUE quoted string to the XML grammar
+     (FieldInitValue -> AttValue) — its array micro-syntax is not parsed, and
+     validating it would require type-directed analysis of the attribute content,
+     not context-free parsing. So the XML is well-formed and parses WITHOUT an
+     ERROR node; plan 03 should flag this with a field-init LINT rule rather than
+     a parse-ERROR assertion (cf. sg_field_type_str_alias.xml). -->
 <field id="a" type="stringarray" value="[a, b, c]" />
