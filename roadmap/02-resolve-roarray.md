@@ -1,5 +1,10 @@
 # 02 — Resolve the roArray field-type question
 
+> **Status: ✅ DONE.** `roArray` is device-VALID (a valued field converts to an
+> array; a bogus type stays `Invalid`) — see `grammar/DEVICE_FACTS.md` #4.
+> Restored to `FieldType`; `check_scenegraph_xsd.py` allowlists it as a
+> device-confirmed extra. Both checkers green; device run 97/97.
+
 ## Goal
 Decide definitively whether `type="roArray"` is a valid SceneGraph field type on
 the device, and reconcile the EBNF + checker accordingly.

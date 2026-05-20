@@ -395,8 +395,10 @@ FieldTypeAttValue ::= '"' FieldType '"' | "'" FieldType "'"
  * comma-joined enumeration token ("Boolean, bool", "integer, int",
  * "string, str"). Per the docs these are ALIASES -- either spelling is a valid
  * standalone value. They are listed here as the individual accepted spellings.
- * The XSD lists only "array" for the generic array type; "roArray" is NOT in
- * the XSD enumeration and has been removed here pending device confirmation. *)
+ * The XSD lists only "array" for the generic array type, but "roArray" is
+ * DEVICE-CONFIRMED valid on Roku OS 15.1.4 (a valued type="roArray" field
+ * converts to an array exactly like "array"); kept here as a device-confirmed
+ * extra. See grammar/DEVICE_FACTS.md; check_scenegraph_xsd.py allowlists it. *)
 FieldType ::=
       'integer'   | 'int'                 (* BrightScript integer *)
     | 'longinteger'                        (* BrightScript longinteger *)
@@ -417,8 +419,9 @@ FieldType ::=
     | 'timearray'                          (* array of time *)
     | 'nodearray'                          (* array of node references *)
     | 'assocarray'                         (* associative array *)
-    | 'array'                              (* generic array of objects;
-                                              XSD has no "roArray" spelling *)
+    | 'array'     | 'roArray'             (* generic array of objects. 'roArray'
+                                             is device-valid but NOT in the XSD
+                                             (see note above + DEVICE_FACTS.md). *)
     | 'rect2D'                             (* assocarray {x,y,width,height} *)
     | 'rect2DArray'                        (* array of rect2D *)
 

@@ -82,12 +82,14 @@ def xsd_field_attrs(xsd):
 
 # ---- diff ------------------------------------------------------------------
 
-def diff(label, ebnf_vals, xsd_vals, fold=False):
+def diff(label, ebnf_vals, xsd_vals, fold=False, allow_extra=None):
     key = (lambda s: s.lower()) if fold else (lambda s: s)
+    allow = {(k.lower() if fold else k) for k in (allow_extra or [])}
     e = {key(v): v for v in ebnf_vals}
     x = {key(v): v for v in xsd_vals}
     missing = sorted(x[k] for k in x.keys() - e.keys())   # in XSD, not in EBNF
-    extra = sorted(e[k] for k in e.keys() - x.keys())     # in EBNF, not in XSD
+    extra = sorted(e[k] for k in e.keys() - x.keys() if k not in allow)  # EBNF-only, not allowlisted
+    allowed = sorted(e[k] for k in (e.keys() - x.keys()) & allow)        # device-confirmed extras
     ok = not missing and not extra
     print(f"\n=== {label}  [{'ok' if ok else 'MISMATCH'}] ===")
     print(f"  EBNF {len(e)} members  vs  XSD {len(x)} members"
@@ -96,6 +98,8 @@ def diff(label, ebnf_vals, xsd_vals, fold=False):
         print(f"  MISSING from EBNF (present in XSD): {missing}")
     if extra:
         print(f"  EXTRA in EBNF (absent from XSD):    {extra}")
+    if allowed:
+        print(f"  device-confirmed extra (allowlisted): {allowed}")
     return ok
 
 
@@ -121,9 +125,11 @@ def main(argv):
     xsd = load_xsd(argv)
     ebnf = open(EBNF, encoding="utf-8").read()
     ok = True
+    # roArray is DEVICE-CONFIRMED valid (DEVICE_FACTS.md #4) though absent from the
+    # XSD; allowlist it so the otherwise-strict parity check stays green.
     ok &= diff("FieldType vs <field> type enum",
                ebnf_literals(ebnf, "FieldType"), xsd_field_type_enum(xsd),
-               fold=True)
+               fold=True, allow_extra={"roArray"})
     ok &= diff("BuiltinNodeClass vs extends enum",
                ebnf_literals(ebnf, "BuiltinNodeClass"), xsd_extends_enum(xsd))
     ok &= diff("FieldAttribute names vs <field> attributes",

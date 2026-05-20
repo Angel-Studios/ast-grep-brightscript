@@ -18,7 +18,7 @@ The self-improving loop is operational:
 | # | Plan | Effort | Depends on | Why |
 |---|------|--------|-----------|-----|
 | 01 | [Expand harness coverage](01-expand-coverage.md) | large | `coverage.json` | exhaustive device truth; builds 03's corpus |
-| 02 | [Resolve roArray](02-resolve-roarray.md) | tiny | — | the one open device fact |
+| 02 | [Resolve roArray](02-resolve-roarray.md) | ✅ done | — | resolved: roArray is device-valid (DEVICE_FACTS #4) |
 | 03 | [Tree-sitter grammar + ast-grep](03-tree-sitter-grammar.md) | large | 01, EBNF | the actual end goal |
 | 04 | [Housekeeping](04-housekeeping.md) | small | — | doc accuracy |
 

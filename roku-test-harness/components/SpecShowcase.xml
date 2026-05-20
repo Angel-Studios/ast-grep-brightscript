@@ -58,8 +58,9 @@
 
     <!-- ===== assoc / generic array / rect ============================== -->
     <field id="assocField"    type="assocarray" />
-    <field id="genericArray"  type="array" />
-    <field id="roArrayField"  type="roArray" />
+    <field id="genericArray"  type="array"    value='[1, 2, 3]' />
+    <!-- roArray: device-confirmed valid though absent from the XSD (DEVICE_FACTS #4). -->
+    <field id="roArrayField"  type="roArray"  value='[1, 2, 3]' />
     <field id="rectField"     type="rect2D"      value="[0, 0, 1280, 720]" />
     <field id="rectArray"     type="rect2DArray" value="[[0,0,10,10],[20,20,30,30]]" />
 

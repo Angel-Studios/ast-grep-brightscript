@@ -89,7 +89,7 @@ These were called out by the spec authors as uncertain. Verify before treating a
 - ~~Boolean operators (`and`/`or`/`not`) inside `#if`~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #1)**: rejected (compile error &h93). `CCExpression` reduced to a single boolean/const; negation via `#else`, conjunction via nested `#if`.
 
 **SceneGraph:**
-- `array` vs `roArray` spelling — `roArray` removed from `FieldType` (not in XSD; `check_scenegraph_xsd.py` enforces). Device test so far **INCONCLUSIVE** (see [DEVICE_FACTS.md](DEVICE_FACTS.md)): a `type="roArray"` field with no `value` did not error, but a field type is only validated when a `value` is present — needs a valued test.
+- ~~`array` vs `roArray` spelling~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #4)**: a valued `type="roArray"` field converts to an array exactly like `array` (a bogus type stays `Invalid`), so `roArray` is device-valid despite being absent from the XSD. Restored to `FieldType`; `check_scenegraph_xsd.py` allowlists it as a device-confirmed extra.
 - **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #3)**: a `stringarray` initial value needs quoted elements — `value='["a","b","c"]'`; `[a, b, c]` is rejected. (Array field-init values are validated only when a `value` is present.)
 - Color string formats beyond `0xRRGGBBAA` (e.g. `#RRGGBB`) — only `0xRRGGBBAA` confirmed.
 - Node-reference attribute micro-syntax (e.g. `"dictionary:SomeId"`) — from an example, not a formal spec.

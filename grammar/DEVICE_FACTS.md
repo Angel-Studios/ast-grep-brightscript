@@ -20,20 +20,19 @@ errors appear on the BrightScript debug console (telnet 8085, captured by
 | 1 | BrightScript | `#if not/and/or` (boolean operators in conditional compilation) | **INVALID** | compile error `&h93` — "Invalid #If/#ElseIf expression (True \| False \| <CONST-NAME>)" | `CCExpression ::= BooleanLiteral \| Identifier`; harness expresses negation via `#else`, conjunction via nested `#if` |
 | 2 | BrightScript | leading `let` on assignment (`let x = 5`) | **INVALID** | `Syntax Error` `&h02` | `AssignmentStatement` drops the optional `let`; `let` stays a reserved word (not a usable statement keyword) |
 | 3 | SceneGraph | `stringarray` field init written as `[a, b, c]` | **INVALID** | runtime: "Cannot convert initial value string \"[a, b, c]\" to field type stringarray" | quote the elements: `value='["a","b","c"]'` (single-quote the XML attr, double-quote the strings) |
+| 4 | SceneGraph | `roArray` field type (valued, e.g. `value='[1,2,3]'`) | **VALID** | probe: a valued `roArray` field's runtime `Type()` is `roArray`, identical to the known-valid `array`; a control `type="notatype"` field stays `Invalid` (its value is not converted) | restored to `scenegraph.ebnf` `FieldType` as a device-confirmed extra (not in the XSD); `check_scenegraph_xsd.py` allowlists it |
 
 General rule learned: a SceneGraph field's **type is validated only when a
 `value` is present** (the device attempts the string→type conversion then).
 
-## Inconclusive / to-do
+## Resolved follow-ups
 
-- **`roArray` field type** — a `<field type="roArray"/>` with **no value** created
-  without error, but per the rule above that does NOT prove `roArray` is a
-  recognized type. Needs a valued `type="roArray" value="[...]"` test. The XSD
-  lists only `array`; `roArray` is currently removed from EBNF `FieldType`.
-- **Harness wiring (not a language fact)** — `TestSuite_Run()` is "not defined in
-  component's namespace" (`&h91`) at `MainScene.brs(31)`: SceneGraph component
-  scripts do not see `pkg:/source/` functions; the test framework must be
-  `<script uri>`-included into the component. For the instrumentation rewrite.
+- **`roArray` field type** — RESOLVED, see Confirmed #4 (the valued-field probe
+  settled the earlier inconclusive valueless test).
+- **Harness wiring** (was `&h91` "not defined in component's namespace") — RESOLVED:
+  the suite now runs in the Main scope (`source/main.brs`) and hands results to
+  `MainScene` via a field, so component scripts no longer call `pkg:/source/`
+  functions.
 
 ## Pipeline status
 deploy automation · console capture · `.brs` compile · SceneGraph component load ·
