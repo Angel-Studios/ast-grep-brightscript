@@ -11,7 +11,7 @@
 sub init()
     m.title = m.top.findNode("title")
     m.summary = m.top.findNode("summary")
-    m.cols = [m.top.findNode("col0"), m.top.findNode("col1"), m.top.findNode("col2")]
+    m.colsGroup = m.top.findNode("cols")
 
     ' Small monospace font (bundled Ubuntu Mono TTF) for the terse boot-log -
     ' ~half the default size to leave room for many more specs.
@@ -40,19 +40,26 @@ sub render()
     if specs = invalid then return
 
     ' Clear any previous render (OK re-render / repeated sets).
-    for each c in m.cols
-        while c.getChildCount() > 0
-            c.removeChildIndex(0)
-        end while
-    end for
+    while m.colsGroup.getChildCount() > 0
+        m.colsGroup.removeChildIndex(0)
+    end while
 
     total = specs.count()
     if total = 0 then return
-    perCol = (total + 2) \ 3          ' integer divide, rounded up: 3 balanced columns
 
+    ' Fill each column down to the bottom of the screen (~55 rows at 14px on a
+    ' 1080 canvas), then start a new column to the right.
+    rowsPerCol = 55
     passed = 0
     i = 0
+    col = invalid
     for each sp in specs
+        if i mod rowsPerCol = 0 then
+            col = m.colsGroup.createChild("LayoutGroup")
+            col.layoutDirection = "vert"
+            col.itemSpacings = [1]
+        end if
+
         ok = sp.passed
         if ok then passed = passed + 1
 
@@ -66,11 +73,9 @@ sub render()
         line = mark + " " + sp.id
         if not ok and sp.detail <> "" then line = line + "  " + sp.detail
 
-        idx = i \ perCol
-        if idx > 2 then idx = 2
-        row = m.cols[idx].createChild("Label")
+        row = col.createChild("Label")
         row.font = m.bodyFont
-        row.width = 600
+        row.width = 340
         row.wrap = false
         row.text = line
         row.color = rowColor

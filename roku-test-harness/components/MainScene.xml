@@ -39,11 +39,9 @@
       <Label id="title"   text="ast-grep brightscript spec harness" color="0x8FA0B6FF" />
       <Label id="summary" text="running specs ..."                  color="0xCCCCCCFF" />
 
-      <LayoutGroup id="cols" layoutDirection="horiz" itemSpacings="[24]" translation="[0, 10]">
-        <LayoutGroup id="col0" layoutDirection="vert" itemSpacings="[1]" />
-        <LayoutGroup id="col1" layoutDirection="vert" itemSpacings="[1]" />
-        <LayoutGroup id="col2" layoutDirection="vert" itemSpacings="[1]" />
-      </LayoutGroup>
+      <!-- Columns are created dynamically in MainScene.brs: each fills down to
+           the bottom of the screen, then a new column starts to its right. -->
+      <LayoutGroup id="cols" layoutDirection="horiz" itemSpacings="[16]" translation="[0, 10]" />
     </LayoutGroup>
 
     <!-- Spec-coverage component, instantiated hidden, to prove it loads. -->
