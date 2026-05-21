@@ -277,8 +277,56 @@ corpus.
 4. **New surface as real-world demand appears** — `try/catch/throw` is already plain-BrightScript;
    watch for any BrighterScript construct `angel-roku` (or a newly synced repo) starts using that the
    grammar doesn't yet parse clean (the 52/52 authored-`.bs` regression will catch it).
-5. **SceneGraph `<script uri="*.bs">` external-script** resolution if/when a real component references
-   a `.bs` by uri (today it parses as `ScriptExternal`; injection covers inline bodies).
+5. ~~**SceneGraph `<script uri="*.bs">` external-script**~~ — ✅ **DONE (2026-05-21).** The grammar +
+   EBNF already accepted every BrighterScript `<script>` form (`ScriptCDataBs`/`ScriptTextBs`/
+   `ScriptExternal`+`ScriptTypeBsAttValue`, added in Phase 6), but the **coverage taxonomy had no
+   leaves for them** — only the BrightScript siblings. Closed that gap: added 4 parse-only scenegraph
+   leaves mirroring the BrightScript script forms — `sg.script.inline_cdata_bs` (ScriptCDataBs),
+   `sg.script.inline_text_bs` (ScriptTextBs), `sg.script.external_uri_bs` (ScriptExternal, the literal
+   item-5 external `.bs` uri), `sg.script.type_bs` (ScriptTypeBsAttValue) — plus 4 corpus `.xml`
+   fixtures, all parsing clean with the right kinds. Parse-only by design: cross-file uri *resolution*
+   is not a single-file tree-sitter concern, and bsc lowers inline `.bs`→`.brs` before the device sees
+   the component, so the embedding *mechanism* is already device-proven on the BrightScript side
+   (DEVICE_FACTS #12). No grammar/EBNF change needed. Coverage 658→662; all gates green.
+6. **Full-surface real-world stress-test** — ◷ **IN PROGRESS (2026-05-21).** angel-roku only exercises
+   a SHALLOW `.bs` subset (namespace/class/annotations/`as Type`); the full surface (`enum`/`const`/
+   `import`/`try`/`new`/optional-chaining/templates) was validated only by hand-written snippets. Cloned
+   a real full-surface corpus — **maestro-roku** (`b1f7f35`, 212 `.bs`), **rooibos** (`1fe183b`),
+   **promises** (`7acd59a`), bslib, ropm — **246 `.bs`** (excl. 14 `.maestro-templates/` `$NAME$`
+   scaffolding stubs, which are invalid BS and correctly rejected). Baseline parse rate **210/246**;
+   triaged the 36 failures to **8 distinct root causes** (all bsc-confirmed valid BrighterScript the
+   grammar wrongly rejected). **Repos kept in `/tmp/{maestro,rooibos,promises,bslib,ropm}-test`.**
+   - ✅ **R1 multi-line empty AA** `{` ⏎ `}` (10 files) — FIXED. `sepList` made the item-bearing part
+     optional so a collection that is empty but contains separators (the newline lexes as `ElementSep`)
+     parses. The EBNF already allowed it (`LBRACE EOS?`); grammar.js had diverged. Corpus test added.
+   - ✅ **R4 numeric type designators** `1.0!` (float), `1%` (integer) (1 file) — FIXED. `FloatLiteral`
+     now allows trailing `!` on any decimal/exponent form; `IntegerLiteral` allows trailing `%`. EBNF
+     `IntegerLiteral` updated to add `'%'?`; corpus test added.
+   - Parse rate after R1+R4: **218/246**. Both grammars rebuilt; base corpus 53→55; angel-roku 52/52;
+     all gates green.
+   - ⏳ **DEFERRED (higher-risk; minimal repros captured) — 28 files remain across 6 causes:**
+     - **R2 keyword-as-identifier** (~14 files, biggest): builtin/keyword words used as method/field
+       names, AA keys, enum names, or namespace/type path segments — `function run()`, `public type as
+       string`, `{ continue: 1 }`, `namespace mc.private`, `new mc.Sub()`. All bsc-valid. The hard one:
+       the external `IdentStart` scanner + RESERVED set (see start_here gotchas) — contextual, risky.
+     - **R3 call-chain off a function-expr arg** (5 files): `p.then(function(x)…end function).catch(
+       function(e)…end function)` — fails when ≥2 chained calls each take a multi-line anon-function
+       arg (GLR ambiguity: `(anonfn)` as `ArgumentList` vs `ParenExpr` in the left-recursive postfix
+       chain). `a.b(1).c(2)` and a single anon-arg call both parse fine.
+     - **R9 nested multi-line array as a call arg** (2 files): `[foo("L", [` ⏎ `bar(1)` ⏎ `]` ⏎ `)]` —
+       the `_nl` made valid by the OUTER `[…]` leaks into `foo(…)`'s arg list (the newline-suppression
+       design is per-token, not per-innermost-context). A simple `foo([`⏎`1`⏎`])` parses fine. Fixing
+       needs ArgumentList to consume `_nl` explicitly — touches the device-validated newline design.
+     - **R5 single-quote inside an interpolated template** (2 files, brighterscript): `` `'${x}'` `` —
+       the template scanner treats `'` as a comment-start. `` `it's` `` (no `${}`) is fine. Scanner work.
+     - **R8 multi-line annotation arg list** (1 file, brighterscript): `@params(` ⏎ `1,` ⏎ `2` ⏎ `)` —
+       single-line `@params(...)` parses; newlines inside the annotation parens don't.
+     - **R6 additive-left comparison in an `if` condition** (1 file): `if a + 1 >= b then` — reduces the
+       condition to `a` then errors. `while a + 1 >= b`, `if a >= b + 1`, `if a * 2 >= b`, and the same
+       as an assignment all parse — only the if/SingleLineIf split + binary/unary `+` overlap. High
+       blast-radius on the expression grammar for 1 file → deferred.
+   - **Not bugs:** `$NAME$` scaffolding templates (14 `.maestro-templates/` files) and one genuine typo
+     (`@it("…")n`) are correctly rejected.
 
 ---
 

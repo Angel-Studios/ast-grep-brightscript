@@ -120,11 +120,20 @@ bun run --cwd roku-listener replay out/console.last.log
   parse-only → device-via-transpile and PASS on hardware (`##SPEC## pass=501 fail=0`, 28 `bs.*`;
   DEVICE_FACTS #20). Tagged template lowers to `tagFn([lit…],[val…])`; `FUNCTION_NAME` lowers to the
   transpiled function name string. Specs in `test_bs.bs`. See roadmap/05 §"Phase 7" backlog item 3.
-- **Runnable backlog is now DRAINED.** Every `bs.*` leaf that has a runtime signal is device-tested
-  (28/28). The 10 remaining parse-only leaves are the constructs **erased on transpile**
-  (`interface`/`type`/`typecast`/`alias`/`type_alias`) — no runtime signal, so they stay parse-only by
-  design. Remaining Phase-7 work is **demand-driven** (roadmap/05 §"Phase 7" items 4–5): a new
-  BrighterScript construct `angel-roku` (or a newly synced repo) starts using that the grammar doesn't
-  yet parse clean — the 52/52 authored-`.bs` regression will catch it — or a real component referencing
-  a `.bs` by `<script uri="*.bs">`. Until then there is no queued item; run the per-feature loop when
-  one appears.
+- ~~SceneGraph `<script uri="*.bs">` external-script (item 5)~~ — ✅ **DONE (2026-05-21).** Added 4
+  parse-only scenegraph coverage leaves + corpus fixtures for the BrighterScript `<script>` forms
+  (`ScriptCDataBs`/`ScriptTextBs`/`ScriptExternal`/`ScriptTypeBsAttValue`) the grammar already accepted
+  but the taxonomy never tracked. Coverage 658→662. See roadmap/05 §"Phase 7" item 5.
+- **Device/runnable backlog DRAINED** (28/28 `bs.*` runtime leaves device-tested). 10 remaining
+  parse-only leaves are erased-on-transpile by design (`interface`/`type`/`typecast`/`alias`).
+- ◷ **Full-surface grammar stress-test (item 6) — IN PROGRESS.** Cloned a real full-surface corpus
+  (maestro-roku/rooibos/promises/bslib/ropm — 246 `.bs` in `/tmp/{maestro,rooibos,promises,bslib,ropm}
+  -test`) since angel-roku only exercises a shallow subset. Triaged to 8 root causes; **R1 (multi-line
+  empty AA) + R4 (numeric `!`/`%` designators) FIXED** (base+brighterscript rebuilt, base corpus 53→55,
+  parse rate 210→218/246, all gates green, angel-roku 52/52). **6 DEFERRED with minimal repros** (R2
+  keyword-as-identifier ~14 files; R3 chained anon-fn-arg calls 5; R9 nested multi-line array arg 2; R5
+  quote-in-interpolated-template 2; R8 multi-line annotation args 1; R6 additive-left if-condition 1) —
+  see roadmap/05 §"Phase 7" item 6 for each repro + why deferred. Pick one and run the grammar loop:
+  reproduce from `/tmp/*-test`, fix grammar.js (or scanner.c for R2/R5), regen + **rebuild the `.so`
+  yourself**, add a `test/corpus` case, keep base/brighterscript/scenegraph corpus + L0/L1/L3/L5 +
+  angel-roku 52/52 green, re-measure the corpus pass rate.

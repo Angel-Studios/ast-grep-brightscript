@@ -1,0 +1,10 @@
+<!-- coverage-id: sg.script.type_bs expect: parse -->
+<!-- The BrighterScript dialect selector type="text/brighterscript" on a <script>.
+     Mirrors the BrightScript sg.script.type_fixed (type="text/brightscript"). This
+     value is NOT in the official RokuSceneGraph.xsd enum (which fixes
+     "text/brightscript"); it is a BrighterScript-toolchain extra that selects the
+     .bs dialect, parsed as the distinct ScriptTypeBsAttValue so the injection layer
+     can tell the two dialects apart. -->
+<component name="SgScriptTypeBs" extends="Group">
+  <script type="text/brighterscript" uri="pkg:/components/SgScriptTypeBs.bs" />
+</component>

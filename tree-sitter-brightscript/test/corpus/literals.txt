@@ -190,3 +190,54 @@ x = { a: 1, b: 2 }
             (IdentStart)))
         (IntegerLiteral))))
   (EOS))
+
+================================================================================
+numeric type designators (! float, % integer) on decimal/integer literals
+================================================================================
+
+a = 1.0!
+b = 1%
+c = .5!
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (FloatLiteral))
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (IntegerLiteral))
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (FloatLiteral))
+  (EOS))
+
+================================================================================
+multi-line empty associative array literal
+================================================================================
+
+x = {
+}
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (AssocArrayLiteral
+      (ElementSep
+        (EOS))))
+  (EOS))

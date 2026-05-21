@@ -1,0 +1,11 @@
+<!-- coverage-id: sg.script.inline_text_bs expect: parse -->
+<!-- Bare (non-CDATA) inline BrighterScript in a text/brighterscript script element.
+     Mirrors the BrightScript sg.script.inline_text. Legal XML (no angle brackets or
+     ampersands in the body), parses as ScriptTextBs giving a BrighterScriptBody. As
+     with the bare BrightScript form, a bare inline script is tolerated at load but its
+     init() does not run on device (DEVICE_FACTS #12); here it just exercises the parse. -->
+<component name="SgScriptInlineTextBs" extends="Group">
+  <script type="text/brighterscript">sub init()
+    m.top.id = "bs"
+  end sub</script>
+</component>

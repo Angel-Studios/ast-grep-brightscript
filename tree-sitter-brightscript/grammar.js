@@ -80,14 +80,20 @@ function nlEos($) {
 
 /**
  * A comma/newline-separated list with optional leading, repeated, and trailing
- * separators (covers trailing commas and multiline collection literals).
+ * separators (covers trailing commas and multiline collection literals). The
+ * item-bearing portion is itself optional so an EMPTY collection that still
+ * contains separators — e.g. a multi-line empty AA `{` ⏎ `}` whose newline lexes
+ * as an ElementSep — parses (bsc-confirmed valid). A truly empty `{}`/`[]` is the
+ * caller's `optional(sepList(...))` matching nothing.
  */
 function sepList($, item) {
   return seq(
     repeat($.ElementSep),
-    item,
-    repeat(seq(repeat1($.ElementSep), item)),
-    repeat($.ElementSep),
+    optional(seq(
+      item,
+      repeat(seq(repeat1($.ElementSep), item)),
+      repeat($.ElementSep),
+    )),
   );
 }
 
@@ -499,9 +505,12 @@ export default grammar({
     // 10+-digit Double form for `5000000000&`, since prec wins over longest-match).
     LongIntegerLiteral: _ => token(prec(6, /([0-9]+|&[hH][0-9a-fA-F]+)&/)),
     DoubleLiteral: _ => token(prec(5, /([0-9]+[dD][+-]?[0-9]+)|([0-9]*\.[0-9]+#)|([0-9]+#)|([0-9]{10,}(\.[0-9]*)?)|(\.[0-9]{10,})/)),
-    FloatLiteral: _ => token(prec(4, /([0-9]+\.[0-9]*([eE][+-]?[0-9]+)?)|(\.[0-9]+([eE][+-]?[0-9]+)?)|([0-9]+[eE][+-]?[0-9]+)|([0-9]+!)/)),
+    // The `!` (float) type designator may trail any decimal/exponent form, not
+    // just a bare integer (`1.0!`, `.5!`, `1e3!` are all floats) — bsc-confirmed.
+    FloatLiteral: _ => token(prec(4, /([0-9]+\.[0-9]*([eE][+-]?[0-9]+)?!?)|(\.[0-9]+([eE][+-]?[0-9]+)?!?)|([0-9]+[eE][+-]?[0-9]+!?)|([0-9]+!)/)),
     HexLiteral: _ => token(prec(2, /&[hH][0-9a-fA-F]+/)),
-    IntegerLiteral: _ => token(prec(1, /[0-9]+/)),
+    // A trailing `%` is the integer type designator (`1%`) — bsc-confirmed.
+    IntegerLiteral: _ => token(prec(1, /[0-9]+%?/)),
 
     StringLiteral: $ => seq('"', repeat(choice($.EscapedQuote, $.StringChar)), '"'),
     // prec must beat the `rem`/`'` Comment extra (prec 3): otherwise a string

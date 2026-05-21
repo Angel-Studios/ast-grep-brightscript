@@ -1,0 +1,11 @@
+<!-- coverage-id: sg.script.external_uri_bs expect: parse -->
+<!-- External BrighterScript script: an empty self-closing script element that
+     references a .bs file by uri (roadmap/05 Phase 7 item 5). Mirrors the
+     BrightScript sg.script.external_uri. Parses as ScriptExternal with a
+     ScriptAttributeBs (type="text/brighterscript"). Parse-only by design: cross-file
+     uri RESOLUTION is not a single-file tree-sitter concern; the referenced .bs is
+     a standalone file the brighterscript grammar already parses on its own, and
+     ast-grep matches it as a normal .bs source. -->
+<component name="SgScriptExternalUriBs" extends="Group">
+  <script type="text/brighterscript" uri="pkg:/components/SgScriptExternalUriBs.bs" />
+</component>

@@ -3597,34 +3597,47 @@
                   }
                 },
                 {
-                  "type": "SYMBOL",
-                  "name": "ArrayElement"
-                },
-                {
-                  "type": "REPEAT",
-                  "content": {
-                    "type": "SEQ",
-                    "members": [
-                      {
-                        "type": "REPEAT1",
-                        "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SEQ",
+                      "members": [
+                        {
                           "type": "SYMBOL",
-                          "name": "ElementSep"
+                          "name": "ArrayElement"
+                        },
+                        {
+                          "type": "REPEAT",
+                          "content": {
+                            "type": "SEQ",
+                            "members": [
+                              {
+                                "type": "REPEAT1",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "ElementSep"
+                                }
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "ArrayElement"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "REPEAT",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "ElementSep"
+                          }
                         }
-                      },
-                      {
-                        "type": "SYMBOL",
-                        "name": "ArrayElement"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "type": "REPEAT",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "ElementSep"
-                  }
+                      ]
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
                 }
               ]
             },
@@ -3682,34 +3695,47 @@
                   }
                 },
                 {
-                  "type": "SYMBOL",
-                  "name": "AAEntry"
-                },
-                {
-                  "type": "REPEAT",
-                  "content": {
-                    "type": "SEQ",
-                    "members": [
-                      {
-                        "type": "REPEAT1",
-                        "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SEQ",
+                      "members": [
+                        {
                           "type": "SYMBOL",
-                          "name": "ElementSep"
+                          "name": "AAEntry"
+                        },
+                        {
+                          "type": "REPEAT",
+                          "content": {
+                            "type": "SEQ",
+                            "members": [
+                              {
+                                "type": "REPEAT1",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "ElementSep"
+                                }
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "AAEntry"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "REPEAT",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "ElementSep"
+                          }
                         }
-                      },
-                      {
-                        "type": "SYMBOL",
-                        "name": "AAEntry"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "type": "REPEAT",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "ElementSep"
-                  }
+                      ]
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
                 }
               ]
             },
@@ -4211,7 +4237,7 @@
         "value": 4,
         "content": {
           "type": "PATTERN",
-          "value": "([0-9]+\\.[0-9]*([eE][+-]?[0-9]+)?)|(\\.[0-9]+([eE][+-]?[0-9]+)?)|([0-9]+[eE][+-]?[0-9]+)|([0-9]+!)"
+          "value": "([0-9]+\\.[0-9]*([eE][+-]?[0-9]+)?!?)|(\\.[0-9]+([eE][+-]?[0-9]+)?!?)|([0-9]+[eE][+-]?[0-9]+!?)|([0-9]+!)"
         }
       }
     },
@@ -4233,7 +4259,7 @@
         "value": 1,
         "content": {
           "type": "PATTERN",
-          "value": "[0-9]+"
+          "value": "[0-9]+%?"
         }
       }
     },

@@ -131,7 +131,10 @@ TypeSuffix      ::= '$' | '%' | '!' | '#' | '&'
      - trailing '&' suffix, or 11+ digit hex        => LongInteger
    We model the distinct lexical shapes; the type-inference is a semantic note. *)
 
-IntegerLiteral      ::= DecDigits
+(* A decimal integer literal may carry the explicit '%' integer type designator
+   (e.g. 1%), mirroring '!'(Float)/'#'(Double)/'&'(LongInteger) on the other forms
+   (bsc-confirmed). Hex form takes no '%'. *)
+IntegerLiteral      ::= DecDigits '%'?
                       | HexLiteral
 DecDigits           ::= [0-9]+
 

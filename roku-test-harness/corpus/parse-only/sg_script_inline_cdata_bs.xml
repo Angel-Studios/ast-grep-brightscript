@@ -1,0 +1,16 @@
+<!-- coverage-id: sg.script.inline_cdata_bs expect: parse -->
+<!-- Inline BrighterScript in a SceneGraph <script>: type="text/brighterscript"
+     with a CDATA body. This is the .bs injection point (ScriptCDataBs ->
+     BrighterScriptBody), mirroring the BrightScript sg.script.inline_cdata.
+     bsc lowers the inline .bs to .brs before the device loads the component, so
+     the embedding mechanism is the same one already device-proven for
+     BrightScript (DEVICE_FACTS #12); this fixture proves the .bs form parses. -->
+<component name="SgScriptInlineCdataBs" extends="Group">
+  <script type="text/brighterscript"><![CDATA[
+    class Greeter
+      function hi() as string
+        return `hello`
+      end function
+    end class
+  ]]></script>
+</component>
