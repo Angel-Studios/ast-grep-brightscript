@@ -2152,7 +2152,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_Expression"
+                "name": "_ExpressionNoCast"
               },
               {
                 "type": "SYMBOL",
@@ -2440,65 +2440,12 @@
       "type": "CHOICE",
       "members": [
         {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "OrExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "AndExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "NotExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "ComparisonExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "BitshiftExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "AdditiveExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "MultiplicativeExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "UnaryExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "PowerExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "CallExpression"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "PostfixExpr"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "Primary"
-            }
-          ]
+          "type": "SYMBOL",
+          "name": "_ExpressionNoCast"
         },
         {
           "type": "SYMBOL",
-          "name": "TernaryExpr"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "NullCoalesceExpr"
+          "name": "TypeCastExpression"
         }
       ]
     },
@@ -2883,7 +2830,7 @@
             "name": "callee",
             "content": {
               "type": "SYMBOL",
-              "name": "_Expression"
+              "name": "_ExpressionNoCast"
             }
           },
           {
@@ -2894,59 +2841,37 @@
       }
     },
     "PostfixExpr": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "PREC_LEFT",
-          "value": 10,
-          "content": {
-            "type": "SEQ",
+      "type": "PREC_LEFT",
+      "value": 10,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "object",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_ExpressionNoCast"
+            }
+          },
+          {
+            "type": "CHOICE",
             "members": [
               {
-                "type": "FIELD",
-                "name": "object",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "_Expression"
-                }
+                "type": "SYMBOL",
+                "name": "IndexSuffix"
               },
               {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "IndexSuffix"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "MemberSuffix"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "AttributeSuffix"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "OptChainSuffix"
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "type": "PREC_LEFT",
-          "value": 10,
-          "content": {
-            "type": "SEQ",
-            "members": [
+                "type": "SYMBOL",
+                "name": "MemberSuffix"
+              },
               {
-                "type": "FIELD",
-                "name": "object",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "_Expression"
-                }
+                "type": "SYMBOL",
+                "name": "AttributeSuffix"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "OptChainSuffix"
               },
               {
                 "type": "SYMBOL",
@@ -2954,8 +2879,8 @@
               }
             ]
           }
-        }
-      ]
+        ]
+      }
     },
     "CallSuffix": {
       "type": "SEQ",
@@ -6361,6 +6286,67 @@
         }
       ]
     },
+    "_ExpressionNoCast": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "OrExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "AndExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "NotExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "ComparisonExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "BitshiftExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "AdditiveExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "MultiplicativeExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "UnaryExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "PowerExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "CallExpression"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "PostfixExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "Primary"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "TernaryExpr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "NullCoalesceExpr"
+        }
+      ]
+    },
     "TernaryExpr": {
       "type": "PREC_RIGHT",
       "value": 0,
@@ -6426,6 +6412,42 @@
             "content": {
               "type": "SYMBOL",
               "name": "_Expression"
+            }
+          }
+        ]
+      }
+    },
+    "TypeCastExpression": {
+      "type": "PREC_LEFT",
+      "value": -1,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "expression",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_Expression"
+            }
+          },
+          {
+            "type": "TOKEN",
+            "content": {
+              "type": "PREC",
+              "value": 2,
+              "content": {
+                "type": "PATTERN",
+                "value": "[aA][sS]"
+              }
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "type",
+            "content": {
+              "type": "SYMBOL",
+              "name": "Type"
             }
           }
         ]
@@ -6749,68 +6771,72 @@
       ]
     },
     "TypedFunctionType": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "TOKEN",
-              "content": {
-                "type": "PREC",
-                "value": 2,
+      "type": "PREC_RIGHT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "TOKEN",
                 "content": {
-                  "type": "PATTERN",
-                  "value": "[fF][uU][nN][cC][tT][iI][oO][nN]"
+                  "type": "PREC",
+                  "value": 2,
+                  "content": {
+                    "type": "PATTERN",
+                    "value": "[fF][uU][nN][cC][tT][iI][oO][nN]"
+                  }
+                }
+              },
+              {
+                "type": "TOKEN",
+                "content": {
+                  "type": "PREC",
+                  "value": 2,
+                  "content": {
+                    "type": "PATTERN",
+                    "value": "[sS][uU][bB]"
+                  }
                 }
               }
-            },
-            {
-              "type": "TOKEN",
-              "content": {
-                "type": "PREC",
-                "value": 2,
-                "content": {
-                  "type": "PATTERN",
-                  "value": "[sS][uU][bB]"
-                }
+            ]
+          },
+          {
+            "type": "STRING",
+            "value": "("
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "ParameterList"
+              },
+              {
+                "type": "BLANK"
               }
-            }
-          ]
-        },
-        {
-          "type": "STRING",
-          "value": "("
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "ParameterList"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "STRING",
-          "value": ")"
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "ReturnType"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        }
-      ]
+            ]
+          },
+          {
+            "type": "STRING",
+            "value": ")"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "ReturnType"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          }
+        ]
+      }
     },
     "InlineInterfaceType": {
       "type": "SEQ",
@@ -7174,23 +7200,19 @@
   "conflicts": [
     [
       "AssignTarget",
-      "_Expression"
-    ],
-    [
-      "AssignTarget",
       "Primary"
-    ],
-    [
-      "ArgumentList",
-      "ParenExpr"
-    ],
-    [
-      "IndexSuffix",
-      "ArrayElement"
     ],
     [
       "TernaryExpr",
       "_PrintItem"
+    ],
+    [
+      "IntrinsicType",
+      "TypedFunctionType"
+    ],
+    [
+      "AssignTarget",
+      "_ExpressionNoCast"
     ]
   ],
   "precedences": [],

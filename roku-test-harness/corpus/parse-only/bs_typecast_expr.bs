@@ -1,0 +1,17 @@
+' coverage-id: bs.typecast.expr
+' expect: parse
+' BrighterScript expression-level type-cast: `expr as <Type>`, chainable
+' (`x as dynamic as string`) and to a namespaced custom type. Erased on transpile,
+' so this is a parse-only corpus example (not device-testable).
+namespace pkg
+    class MyType
+        id as integer
+    end class
+end namespace
+
+sub demo(data as object)
+    value = data as integer
+    chained = data as dynamic as string
+    typed = data as pkg.MyType
+    print value ; chained ; typed.id
+end sub

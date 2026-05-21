@@ -24,6 +24,10 @@ the source of truth:
 
 When you change the parser, do not start from scratch — work from these specs and the skill.
 
+The **BrighterScript (`.bs`) initiative (`roadmap/05`) is at Phase 7** (grow the runnable/device-
+validated subset). If you're picking that up, start at [`start_here.md`](start_here.md) — it has the
+green-check, the per-feature loop, and the hard-won grammar/device gotchas.
+
 ## Repository map
 
 ```

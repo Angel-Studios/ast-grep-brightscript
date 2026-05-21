@@ -57,7 +57,7 @@ through this lens — the spec/coverage are exhaustive; the runnable/device-vali
   as the constructor/member name). ABI15, built to `brighterscript.so`. Parses CLEAN: `test_bs.bs`,
   all 13 parse-only `.bs`, and **52/52 authored `angel-roku` `.bs`**; 38 `test/corpus` tests pass;
   negatives ERROR; all 42 new `bs.*` kinds present in `node-types.json`. (Expression-level `expr as T`
-  typecast is modeled in the EBNF but deferred in the grammar.)
+  typecast was deferred here; it is now implemented — see Phase 7 backlog item 1.)
 - **Phase 6** — **DONE.** `brighterscript` registered as an ast-grep `customLanguage` (`.bs`) in
   `sgconfig.yml`; all 37 coverage kinds are ast-grep-matchable; angel-roku ast-grep regression passes
   (52 namespaces / 47 classes / 2257 annotations / 1793 methods). `check_parity` (L5) extended with
@@ -201,7 +201,7 @@ real `angel-roku` `.bs` example.
 **Acceptance:** a device run reports the BrighterScript specs PASS; `DEVICE_FACTS.md` updated. This
 closes the "valid as confirmed by running on Roku" half of the goal.
 
-### Phase 5 — Tree-sitter: add the BrighterScript grammar layer + injection
+### Phase 5 — Tree-sitter: add the BrighterScript grammar layer + injection  ✅ DONE
 
 *(Depends on `roadmap/03` — the BrightScript tree-sitter grammar must exist first.)*
 
@@ -216,7 +216,7 @@ closes the "valid as confirmed by running on Roku" half of the goal.
 **Acceptance:** tree-sitter parses every `.bs` corpus file with zero ERROR; negatives ERROR; new
 kinds present.
 
-### Phase 6 — Register & validate ast-grep over BrighterScript
+### Phase 6 — Register & validate ast-grep over BrighterScript  ✅ DONE
 
 - Register the grammar (or `.bs` dialect) under `sgconfig.yml` `customLanguages` so `.bs` is
   searchable — fulfills "parse BrighterScript from ast-grep".
@@ -228,30 +228,69 @@ kinds present.
 **Acceptance:** ast-grep matches BrighterScript patterns on `.bs` (including `angel-roku`); all
 parity checks green.
 
-### Phase 7 — Grow the subset (iterative)
+### Phase 7 — Grow the subset (iterative)  ◷ ACTIVE — the standing track
 
-Repeat Phases 1→6 per feature, driven by real-world demand: ternary `?:`, `??`, `?.`, template
-strings, `import`, `const`, `enum`, `interface`, `try/catch/throw`, `typecast`, full type system.
-Each feature runs the same loop: spec → coverage leaf → harness `.bs` → bsc + device → grammar →
-ast-grep. `angel-roku` (and any newly added repos) remain the regression corpus.
+The spec (`brighterscript.ebnf`) and coverage taxonomy are already **exhaustive** over the language;
+the EBNF, tree-sitter grammar, and ast-grep registration accept the full surface. What "grows" in
+Phase 7 is the **runnable / device-validated** set and any remaining grammar/EBNF fidelity gaps.
+See `start_here.md` (repo root) for the seamless pickup guide and the exact per-feature loop.
+
+**The per-feature loop (run for each item below):**
+spec (`brighterscript.ebnf`) → coverage leaf (`coverage.json`, pick device-via-transpile vs
+parse-only) → harness `.bs` (`test_bs.bs` t.spec, or a `corpus/parse-only/*.bs`) → `bsc`
+(`npm run check`) → device (`npm run roku:deploy` + `roku-listener`) → tree-sitter grammar +
+`test/corpus` → ast-grep / parity. Keep all 6 gates green; `angel-roku` is the standing regression
+corpus.
+
+**Backlog (rough priority order):**
+
+1. ~~**Expression-level type-cast `expr as T` (`TypeCastExpression`)**~~ — ✅ **DONE (2026-05-20).**
+   Implemented as the outermost (loosest-binding, left-assoc, chainable) expression wrapper. The
+   `as`-token clash with the typed positions is resolved exactly as bsc does: param defaults parse
+   with `findTypeCast=false` (Parser.ts:1042), so a trailing `as Type` there is the parameter's
+   declared type — modeled with a two-tier `_Expression`/`_ExpressionNoCast` split where postfix/call
+   objects are no-cast (a cast is never a `.`/`[]`/`(` object without parens), so `resp as a.b.c` and
+   `x as integer[]` attach the dotted name / `[]` to the TYPE. Added `TypeCastExpression` to
+   `brighterscript.ebnf` (impl. note 9), the `bs.typecast.expr` coverage leaf (parse-only — casts are
+   erased on transpile), a `corpus/parse-only/bs_typecast_expr.bs`, and 5 `test/corpus` cases + 1
+   `:error` negative. All 5 gates green; 44 bs corpus tests; 52/52 angel-roku; ast-grep matches the
+   kind. The EBNF and tree-sitter grammar now have NO spec→grammar gap.
+2. **Device-test the parse-only constructs that CAN run** — promote leaves from parse-only to
+   device-via-transpile where a clean runtime assertion exists: `callfunc` (`@.`) against a real
+   SceneGraph node that exposes a `<function>`; `import` (multi-file — add a second `.bs` and import
+   it); `interface`/`type`/`typecast`/`alias` only if a runtime signal is contrivable (most are erased,
+   so they stay parse-only). Each promotion: flip `device_testable`, move the spec into `test_bs.bs`,
+   re-deploy, confirm PASS.
+3. **Tagged templates & source literals on-device** — add device specs (tagged-template needs a tag
+   function; source literals like `FUNCTION_NAME` assert a substring of the lowered string).
+4. **New surface as real-world demand appears** — `try/catch/throw` is already plain-BrightScript;
+   watch for any BrighterScript construct `angel-roku` (or a newly synced repo) starts using that the
+   grammar doesn't yet parse clean (the 52/52 authored-`.bs` regression will catch it).
+5. **SceneGraph `<script uri="*.bs">` external-script** resolution if/when a real component references
+   a `.bs` by uri (today it parses as `ScriptExternal`; injection covers inline bodies).
 
 ---
 
 ## Dependencies / sequencing
 
 ```
-Phase 0 ─ (independent; do first as a warm-up of the loop)
-Phase 1 → Phase 2 → Phase 3 → Phase 4         (spec → taxonomy → corpus+bsc → device)
-                       └────────────→ Phase 5 → Phase 6   (tree-sitter → ast-grep)
-                                         ▲
-                              roadmap/03 (BrightScript tree-sitter grammar)
-Phase 7 ─ loops 1→6 per new feature
+Phase 0 ✅ ─ (independent; warm-up of the loop)
+Phase 1 ✅ → Phase 2 ✅ → Phase 3 ✅ → Phase 4 ✅   (spec → taxonomy → corpus+bsc → DEVICE)
+                            └─────────────→ Phase 5 ✅ → Phase 6 ✅   (tree-sitter → ast-grep)
+                                              ▲
+                                   roadmap/03 ✅ (BrightScript tree-sitter grammar)
+Phase 7 ◷ ─ loops 1→6 per new feature (ACTIVE; see start_here.md)
 ```
 
-## End-to-end acceptance (definition of done for the initiative)
+## End-to-end acceptance (definition of done for the initiative)  ✅ MET
 
-A BrighterScript `.bs` file can be searched/linted/rewritten with ast-grep via the custom language;
-the BrighterScript subset corpus parses clean (zero ERROR) in tree-sitter and its transpiled output
-**runs on a real Roku** (`##SPEC## fail=0`); `bsc` accepts the same `.bs` syntax; coverage parity,
-EBNF-internal, XSD, and EBNF↔node-types checks are all green; `angel-roku` is the standing real-world
-regression corpus. The device remains the final authority.
+A BrighterScript `.bs` file can be searched/linted/rewritten with ast-grep via the custom language
+(✅ `brighterscript` customLanguage registered, `.bs`); the BrighterScript corpus parses clean (zero
+ERROR) in tree-sitter (✅ `test_bs.bs`, 13 corpus, 52/52 authored `angel-roku` `.bs`; negatives ERROR)
+and its transpiled output **runs on a real Roku** (✅ `##SPEC## event=run-end pass=497 fail=0`, all 24
+`bs.*` PASS, DEVICE_FACTS #18); `bsc` accepts the same `.bs` syntax (✅ `npm run check`); coverage
+parity, EBNF-internal, XSD, and EBNF↔node-types checks are all green (✅ L0/L1/L2/L3/L5); `angel-roku`
+is the standing real-world regression corpus. The device remains the final authority.
+
+**Initiative status: Phases 0–6 COMPLETE.** Phase 7 (grow the runnable/device-validated subset) is the
+ongoing track — start at `start_here.md`.

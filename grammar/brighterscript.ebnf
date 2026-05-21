@@ -292,7 +292,19 @@ TypeAliasStatement ::= 'type' Identifier ASSIGN Type
    src/parser/Parser.ts: expression() (wraps TypeCastExpression),
    anonymousFunction() (wraps Ternary/NullCoalescing), ternaryExpression(),
    nullCoalescingExpression(). All BrighterScript-only. *)
-Expression      ::= ( TernaryExpr | NullCoalesceExpr ) ( 'as' Type )*  (* typecast outermost *)
+Expression      ::= TernaryExpr | NullCoalesceExpr | TypeCastExpression
+
+(* Expression-level type-cast `expr as Type`, chainable (`x as dynamic as string`).
+   The OUTERMOST expression wrapper -- bsc applies it last (binds loosest), after
+   ternary/null-coalescing. One-or-more casts so the node exists only when an `as`
+   is actually present (a cast-less expression is just TernaryExpr/NullCoalesceExpr).
+   src/parser/Parser.ts: expression() -- anonymousFunction() then an `as Type` loop.
+   CAVEAT (tree-sitter implementer note 9): typecast is SUPPRESSED in a parameter
+   DEFAULT value -- bsc parses those with expression(findTypeCast=false)
+   (Parser.ts:1042), so a trailing `as Type` after `name = default` is the
+   PARAMETER's declared type, not a cast of the default. Everywhere else the cast
+   wins. *)
+TypeCastExpression ::= ( TernaryExpr | NullCoalesceExpr ) ( 'as' Type )+
 TernaryExpr     ::= OrExpr ( QUESTION Expression COLON Expression )?   (* cond ? a : b; falls through to OrExpr *)
 NullCoalesceExpr ::= OrExpr OP_NULLCOALESCE Expression                  (* a ?? b *)
 
@@ -529,4 +541,19 @@ DOLLAR_LBRACE   ::= '${'            (* template interpolation opener *)
      `##SPEC##` (see roadmap/05 Phase 4). The grammar models source `.bs`; the
      thing that RUNS on the Roku is the lowered `.brs` already covered by
      brightscript.ebnf. Record device-confirmed lowering facts in DEVICE_FACTS.md.
+
+  9. TYPECAST `as` vs PARAMETER/RETURN/FIELD `as`. The expression-level
+     TypeCastExpression (`expr as Type`) shares the `as` token with every typed
+     position (param/return/field/typed-assignment/typed-for-each). bsc resolves
+     the only genuine clash -- a parameter DEFAULT followed by `as` -- by parsing
+     the default with expression(findTypeCast=false) (Parser.ts:1042), so in
+     `function f(p = a as integer)` the `as integer` is p's declared TYPE, not a
+     cast of `a`. In the tree-sitter grammar this falls out of giving the typecast
+     the LOOSEST precedence (below ternary/??): at a parameter default the default
+     reduces before the cast can form, so Parameter consumes its own `as Type` and
+     the parameter-type reading wins. Every other position (assignment RHS, return,
+     args, collection elements, ...) keeps the cast, which chains left-assoc. A cast
+     is also kept out of postfix/member/index/call OBJECT position (it is the
+     outermost wrapper), so `expr as a.b.c` / `expr as T[]` bind the dotted name /
+     `[]` into the TYPE rather than as a suffix on the cast.
 *)

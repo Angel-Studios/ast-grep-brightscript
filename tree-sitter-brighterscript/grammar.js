@@ -17,8 +17,18 @@
 // emits IdentStart for them and the ci() keyword token (prec 2) wins only where
 // the grammar makes the keyword valid.
 //
-// Deferred to a later phase (modeled in the EBNF, not yet in this grammar):
-// expression-level type-cast `expr as T` (TypeCastExpression).
+// Expression-level type-cast `expr as T` (TypeCastExpression) is the outermost
+// (loosest-binding) expression wrapper, chainable left-assoc. _Expression is split
+// into two tiers mirroring bsc: _Expression == bsc expression(true) == an optional
+// outermost cast over _ExpressionNoCast == bsc anonymousFunction() == the binary/
+// postfix cascade + ternary/??. Postfix/call OBJECTS are _ExpressionNoCast, so a
+// cast is never a `.`/`[]`/`(` object without parens (member/index/call bind inside
+// anonymousFunction, before the cast) — that keeps `resp as a.b.c` / `x as T[]`
+// attaching to the TYPE. The `as` token is shared with the typed positions
+// (param/return/field/typed-assign/typed-for-each); the only genuine clash — a
+// parameter DEFAULT followed by `as` — falls out of the cast's loosest precedence
+// (bsc parses defaults with expression(findTypeCast=false), Parser.ts:1042), so the
+// trailing `as Type` reads as the parameter's declared type, not a cast.
 
 import base from '../tree-sitter-brightscript/grammar.js';
 
@@ -57,12 +67,32 @@ export default grammar(base, {
   name: 'brighterscript',
 
   conflicts: ($, previous) => [
-    ...previous,
+    // Inherit the base conflicts EXCEPT the three the two-tier expression model
+    // below makes unnecessary (tree-sitter flags them): the base
+    // [AssignTarget,_Expression], [ArgumentList,ParenExpr] and
+    // [IndexSuffix,ArrayElement] resolve cleanly now that the cascade derives only
+    // through _ExpressionNoCast. [AssignTarget,Primary] is still needed and kept.
+    ...previous.filter((pair) => {
+      const names = pair.map((s) => s.name).sort().join(',');
+      return ![
+        ['AssignTarget', '_Expression'], ['ArgumentList', 'ParenExpr'],
+        ['IndexSuffix', 'ArrayElement'],
+      ].some((d) => d.slice().sort().join(',') === names);
+    }),
     // `?` is both the ternary operator and the `print` shorthand: in a then-less
     // single-line `if` body, `if x ? a : b` is ambiguous (ternary condition vs
     // `if x` + `? a` print). Keep both alive; context (a later `end if` / use in
     // expression position) decides.
     [$.TernaryExpr, $._PrintItem],
+    // `as function` / `as sub`: the intrinsic type `function` and the typed-
+    // function-type `function(params) as Ret` share the keyword prefix. The next
+    // token (`(` -> TypedFunctionType, else IntrinsicType) decides; keep both alive.
+    // Newly reachable via TypeCastExpression (`x as function(...)`).
+    [$.IntrinsicType, $.TypedFunctionType],
+    // An l-value (`m.x`, `a[0]`) is an AssignTarget before `=`/`as Type =` but an
+    // ordinary expression otherwise — mirrors the base [AssignTarget, _Expression]
+    // conflict, now also against the no-cast tier that derives PostfixExpr.
+    [$.AssignTarget, $._ExpressionNoCast],
   ],
 
   rules: {
@@ -202,13 +232,42 @@ export default grammar(base, {
     //========================================================================
     // expression extensions
     //========================================================================
-    _Expression: ($, previous) => choice(previous, $.TernaryExpr, $.NullCoalesceExpr),
+    // Two tiers (mirroring bsc): _Expression == bsc expression(true) == a no-cast
+    // expression optionally wrapped by an outermost type-cast; _ExpressionNoCast ==
+    // bsc anonymousFunction() == the binary/postfix cascade + ternary/??. Routing
+    // the cascade ONLY through _ExpressionNoCast (not _Expression directly) keeps a
+    // single derivation path, so there is NO _Expression/_ExpressionNoCast
+    // reduce-reduce ambiguity.
+    _Expression: $ => choice($._ExpressionNoCast, $.TypeCastExpression),
+    // Mirrors the inherited brightscript _Expression cascade (OrExpr..Primary) — a
+    // NEW rule can't take `previous`, so the alternatives are listed — plus the
+    // BrighterScript ternary/?? additions. Keep in sync with the base _Expression.
+    _ExpressionNoCast: $ => choice(
+      $.OrExpr, $.AndExpr, $.NotExpr, $.ComparisonExpr, $.BitshiftExpr,
+      $.AdditiveExpr, $.MultiplicativeExpr, $.UnaryExpr, $.PowerExpr,
+      $.CallExpression, $.PostfixExpr, $.Primary,
+      $.TernaryExpr, $.NullCoalesceExpr,
+    ),
     // Ternary / null-coalescing bind looser than every binary operator (prec 0).
     TernaryExpr: $ => prec.right(0, seq(
       field('condition', $._Expression), $.QUESTION,
       field('consequence', $._Expression), ':', field('alternative', $._Expression),
     )),
     NullCoalesceExpr: $ => prec.left(0, seq(field('left', $._Expression), '??', field('right', $._Expression))),
+    // Type-cast `expr as Type`, chainable (`x as dynamic as string`). Binds LOOSEST
+    // (prec -1, below ternary/??) so it wraps the whole expression, as bsc applies it
+    // last; left-assoc via the _Expression operand for the cast chain. That loosest
+    // precedence also settles the one genuine clash — a parameter DEFAULT followed by
+    // `as`: bsc parses defaults with expression(findTypeCast=false) (Parser.ts:1042),
+    // so the `as Type` is the parameter's declared type; the cast's -1 lets the
+    // default reduce and Parameter take its own `as`, so the param-type reading wins.
+    // A cast is NOT a postfix/call object (see PostfixExpr/CallExpression below), so
+    // `resp as a.b.c` / `x as integer[]` attach the dotted name / `[]` to the TYPE,
+    // not as member/index on the cast — exactly as bsc, where member/index/call live
+    // inside anonymousFunction(). brighterscript.ebnf TypeCastExpression / impl note 9.
+    TypeCastExpression: $ => prec.left(-1, seq(
+      field('expression', $._Expression), ci('as'), field('type', $.Type),
+    )),
 
     // primary additions (Primary is an inherited supertype; these become subtypes)
     Primary: ($, previous) => choice(
@@ -217,19 +276,25 @@ export default grammar(base, {
     ),
     NewExpression: $ => prec.right(seq(ci('new'), field('class', $.QualifiedName), '(', optional($.ArgumentList), ')')),
 
-    // postfix addition: callfunc operator `obj@.method(args)`
-    PostfixExpr: ($, previous) => choice(
-      previous,
-      prec.left(10, seq(field('object', $._Expression), $.CallfuncSuffix)),
-    ),
+    // Postfix / call OBJECT is the no-cast expression: a type-cast is the OUTERMOST
+    // wrapper and can never be the object of `.`/`[]`/`(`/`@.` without parens (bsc
+    // parses member/index/call inside anonymousFunction(), before the cast loop).
+    // Fully redefined (not `previous`) to swap the object AND fold in the callfunc
+    // suffix `obj@.method(args)` in one rule.
+    PostfixExpr: $ => prec.left(10, seq(
+      field('object', $._ExpressionNoCast),
+      choice($.IndexSuffix, $.MemberSuffix, $.AttributeSuffix, $.OptChainSuffix, $.CallfuncSuffix),
+    )),
+    CallExpression: $ => prec.left(10, seq(field('callee', $._ExpressionNoCast), $.CallSuffix)),
     CallfuncSuffix: $ => seq('@.', field('name', $._NameOrKeyword), '(', optional($.ArgumentList), ')'),
 
     // A bare callfunc call `obj@.method(args)` is a valid expression statement
     // (it ends in a call, like CallExpression). The base ExpressionStatement only
-    // covers chains ending in a plain `(...)`; add the callfunc terminus.
+    // covers chains ending in a plain `(...)`; add the callfunc terminus (no-cast
+    // object, like PostfixExpr).
     ExpressionStatement: ($, previous) => choice(
       previous,
-      prec.left(10, seq($._Expression, $.CallfuncSuffix)),
+      prec.left(10, seq($._ExpressionNoCast, $.CallfuncSuffix)),
     ),
 
     // BrighterScript's AllowedProperties: nearly every keyword (incl. the new
@@ -282,7 +347,10 @@ export default grammar(base, {
       ci('boolean'), ci('integer'), ci('longinteger'), ci('float'), ci('double'),
       ci('string'), ci('object'), ci('function'), ci('dynamic'), ci('void'), ci('invalid'),
     ),
-    TypedFunctionType: $ => seq(choice(ci('function'), ci('sub')), '(', optional($.ParameterList), ')', optional($.ReturnType)),
+    // prec.right so the optional ReturnType is GREEDY: `x as function() as string`
+    // attaches `as string` as this function-type's return, not as a chained cast on
+    // the whole function-type (matches bsc's typedFunctionType()/typeToken()).
+    TypedFunctionType: $ => prec.right(seq(choice(ci('function'), ci('sub')), '(', optional($.ParameterList), ')', optional($.ReturnType))),
     InlineInterfaceType: $ => seq('{', optional(seq($.InlineInterfaceField, repeat(seq(choice(',', $.EOS), $.InlineInterfaceField)))), '}'),
     InlineInterfaceField: $ => seq(optional(ci('optional')), field('name', $.Identifier), ci('as'), field('type', $.Type)),
     GroupedType: $ => seq('(', $.Type, ')'),

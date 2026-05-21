@@ -197,3 +197,152 @@ loc = source_location
         (IdentStart)))
     (BsSourceLiteral))
   (EOS))
+
+================================================================================
+type-cast expression
+================================================================================
+
+x = value as integer
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (TypeCastExpression
+      (Identifier
+        (IdentStart))
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart))))))))
+  (EOS))
+
+================================================================================
+chained type-cast expression
+================================================================================
+
+x = foo() as dynamic as string
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (TypeCastExpression
+      (TypeCastExpression
+        (CallExpression
+          (Identifier
+            (IdentStart))
+          (CallSuffix))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart)))))))
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart))))))))
+  (EOS))
+
+================================================================================
+type-cast to a namespaced type
+================================================================================
+
+x = resp as my.pkg.MyType
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (TypeCastExpression
+      (Identifier
+        (IdentStart))
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart))
+              (Identifier
+                (IdentStart))
+              (Identifier
+                (IdentStart))))))))
+  (EOS))
+
+================================================================================
+type-cast to a typed array
+================================================================================
+
+items = data as integer[]
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (TypeCastExpression
+      (Identifier
+        (IdentStart))
+      (Type
+        (BsTypeUnion
+          (BsTypePostfix
+            (QualifiedName
+              (Identifier
+                (IdentStart))))))))
+  (EOS))
+
+================================================================================
+parameter default is not absorbed as a type-cast
+================================================================================
+
+function f(p = a as integer)
+    return p
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    (Identifier
+      (IdentStart))
+    (ParameterList
+      (Parameter
+        (Identifier
+          (IdentStart))
+        (Identifier
+          (IdentStart))
+        (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart))))))))
+    (EOS)
+    (Block
+      (ReturnStatement
+        (Identifier
+          (IdentStart)))
+      (EOS))
+    (EndFunction))
+  (EOS))
