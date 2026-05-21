@@ -44,6 +44,12 @@ sub Main(args as Dynamic)
     showcase = scene.findNode("showcase")
     test_scenegraph_all(runner, scene, showcase)
 
+    ' --- 3. BrighterScript SceneGraph specs (render-phase) ------------------
+    ' BrighterScript constructs that need a live roSGNode (the callfunc operator
+    ' node@.method) run here, after the scene exists. Authored in
+    ' source/tests/test_bs_sg.bs and transpiled to the global `test_bs_sg_all`.
+    test_bs_sg_all(runner, showcase)
+
     ' --- Emit the unified ##SPEC## protocol --------------------------------
     ' run-start framing, one line per registered spec (BrightScript + SceneGraph),
     ' run-end framing - all from the Main scope, captured over telnet by

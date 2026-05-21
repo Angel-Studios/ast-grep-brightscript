@@ -1,0 +1,26 @@
+' test_bs_sg.bs - BrighterScript SceneGraph spec module (render-phase, device-tested
+' VIA TRANSPILE). Unlike test_bs.bs (which runs in the Main scope BEFORE the screen),
+' this runs AFTER screen.show() with the live `showcase` node passed in -- invoked
+' from source/main.brs right after test_scenegraph_all -- so it can exercise the
+' BrighterScript constructs that need a real roSGNode.
+'
+' The deploy build (bsconfig.deploy.json) transpiles this to .brs; `test_bs_sg_all`
+' becomes a global the Main scope calls. Ids/kinds are keyed 1:1 to the
+' layer="brighterscript" leaves in grammar/coverage.json (check_coverage.py asserts
+' parity, scanning .bs).
+sub test_bs_sg_all(t as Object, showcase as Object)
+    ' bs.expr.callfunc : the callfunc operator `node@.method(args)` lowers to
+    ' node.callFunc("method", args). showcase.describe(note) echoes the note into
+    ' its returned summary string, so finding the note back proves the call AND the
+    ' argument round-tripped through callFunc on a real SceneGraph node.
+    t.spec("bs.expr.callfunc", "CallfuncSuffix", "callfunc operator node@.method(args)")
+    if showcase = invalid then
+        t.assertNotInvalid("bs.expr.callfunc: showcase node", showcase)
+        return
+    end if
+    described = showcase@.describe("bs-callfunc")
+    t.assertNotInvalid("bs.expr.callfunc: describe() returned", described)
+    if described <> invalid then
+        t.assertTrue("bs.expr.callfunc: describe() includes note", described.Instr("bs-callfunc") >= 0)
+    end if
+end sub

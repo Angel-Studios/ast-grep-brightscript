@@ -255,12 +255,15 @@ corpus.
    erased on transpile), a `corpus/parse-only/bs_typecast_expr.bs`, and 5 `test/corpus` cases + 1
    `:error` negative. All 5 gates green; 44 bs corpus tests; 52/52 angel-roku; ast-grep matches the
    kind. The EBNF and tree-sitter grammar now have NO spec→grammar gap.
-2. **Device-test the parse-only constructs that CAN run** — promote leaves from parse-only to
-   device-via-transpile where a clean runtime assertion exists: `callfunc` (`@.`) against a real
-   SceneGraph node that exposes a `<function>`; `import` (multi-file — add a second `.bs` and import
-   it); `interface`/`type`/`typecast`/`alias` only if a runtime signal is contrivable (most are erased,
-   so they stay parse-only). Each promotion: flip `device_testable`, move the spec into `test_bs.bs`,
-   re-deploy, confirm PASS.
+2. **Device-test the parse-only constructs that CAN run** — ⏳ **IN PROGRESS (2026-05-20):**
+   `import` (multi-file) and `callfunc` (`@.`) are **DONE** — both promoted parse-only →
+   device-via-transpile and **confirmed PASS on hardware** (`##SPEC## pass=499 fail=0`, 26 `bs.*`
+   specs; DEVICE_FACTS #19). `bs.import.stmt` calls an imported sibling `source/lib/bs_importlib.bs`
+   from `test_bs.bs`; `bs.expr.callfunc` runs **render-phase** in the new
+   `source/tests/test_bs_sg.bs` (`test_bs_sg_all`, wired into `main.brs` after `test_scenegraph_all`)
+   because the callfunc operator needs a live `roSGNode` (the `showcase` node) — `test_bs_all` runs in
+   the Main scope where `CreateObject("roSGNode")` is unavailable. **Remaining:** `interface`/`type`/
+   `typecast`/`alias`/`type_alias` stay parse-only (erased on transpile — no runtime signal).
 3. **Tagged templates & source literals on-device** — add device specs (tagged-template needs a tag
    function; source literals like `FUNCTION_NAME` assert a substring of the lowered string).
 4. **New surface as real-world demand appears** — `try/catch/throw` is already plain-BrightScript;

@@ -653,8 +653,8 @@
   {"id": "bs.typecast.expr", "kind": "TypeCastExpression", "layer": "brighterscript", "dimension": "expression-level type-cast `expr as Type` (chainable; erased on transpile)", "snippet": "value = data as integer", "device_testable": false, "expect": "parse"},
   {"id": "bs.alias.stmt", "kind": "AliasStatement", "layer": "brighterscript", "dimension": "alias statement (single-identifier value in 0.72.2)", "snippet": "alias logger = log", "device_testable": false, "expect": "parse"},
   {"id": "bs.type_alias.stmt", "kind": "TypeAliasStatement", "layer": "brighterscript", "dimension": "type alias statement (erased on transpile)", "snippet": "type Id = string or integer", "device_testable": false, "expect": "parse"},
-  {"id": "bs.import.stmt", "kind": "ImportStatement", "layer": "brighterscript", "dimension": "import statement (multi-file; resolved at compile)", "snippet": "import \"pkg:/source/lib.bs\"", "device_testable": false, "expect": "parse"},
+  {"id": "bs.import.stmt", "kind": "ImportStatement", "layer": "brighterscript", "dimension": "import statement (multi-file; resolved at compile)", "snippet": "import \"pkg:/source/lib.bs\"", "device_testable": true, "expect": "value:73"},
   {"id": "bs.expr.tagged_template", "kind": "TaggedTemplate", "layer": "brighterscript", "dimension": "tagged template string (tag function before backtick)", "snippet": "y = tag`hi ${name}`", "device_testable": false, "expect": "parse"},
-  {"id": "bs.expr.callfunc", "kind": "CallfuncSuffix", "layer": "brighterscript", "dimension": "callfunc operator node@.method(args) (transpiles to .callFunc)", "snippet": "node@.doIt(1)", "device_testable": false, "expect": "parse"},
+  {"id": "bs.expr.callfunc", "kind": "CallfuncSuffix", "layer": "brighterscript", "dimension": "callfunc operator node@.method(args) (transpiles to .callFunc)", "snippet": "node@.doIt(1)", "device_testable": true, "expect": "value:true"},
   {"id": "bs.source_literal.function_name", "kind": "BsSourceLiteral", "layer": "brighterscript", "dimension": "BrighterScript source literal (e.g. FUNCTION_NAME)", "snippet": "y = function_name", "device_testable": false, "expect": "parse"}
 ]

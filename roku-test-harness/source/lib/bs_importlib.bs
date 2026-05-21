@@ -1,0 +1,9 @@
+' bs_importlib.bs - a BrighterScript library module IMPORTED by test_bs.bs to
+' device-test the `import` statement (multi-file). The deploy build transpiles this
+' to a mangled global, so the imported call resolves and runs on the device — the
+' on-device proof that a multi-file `import` lowers and executes (DEVICE_FACTS #18).
+namespace bsimport
+    function tag() as integer
+        return 73
+    end function
+end namespace

@@ -1,7 +1,0 @@
-' coverage-id: bs.expr.callfunc
-' expect: parse
-' BrighterScript callfunc operator (node@.method(args)). Parse-only, not run.
-function trigger() as dynamic
-    node = invalid
-    return node@.doIt(1)
-end function

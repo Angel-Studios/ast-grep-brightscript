@@ -15,6 +15,10 @@
 ' BrighterScript leaves (interface, typecast, alias, import, ...) are tagged
 ' corpus files under roku-test-harness/corpus/ (they have no runtime signal).
 
+' Multi-file import: pull in a sibling BrighterScript module. The imported
+' `bsimport.tag()` is called in a spec below to prove `import` lowers and runs.
+import "pkg:/source/lib/bs_importlib.bs"
+
 ' ===========================================================================
 ' Constructs under test (all top-level -> transpile to mangled globals)
 ' ===========================================================================
@@ -216,4 +220,8 @@ sub test_bs_all(t as Object)
     ' ----- annotation ------------------------------------------------------
     t.spec("bs.annotation.on_func", "Annotation", "@annotation on a function declaration")
     t.assertEqual("bs.annotation.on_func: bsAnnotated()", bsAnnotated(), 4)
+
+    ' ----- multi-file import -----------------------------------------------
+    t.spec("bs.import.stmt", "ImportStatement", "multi-file import; call imported fn")
+    t.assertEqual("bs.import.stmt: bsimport.tag()", bsimport.tag(), 73)
 end sub

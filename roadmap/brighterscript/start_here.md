@@ -11,15 +11,17 @@ this, run the green-check, then pick a backlog item from roadmap/05 §"Phase 7".
 - **`tree-sitter-brighterscript/`** — the grammar, built to `brighterscript.so`. It EXTENDS the
   BrightScript grammar via tree-sitter inheritance: `grammar(base, {...})` in `grammar.js`. Same
   shadow/override model as the EBNF. `src/scanner.c` is a renamed copy of the brightscript scanner.
-- **`coverage.json`** — has a `brighterscript` layer (37 leaves: 24 device-via-transpile + 13
+- **`coverage.json`** — has a `brighterscript` layer (38 leaves: 26 device-via-transpile + 12
   parse-only). `device_testable:true` brighterscript leaves run on-device VIA TRANSPILE.
-- **Harness**: `roku-test-harness/source/tests/test_bs.bs` (24 runnable specs, registered in
-  `TestSuite.brs` as `test_bs_all`); `roku-test-harness/corpus/parse-only/bs_*.bs` (parse-only).
-  The deploy build (`bsconfig.deploy.json` via `scripts/roku-deploy.ts`) transpiles `.bs`→`.brs`.
+- **Harness**: `roku-test-harness/source/tests/test_bs.bs` (Main-scope specs, registered in
+  `TestSuite.brs` as `test_bs_all`) + `test_bs_sg.bs` (render-phase specs needing a live `roSGNode`,
+  e.g. callfunc — invoked from `main.brs` after `test_scenegraph_all`); `corpus/parse-only/bs_*.bs`
+  (parse-only). The deploy build (`bsconfig.deploy.json` via `scripts/roku-deploy.ts`) transpiles
+  `.bs`→`.brs`.
 - **ast-grep**: `sgconfig.yml` registers `brighterscript` (`.bs`) and injects it into SceneGraph
   `<script type="text/brighterscript">` bodies (`BrighterScriptBody` node).
-- **Device-proven**: a real Roku run is green (`##SPEC## pass=497 fail=0`, 24 `bs.*` PASS,
-  DEVICE_FACTS #18).
+- **Device-proven**: a real Roku run is green (`##SPEC## pass=499 fail=0`, 26 `bs.*` PASS,
+  DEVICE_FACTS #18–#19).
 
 ## Verify everything is green (do this first)
 ```sh
@@ -30,7 +32,7 @@ python3 grammar/check_scenegraph_xsd.py  # L2
 python3 grammar/check_grammar.py         # L3
 python3 grammar/check_parity.py          # L5
 npm run check                            # L4 (bsc) — advisory
-(cd tree-sitter-brighterscript && ../node_modules/.bin/tree-sitter test)  # 38 tests
+(cd tree-sitter-brighterscript && ../node_modules/.bin/tree-sitter test)  # 44 tests
 (cd tree-sitter-scenegraph   && ../node_modules/.bin/tree-sitter test)    # 36 tests
 ```
 All must pass before and after your change.
@@ -110,7 +112,11 @@ bun run --cwd roku-listener replay out/console.last.log
   `_Expression`/`_ExpressionNoCast` so a cast is never a postfix object and param defaults keep their
   `as Type`; `bs.typecast.expr` leaf is parse-only). See roadmap/05 §"Phase 7" backlog item 1 for the
   full write-up and the worked grammar gotchas it surfaced.
-- The remaining backlog is in roadmap/05 §"Phase 7": promote parse-only leaves that CAN run to
-  device-via-transpile (`callfunc` on a real node, multi-file `import`), tagged-templates/source
-  literals on-device, and new surface as `angel-roku` demand appears. Pick one and run the per-feature
+- ~~Device-test parse-only constructs that CAN run (`callfunc` on a real node, multi-file `import`)~~ —
+  ✅ **DONE (2026-05-20).** Both promoted to device-via-transpile and PASS on hardware (`pass=499
+  fail=0`, DEVICE_FACTS #19). callfunc needed a render-phase module (`source/tests/test_bs_sg.bs`)
+  since `test_bs_all` is Main-scope (no `roSGNode`). See roadmap/05 §"Phase 7" backlog item 2.
+- The remaining backlog is in roadmap/05 §"Phase 7": tagged-templates / source literals on-device
+  (item 3), and new surface as `angel-roku` demand appears (item 4). The erased-on-transpile
+  constructs (`interface`/`type`/`typecast`/`alias`) stay parse-only. Pick one and run the per-feature
   loop above.

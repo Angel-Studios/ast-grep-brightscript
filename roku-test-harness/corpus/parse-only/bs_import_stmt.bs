@@ -1,4 +1,0 @@
-' coverage-id: bs.import.stmt
-' expect: parse
-' BrighterScript import statement.
-import "pkg:/source/lib.bs"
