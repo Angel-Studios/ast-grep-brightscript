@@ -264,8 +264,16 @@ corpus.
    because the callfunc operator needs a live `roSGNode` (the `showcase` node) — `test_bs_all` runs in
    the Main scope where `CreateObject("roSGNode")` is unavailable. **Remaining:** `interface`/`type`/
    `typecast`/`alias`/`type_alias` stay parse-only (erased on transpile — no runtime signal).
-3. **Tagged templates & source literals on-device** — add device specs (tagged-template needs a tag
-   function; source literals like `FUNCTION_NAME` assert a substring of the lowered string).
+3. ~~**Tagged templates & source literals on-device**~~ — ✅ **DONE (2026-05-21).** Both promoted
+   parse-only → device-via-transpile and **confirmed PASS on hardware** (`##SPEC## pass=501 fail=0`,
+   28 `bs.*` specs; DEVICE_FACTS #20). A tagged template lowers to a plain call
+   `tagFn([lit…], [val…])` (literal segments + interpolated values as two arrays), so
+   `bsTagJoin`hi ${who}!`` round-trips to `"hi world!"` (`bs.expr.tagged_template`); `FUNCTION_NAME`
+   lowers to a string literal of the **transpiled** enclosing function name — top-level it equals the
+   source name, `bsWhoAmI()` → `"bsWhoAmI"` (`bs.source_literal.function_name`). Both specs live in
+   `test_bs.bs`. This drains the runnable backlog: the **only** remaining parse-only `bs.*` leaves are
+   the 10 constructs **erased on transpile** (`interface`/`type`/`typecast`/`alias`/`type_alias`) —
+   they leave no runtime signal, so they stay parse-only by design.
 4. **New surface as real-world demand appears** — `try/catch/throw` is already plain-BrightScript;
    watch for any BrighterScript construct `angel-roku` (or a newly synced repo) starts using that the
    grammar doesn't yet parse clean (the 52/52 authored-`.bs` regression will catch it).

@@ -1,7 +1,0 @@
-' coverage-id: bs.source_literal.function_name
-' expect: parse
-' BrighterScript source literal FUNCTION_NAME.
-function whoAmI() as string
-    name = FUNCTION_NAME
-    return name
-end function

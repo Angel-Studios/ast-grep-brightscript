@@ -20,8 +20,8 @@ this, run the green-check, then pick a backlog item from roadmap/05 §"Phase 7".
   `.bs`→`.brs`.
 - **ast-grep**: `sgconfig.yml` registers `brighterscript` (`.bs`) and injects it into SceneGraph
   `<script type="text/brighterscript">` bodies (`BrighterScriptBody` node).
-- **Device-proven**: a real Roku run is green (`##SPEC## pass=499 fail=0`, 26 `bs.*` PASS,
-  DEVICE_FACTS #18–#19).
+- **Device-proven**: a real Roku run is green (`##SPEC## pass=501 fail=0`, 28 `bs.*` PASS,
+  DEVICE_FACTS #18–#20).
 
 ## Verify everything is green (do this first)
 ```sh
@@ -116,7 +116,15 @@ bun run --cwd roku-listener replay out/console.last.log
   ✅ **DONE (2026-05-20).** Both promoted to device-via-transpile and PASS on hardware (`pass=499
   fail=0`, DEVICE_FACTS #19). callfunc needed a render-phase module (`source/tests/test_bs_sg.bs`)
   since `test_bs_all` is Main-scope (no `roSGNode`). See roadmap/05 §"Phase 7" backlog item 2.
-- The remaining backlog is in roadmap/05 §"Phase 7": tagged-templates / source literals on-device
-  (item 3), and new surface as `angel-roku` demand appears (item 4). The erased-on-transpile
-  constructs (`interface`/`type`/`typecast`/`alias`) stay parse-only. Pick one and run the per-feature
-  loop above.
+- ~~Tagged templates & source literals on-device~~ — ✅ **DONE (2026-05-21).** Both promoted
+  parse-only → device-via-transpile and PASS on hardware (`##SPEC## pass=501 fail=0`, 28 `bs.*`;
+  DEVICE_FACTS #20). Tagged template lowers to `tagFn([lit…],[val…])`; `FUNCTION_NAME` lowers to the
+  transpiled function name string. Specs in `test_bs.bs`. See roadmap/05 §"Phase 7" backlog item 3.
+- **Runnable backlog is now DRAINED.** Every `bs.*` leaf that has a runtime signal is device-tested
+  (28/28). The 10 remaining parse-only leaves are the constructs **erased on transpile**
+  (`interface`/`type`/`typecast`/`alias`/`type_alias`) — no runtime signal, so they stay parse-only by
+  design. Remaining Phase-7 work is **demand-driven** (roadmap/05 §"Phase 7" items 4–5): a new
+  BrighterScript construct `angel-roku` (or a newly synced repo) starts using that the grammar doesn't
+  yet parse clean — the 52/52 authored-`.bs` regression will catch it — or a real component referencing
+  a `.bs` by `<script uri="*.bs">`. Until then there is no queued item; run the per-feature loop when
+  one appears.
