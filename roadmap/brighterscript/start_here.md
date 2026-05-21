@@ -133,7 +133,9 @@ bun run --cwd roku-listener replay out/console.last.log
   parse rate 210→218/246, all gates green, angel-roku 52/52). **6 DEFERRED with minimal repros** (R2
   keyword-as-identifier ~14 files; R3 chained anon-fn-arg calls 5; R9 nested multi-line array arg 2; R5
   quote-in-interpolated-template 2; R8 multi-line annotation args 1; R6 additive-left if-condition 1) —
-  see roadmap/05 §"Phase 7" item 6 for each repro + why deferred. Pick one and run the grammar loop:
-  reproduce from `/tmp/*-test`, fix grammar.js (or scanner.c for R2/R5), regen + **rebuild the `.so`
-  yourself**, add a `test/corpus` case, keep base/brighterscript/scenegraph corpus + L0/L1/L3/L5 +
-  angel-roku 52/52 green, re-measure the corpus pass rate.
+  see **[`06-grammar-fidelity.md`](06-grammar-fidelity.md)** — the dedicated phase doc with the full
+  per-gap plan (repro, root cause, approach, risk, files, validation) for all 6 deferred gaps, the
+  re-clone-the-corpus instructions, the per-gap loop, AND an index of every other open initiative
+  (audit-for-rules, demand-driven surface). **Start there for the remaining grammar work.** Pick a gap
+  (suggested order R8 → R5 → R3 → R9 → R2 → R6), run the loop, **rebuild the `.so` yourself**, keep
+  base/brighterscript/scenegraph corpus + L0/L1/L3/L5 + angel-roku 52/52 green, re-measure the rate.

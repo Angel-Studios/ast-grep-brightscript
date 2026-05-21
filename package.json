@@ -10,6 +10,7 @@
     "gen:reference": "bun scripts/gen-brightscript-reference.ts",
     "check:reference": "python3 grammar/check_reference.py",
     "sync:angel-roku": "bun scripts/sync-angel-roku.ts",
+    "sync:angel-roku:ast-grep": "bun scripts/sync-angel-roku-ast-grep.ts",
     "roku:zip": "bun scripts/roku-deploy.ts zip",
     "roku:install": "bun scripts/roku-deploy.ts install",
     "roku:launch": "bun scripts/roku-deploy.ts launch",

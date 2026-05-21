@@ -102,10 +102,28 @@ bool tree_sitter_brightscript_external_scanner_scan(void *payload, TSLexer *lexe
     return true;
   }
 
-  // ---- IdentStart : a whole non-reserved word.
-  if (valid_symbols[IDENT_START] && is_ident_start(lexer->lookahead)) {
+  // ---- IdentStart : a whole non-reserved word. Also lexes ast-grep meta-
+  // variables ($X, $$$ARGS) so structural patterns parse: a word may begin with
+  // a run of '$' (the meta-variable sigil). Real BrightScript never starts a word
+  // with '$' (it is only a trailing type-designator, lexed by TypeSuffix), so a
+  // leading '$' here can only be a meta-variable, never real code.
+  if (valid_symbols[IDENT_START] &&
+      (is_ident_start(lexer->lookahead) || lexer->lookahead == '$')) {
     char word[64];
     unsigned len = 0;
+    bool meta = lexer->lookahead == '$';
+    while (lexer->lookahead == '$') {
+      if (len < sizeof(word) - 1) {
+        word[len] = '$';
+      }
+      len++;
+      lexer->advance(lexer, false);
+    }
+    // A lone '$' with no identifier following is a type-designator, not a meta-
+    // variable: decline so the TypeSuffix lexer handles it (span is dropped).
+    if (meta && len == 1 && !is_ident_cont(lexer->lookahead)) {
+      return false;
+    }
     while (is_ident_cont(lexer->lookahead)) {
       if (len < sizeof(word) - 1) {
         word[len] = (char)lexer->lookahead;
@@ -113,8 +131,9 @@ bool tree_sitter_brightscript_external_scanner_scan(void *payload, TSLexer *lexe
       len++;
       lexer->advance(lexer, false);
     }
-    // A word longer than the buffer cannot be a (short) reserved keyword.
-    bool reserved = len < sizeof(word) && is_reserved(word, len);
+    // A word longer than the buffer cannot be a (short) reserved keyword; a meta-
+    // variable word (leading '$') is never a reserved keyword.
+    bool reserved = !meta && len < sizeof(word) && is_reserved(word, len);
     if (!reserved) {
       lexer->mark_end(lexer);
       lexer->result_symbol = IDENT_START;

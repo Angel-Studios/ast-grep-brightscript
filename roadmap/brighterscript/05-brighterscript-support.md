@@ -304,7 +304,9 @@ corpus.
      `IntegerLiteral` updated to add `'%'?`; corpus test added.
    - Parse rate after R1+R4: **218/246**. Both grammars rebuilt; base corpus 53→55; angel-roku 52/52;
      all gates green.
-   - ⏳ **DEFERRED (higher-risk; minimal repros captured) — 28 files remain across 6 causes:**
+   - ⏳ **DEFERRED (higher-risk; minimal repros captured) — 28 files remain across 6 causes.**
+     **Full per-gap plans + the index of all other remaining work are now in the dedicated phase
+     doc [`06-grammar-fidelity.md`](06-grammar-fidelity.md)** (this list is the summary):
      - **R2 keyword-as-identifier** (~14 files, biggest): builtin/keyword words used as method/field
        names, AA keys, enum names, or namespace/type path segments — `function run()`, `public type as
        string`, `{ continue: 1 }`, `namespace mc.private`, `new mc.Sub()`. All bsc-valid. The hard one:

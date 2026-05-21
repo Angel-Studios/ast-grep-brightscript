@@ -3,16 +3,24 @@
  * sync-angel-roku.ts
  *
  * Embeds this repo's BrightScript agent tooling — the `bsc` validation hook and
- * the `write-brightscript` skill (with its freshly generated reference.md) — into
- * a peer Roku app. Default target is the sibling `../angel-roku`.
+ * the freshly generated reference.md — into a peer Roku app. Default target is
+ * the sibling `../angel-roku`.
+ *
+ * The reference.md is the device-validated syntax knowledge layer; in the peer
+ * app it lives inside that app's own `brightscript-expertise` skill (which merges
+ * this syntax layer with the app's channel-architecture content). This repo owns
+ * the generated reference.md; the app owns its brightscript-expertise/SKILL.md.
+ * That's why the sync only refreshes reference.md and never writes the SKILL.md.
  *
  *   bun scripts/sync-angel-roku.ts [targetDir] [--dry-run]
  *   ANGEL_ROKU_DIR=/path/to/app bun scripts/sync-angel-roku.ts
  *
  * What it does (idempotent):
  *   1. (real run) regenerate reference.md from the grammar/ ledgers
- *   2. copy .claude/hooks/bsc-validate.sh           → <target>/.claude/hooks/
- *   3. copy .claude/skills/write-brightscript/      → <target>/.claude/skills/
+ *   2. copy .claude/hooks/bsc-validate.sh → <target>/.claude/hooks/
+ *   3. copy this repo's generated reference.md →
+ *      <target>/.claude/skills/brightscript-expertise/reference.md
+ *      (the target must already have that skill's SKILL.md — see the guard below)
  *   4. merge the PostToolUse hook into <target>/.claude/settings.json (shared,
  *      committed; matched by command string so re-runs never duplicate)
  *
@@ -38,8 +46,14 @@ const TARGET = resolve(
 );
 
 const HOOK_REL = ".claude/hooks/bsc-validate.sh";
-const SKILL_REL = ".claude/skills/write-brightscript";
-const REF_REL = `${SKILL_REL}/reference.md`;
+// Source skill in THIS repo (canonical "write valid BrightScript" skill; the gen
+// step writes its reference.md). The peer app merges this knowledge into its own
+// broader `brightscript-expertise` skill, so source and destination skill names
+// intentionally differ — only the generated reference.md crosses over.
+const SRC_SKILL_REL = ".claude/skills/write-brightscript";
+const DST_SKILL_REL = ".claude/skills/brightscript-expertise";
+const SRC_REF_REL = `${SRC_SKILL_REL}/reference.md`;
+const DST_REF_REL = `${DST_SKILL_REL}/reference.md`;
 const HOOK_CMD = 'bash "$CLAUDE_PROJECT_DIR/.claude/hooks/bsc-validate.sh"';
 const HOOK_MATCHER = "Write|Edit|MultiEdit";
 
@@ -55,6 +69,17 @@ if (!existsSync(join(TARGET, "bsconfig.json"))) {
   fail(
     `${TARGET} has no root bsconfig.json — doesn't look like a BrightScript app.\n` +
       `  Pass the app dir explicitly: bun scripts/sync-angel-roku.ts <dir>`,
+  );
+}
+// The merged brightscript-expertise skill (with its app-specific channel content)
+// is owned by the target app; sync only refreshes its generated reference.md and
+// will not bootstrap the skill. Require its SKILL.md to already exist.
+if (!existsSync(join(TARGET, DST_SKILL_REL, "SKILL.md"))) {
+  fail(
+    `${TARGET} has no ${DST_SKILL_REL}/SKILL.md.\n` +
+      `  This sync refreshes that skill's generated reference.md; it does not create the\n` +
+      `  skill. Create ${DST_SKILL_REL}/SKILL.md in the target first (it carries the\n` +
+      `  app's channel-architecture content), then re-run.`,
   );
 }
 log(`→ target: ${TARGET}${dryRun ? "  (dry run)" : ""}`);
@@ -83,10 +108,10 @@ if (dryRun) {
   }
 }
 
-// --- 2 + 3. copy hook + skill ------------------------------------------------
+// --- 2 + 3. copy hook + generated reference.md -------------------------------
 const copies: Array<[string, string]> = [
   [HOOK_REL, HOOK_REL],
-  [SKILL_REL, SKILL_REL],
+  [SRC_REF_REL, DST_REF_REL],
 ];
 for (const [src, dst] of copies) {
   const from = join(REPO, src);
@@ -131,9 +156,9 @@ if (already) {
 log(
   dryRun
     ? "\n✓ dry run complete — no files written."
-    : "\n✓ synced. The bsc hook + write-brightscript skill are now embedded in the target app.",
+    : "\n✓ synced. The bsc hook + brightscript-expertise/reference.md are now refreshed in the target app.",
 );
 if (!dryRun)
   log(
-    "  Verify in the target: ls .claude/hooks/bsc-validate.sh .claude/skills/write-brightscript/ && cat .claude/settings.json",
+    `  Verify in the target: ls .claude/hooks/bsc-validate.sh ${DST_SKILL_REL}/reference.md && cat .claude/settings.json`,
   );

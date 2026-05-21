@@ -117,7 +117,19 @@ export default grammar(base, {
     // annotations
     //========================================================================
     AnnotatedItem: $ => seq(annotationPrefix($), $._AnnotatableDeclaration),
-    Annotation: $ => seq('@', field('name', $._NameOrKeyword), optional(seq('(', optional($.ArgumentList), ')'))),
+    Annotation: $ => seq('@', field('name', $._NameOrKeyword), optional(seq('(', optional(alias($._AnnotationArgs, $.ArgumentList)), ')'))),
+    // Annotation arg list tolerant of newlines around/between args (R8): an
+    // annotation `(...)` may span lines (`@params(`⏎`1,`⏎`2`⏎`)`). Aliased to
+    // ArgumentList at the use site so the node kind matches the single-line
+    // `@x(a, b)` form and no new kind is introduced (keeps L5 parity). `_nl` is
+    // the external newline token — valid here because this rule explicitly admits
+    // it, so the scanner emits and we consume it instead of erroring.
+    _AnnotationArgs: $ => seq(
+      optional($._nl),
+      $._Expression,
+      repeat(seq(optional($._nl), ',', optional($._nl), $._Expression)),
+      optional($._nl),
+    ),
     _AnnotatableDeclaration: $ => choice(
       $.NamespaceStatement, $.ClassDeclaration, $.InterfaceDeclaration,
       $.EnumDeclaration, $.ConstStatement, $.FunctionDeclaration, $.SubDeclaration,
@@ -358,7 +370,14 @@ export default grammar(base, {
     //========================================================================
     // template strings / regex / source literals
     //========================================================================
-    TemplateString: $ => seq('`', repeat(choice($.TemplateInterpolation, $.TemplateChars)), '`'),
+    // The CLOSING backtick is token.immediate so that after a `${...}`
+    // interpolation no extras are skipped before the next template segment (R5).
+    // A `'` is the BrightScript comment opener; if any *non-immediate* token were
+    // valid after the interpolation's `}`, tree-sitter would skip extras and eat
+    // `'…`→EOL as a Comment. With the only continuations all immediate
+    // (TemplateChars, `${`, closing `` ` ``), `'` stays ordinary template text in
+    // an interpolated template, matching the no-interpolation case.
+    TemplateString: $ => seq('`', repeat(choice($.TemplateInterpolation, $.TemplateChars)), token.immediate('`')),
     // A run of template text: anything but ` $ \  ; an escape \X; or a $ not opening ${.
     TemplateChars: _ => token.immediate(prec(1, /([^`$\\]|\\[\s\S]|\$[^{])+/)),
     TemplateInterpolation: $ => seq(token.immediate('${'), $._Expression, '}'),

@@ -225,3 +225,33 @@ end class
             (EndFunction)))
         (EOS))))
   (EOS))
+
+================================================================================
+multi-line annotation argument list (R8)
+================================================================================
+
+@params(
+  1,
+  2
+)
+sub annotated()
+end sub
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AnnotatedItem
+    (Annotation
+      name: (Identifier
+        (IdentStart))
+      (ArgumentList
+        (IntegerLiteral)
+        (IntegerLiteral)))
+    (EOS)
+    (SubDeclaration
+      name: (Identifier
+        (IdentStart))
+      (EOS)
+      (EndSub)))
+  (EOS))
