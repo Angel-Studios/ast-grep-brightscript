@@ -112,7 +112,7 @@ These were called out by the spec authors as uncertain. Verify before treating a
 
 **BrightScript:**
 - Fused vs spaced keywords (`endwhile`/`end while`, `exitfor`/`exit for`) — fused `exitfor`/`endfor` are weakly documented.
-- ~~Line continuation~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #14)**: no continuation char. Newlines are non-significant only inside `[ ]` / `{ }` collection literals and call **argument lists** — NOT inside a grouping `( )` (`x = (1 +`⏎`2)` is Syntax Error `&h02`). The earlier "inside `() [] {}`" wording was too broad.
+- ~~Line continuation~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #14, #21)**: no continuation char. Newlines are non-significant **only inside `[ ]` / `{ }` collection literals** — NOT inside a grouping `( )` (`x = (1 +`⏎`2)` is Syntax Error `&h02`, #14) and NOT inside a call **argument list** (`f(`⏎`1,`⏎`2)` is Syntax Error `&h02`, device-confirmed #21). The earlier "inside `() [] {}`" / "and call argument lists" wordings were too broad. (BrighterScript `.bs` — but NOT `.brs` — DOES allow newlines in call args; that is handled only in the brighterscript grammar.)
 - Trailing commas in `[]`/`{}` literals — modeled permissively; runtime tolerance not documented.
 - Reserved built-ins (`Eval`, `Run`, `Type`, `Box`, `GetGlobalAA`, `Line_Num`, …) — call signatures not fully spec'd.
 - ~~`Dim` with `(…)` vs `[…]` bounds~~ — **RESOLVED (device, [DEVICE_FACTS.md](DEVICE_FACTS.md) #8)**: bracket bounds `dim a[n]` are required; the paren form `dim a(n)` is a Syntax Error (&h02). `DimBounds` keeps only the bracket form; the paren alternative is annotated device-rejected.

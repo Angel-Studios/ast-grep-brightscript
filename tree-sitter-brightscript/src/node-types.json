@@ -1171,35 +1171,7 @@
         "required": true,
         "types": [
           {
-            "type": "AdditiveExpr",
-            "named": true
-          },
-          {
-            "type": "AndExpr",
-            "named": true
-          },
-          {
-            "type": "BitshiftExpr",
-            "named": true
-          },
-          {
             "type": "CallExpression",
-            "named": true
-          },
-          {
-            "type": "ComparisonExpr",
-            "named": true
-          },
-          {
-            "type": "MultiplicativeExpr",
-            "named": true
-          },
-          {
-            "type": "NotExpr",
-            "named": true
-          },
-          {
-            "type": "OrExpr",
             "named": true
           },
           {
@@ -1207,15 +1179,7 @@
             "named": true
           },
           {
-            "type": "PowerExpr",
-            "named": true
-          },
-          {
             "type": "Primary",
-            "named": true
-          },
-          {
-            "type": "UnaryExpr",
             "named": true
           }
         ]
@@ -1622,6 +1586,16 @@
         "types": [
           {
             "type": "Block",
+            "named": true
+          }
+        ]
+      },
+      "inline": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "InlineStatements",
             "named": true
           }
         ]
@@ -3052,35 +3026,7 @@
         "required": true,
         "types": [
           {
-            "type": "AdditiveExpr",
-            "named": true
-          },
-          {
-            "type": "AndExpr",
-            "named": true
-          },
-          {
-            "type": "BitshiftExpr",
-            "named": true
-          },
-          {
             "type": "CallExpression",
-            "named": true
-          },
-          {
-            "type": "ComparisonExpr",
-            "named": true
-          },
-          {
-            "type": "MultiplicativeExpr",
-            "named": true
-          },
-          {
-            "type": "NotExpr",
-            "named": true
-          },
-          {
-            "type": "OrExpr",
             "named": true
           },
           {
@@ -3088,15 +3034,7 @@
             "named": true
           },
           {
-            "type": "PowerExpr",
-            "named": true
-          },
-          {
             "type": "Primary",
-            "named": true
-          },
-          {
-            "type": "UnaryExpr",
             "named": true
           }
         ]

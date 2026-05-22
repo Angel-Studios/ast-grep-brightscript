@@ -12,10 +12,13 @@
 //    (e.g. `print` vs `printer`) is solved by making IdentStart an EXTERNAL token
 //    that the scanner only emits for non-reserved whole words (see src/scanner.c).
 //  * `_nl` is an external newline token emitted by the scanner ONLY when valid
-//    (valid_symbols). This makes the grouping-paren rule (#14) and the
-//    collection/arg-list newline-suppression fall out of the grammar shape: a
-//    newline inside `( expr )` is not a valid EOS there, so it errors; inside
-//    `[ ]` / `{ }` / argument lists EOS is allowed, so it is consumed.
+//    (valid_symbols). This makes the newline-suppression fall out of the grammar
+//    shape: a newline is a valid EOS only inside `[ ]` / `{ }` collection literals
+//    (consumed), and NOT inside a grouping `( expr )` NOR inside a call ARGUMENT
+//    list — both reject a bare newline (Syntax Error &h02; DEVICE_FACTS #14, #21).
+//    (BrighterScript `.bs` DOES allow newlines in call args — a .bs-only dialect
+//    feature overridden in tree-sitter-brighterscript, not here; see 06-grammar-
+//    fidelity.md R9.)
 //  * Supertypes (Literal/NumericLiteral/Primary/AnonymousFunction/OptChainSuffix)
 //    are hidden: good for structure & node-types.json, but ast-grep cannot match
 //    them, so coverage targets the concrete subtypes.
@@ -116,17 +119,11 @@ export default grammar({
     $.OptChainSuffix,
   ],
 
-  conflicts: $ => [
-    // An l-value (`x`, `m.x`, `a[0]`) is an AssignTarget before `=`/op but an
-    // ordinary expression otherwise; keep both alive until the trailing token.
-    [$.AssignTarget, $._Expression],
-    [$.AssignTarget, $.Primary],
-    // `( expr )` after a callee is a single-arg ArgumentList; standalone it is a
-    // ParenExpr — same shape, resolved by whether a callee precedes it.
-    [$.ArgumentList, $.ParenExpr],
-    // `[ … ]` after an object is an IndexSuffix; standalone it is an ArrayLiteral.
-    [$.IndexSuffix, $.ArrayElement],
-  ],
+  // Narrowing the postfix callee/object to the callable tier (_Callable) removed
+  // the GLR ambiguities that previously needed declared conflicts (AssignTarget vs
+  // _Expression/Primary, ArgumentList vs ParenExpr, IndexSuffix vs ArrayElement):
+  // an l-value, a `(…)` and a `[…]` now have a single derivation. None remain.
+  conflicts: $ => [],
 
   rules: {
     //========================================================================
@@ -164,7 +161,9 @@ export default grammar({
     // ---- function / sub declarations ------------------------------------
     FunctionDeclaration: $ => seq(
       ci('function'),
-      field('name', $.Identifier),
+      // A reserved word may be the function name (`function try()`) — bsc allows
+      // it in both .brs and .bs (BrightScript AllowedProperties). R2d.
+      field('name', $._NameOrKeyword),
       '(', optional($.ParameterList), ')',
       optional($.ReturnType),
       repeat1($.EOS),
@@ -173,7 +172,7 @@ export default grammar({
     ),
     SubDeclaration: $ => seq(
       ci('sub'),
-      field('name', $.Identifier),
+      field('name', $._NameOrKeyword),
       '(', optional($.ParameterList), ')',
       optional($.ReturnType),
       repeat1($.EOS),
@@ -277,8 +276,16 @@ export default grammar({
       repeat1($.EOS),
       optional(field('consequence', alias(blockBody($), $.Block))),
     ),
+    // The else clause's FIRST statement(s) may sit on the SAME line as `else`
+    // (then the block continues on following lines) — device/bsc-accepted; e.g.
+    //   else c()       <- inline first statement
+    //       d()        <- block continues
+    //   end if
+    // The optional inline InlineStatements precedes the EOS+block. The `end if`
+    // terminator keeps this BlockIf form distinct from a SingleLineIf else.
     ElseClause: $ => seq(
       ci('else'),
+      optional(field('inline', $.InlineStatements)),
       repeat1($.EOS),
       optional(field('consequence', alias(blockBody($), $.Block))),
     ),
@@ -392,9 +399,10 @@ export default grammar({
       $.MultiplicativeExpr,
       $.UnaryExpr,
       $.PowerExpr,
-      $.CallExpression,
-      $.PostfixExpr,
-      $.Primary,
+      // The callable tier (Primary + postfix cascade) is reached ONLY through
+      // _Callable, so CallExpression/PostfixExpr have a single derivation path
+      // (also used as their own callee/object) — see _Callable (R6).
+      $._Callable,
     ),
 
     OrExpr: $ => prec.left(PREC.or, seq(field('left', $._Expression), ci('or'), field('right', $._Expression))),
@@ -413,11 +421,19 @@ export default grammar({
     // `a.b()[0].c` nests correctly. A chain ending in a call '(...)' is a
     // CallExpression (matchable in any position, incl. the standard library);
     // a chain ending in member/index/attr/optional-chain is a PostfixExpr.
-    CallExpression: $ => prec.left(PREC.postfix, seq(field('callee', $._Expression), $.CallSuffix)),
+    // The callee/object is the CALLABLE tier (Primary + postfix cascade), NOT the
+    // full _Expression — mirrors the EBNF `Primary PostfixSuffix*`. A binary/unary
+    // expression is only ever a callee/object when parenthesized (then it is a
+    // ParenExpr, i.e. a Primary), so this loses no valid parse but removes the
+    // spurious ambiguity where an if-condition's `+`/`-` was read as the unary
+    // start of the (single-line-if) consequence statement instead of the binary
+    // continuation of the condition — `if a + 1 >= b then` (R6).
+    CallExpression: $ => prec.left(PREC.postfix, seq(field('callee', $._Callable), $.CallSuffix)),
     PostfixExpr: $ => prec.left(PREC.postfix, seq(
-      field('object', $._Expression),
+      field('object', $._Callable),
       choice($.IndexSuffix, $.MemberSuffix, $.AttributeSuffix, $.OptChainSuffix),
     )),
+    _Callable: $ => choice($.Primary, $.PostfixExpr, $.CallExpression),
 
     CallSuffix: $ => seq('(', optional($.ArgumentList), ')'),
     IndexSuffix: $ => seq('[', $._Expression, repeat(seq(',', $._Expression)), ']'),
@@ -448,15 +464,25 @@ export default grammar({
     // A name position that also accepts reserved words used as names
     // (AA keys, member/attribute access). `m` is just an Identifier.
     _NameOrKeyword: $ => choice($.Identifier, alias($._reserved_word, $.Identifier)),
+    // Keywords admitted as a member name (`a.catch`) or AA key — BrightScript's
+    // AllowedProperties (brighterscript TokenKind.ts). A reserved word is excluded
+    // from the scanner's IdentStart, so it can ONLY appear as a name where the
+    // grammar lists it here. The try/catch family (`catch`/`try`/`throw`/`endtry`),
+    // `continue`, the for-loop terminators (`endfor`/`exitfor`), `true`, and
+    // `library` were missing — hence `p.then(…).catch(…)` and `obj.continue`
+    // wrongly rejected (R3; R2b). Each stays a keyword in its own statement role
+    // (only reachable as a name after `.`/`@`/`?.` or as an AA key).
     _reserved_word: _ => choice(
-      ci('and'), ci('box'), ci('createobject'), ci('dim'), ci('each'), ci('else'),
-      ci('elseif'), ci('end'), ci('endfunction'), ci('endif'), ci('endsub'),
-      ci('endwhile'), ci('eval'), ci('exit'), ci('exitwhile'), ci('false'),
+      ci('and'), ci('box'), ci('catch'), ci('continue'), ci('createobject'),
+      ci('dim'), ci('each'), ci('else'), ci('elseif'), ci('end'), ci('endfor'),
+      ci('endfunction'), ci('endif'), ci('endsub'), ci('endtry'), ci('endwhile'),
+      ci('eval'), ci('exit'), ci('exitfor'), ci('exitwhile'), ci('false'),
       ci('for'), ci('function'), ci('getglobalaa'), ci('getlastruncompileerror'),
-      ci('getlastrunruntimeerror'), ci('goto'), ci('if'), ci('invalid'), ci('let'),
-      ci('line_num'), ci('mod'), ci('next'), ci('not'), ci('objfun'), ci('or'),
-      ci('pos'), ci('print'), ci('return'), ci('run'), ci('step'), ci('stop'),
-      ci('sub'), ci('tab'), ci('then'), ci('to'), ci('type'), ci('while'),
+      ci('getlastrunruntimeerror'), ci('goto'), ci('if'), ci('invalid'),
+      ci('let'), ci('library'), ci('line_num'), ci('mod'), ci('next'), ci('not'),
+      ci('objfun'), ci('or'), ci('pos'), ci('print'), ci('return'), ci('run'),
+      ci('step'), ci('stop'), ci('sub'), ci('tab'), ci('then'), ci('throw'),
+      ci('to'), ci('true'), ci('try'), ci('type'), ci('while'),
     ),
 
     //---- array / assoc-array literals ------------------------------------

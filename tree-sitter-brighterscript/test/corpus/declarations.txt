@@ -397,3 +397,69 @@ type StringOrInt = string or integer
             (Identifier
               (IdentStart)))))))
   (EOS))
+
+================================================================================
+class method named with a reserved keyword (R2a)
+================================================================================
+
+class C
+  function run() as dynamic
+    return 0
+  end function
+end class
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ClassDeclaration
+    name: (Identifier
+      (IdentStart))
+    (EOS)
+    body: (ClassBody
+      (MethodDeclaration
+        name: (Identifier)
+        (ReturnType
+          type: (Type
+            (BsTypeUnion
+              (BsTypePostfix
+                (QualifiedName
+                  (Identifier
+                    (IdentStart)))))))
+        (EOS)
+        body: (Block
+          (ReturnStatement
+            (IntegerLiteral))
+          (EOS))
+        (EndFunction))
+      (EOS)))
+  (EOS))
+
+================================================================================
+class field named with a reserved keyword (R2a)
+================================================================================
+
+class C
+  public type as string
+end class
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (ClassDeclaration
+    name: (Identifier
+      (IdentStart))
+    (EOS)
+    body: (ClassBody
+      (FieldDeclaration
+        access: (AccessModifier)
+        name: (Identifier)
+        type: (Type
+          (BsTypeUnion
+            (BsTypePostfix
+              (QualifiedName
+                (Identifier
+                  (IdentStart)))))))
+      (EOS)))
+  (EOS))

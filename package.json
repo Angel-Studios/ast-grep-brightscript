@@ -9,6 +9,7 @@
     "watch": "bsc --project roku-test-harness/bsconfig.json --watch",
     "gen:reference": "bun scripts/gen-brightscript-reference.ts",
     "check:reference": "python3 grammar/check_reference.py",
+    "check:realworld": "python3 grammar/check_realworld.py",
     "sync:angel-roku": "bun scripts/sync-angel-roku.ts",
     "sync:angel-roku:ast-grep": "bun scripts/sync-angel-roku-ast-grep.ts",
     "roku:zip": "bun scripts/roku-deploy.ts zip",

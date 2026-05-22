@@ -223,3 +223,35 @@ o = CreateObject("roArray", 10, true)
         (IntegerLiteral)
         (BooleanLiteral))))
   (EOS))
+
+================================================================================
+chained call with a reserved keyword as a member name (R3)
+================================================================================
+
+x = p.then(1).catch(2)
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (CallExpression
+      (PostfixExpr
+        (CallExpression
+          (PostfixExpr
+            (Identifier
+              (IdentStart))
+            (MemberSuffix
+              (Identifier)))
+          (CallSuffix
+            (ArgumentList
+              (IntegerLiteral))))
+        (MemberSuffix
+          (Identifier)))
+      (CallSuffix
+        (ArgumentList
+          (IntegerLiteral)))))
+  (EOS))

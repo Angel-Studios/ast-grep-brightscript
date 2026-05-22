@@ -14,21 +14,76 @@ backlog. It is the follow-up home for:
 Pick a gap, run the per-gap loop, keep all gates green, re-measure the corpus. Each gap is sized,
 risk-rated, and has a minimal repro so it is resumable cold.
 
-## Status (2026-05-21)
+## Status — ✅ COMPLETE (2026-05-21)
 
-The stress-test cloned a real full-surface corpus (`maestro-roku` `b1f7f35`, `rooibos` `1fe183b`,
-`promises` `7acd59a`, `bslib`, `ropm` = **246 `.bs`**, excluding 14 `.maestro-templates/` `$NAME$`
-scaffolding stubs that are invalid BrightScript and correctly rejected). Baseline parse rate
-**210/246**. Triaged the 36 failures to **8 distinct root causes**, all bsc-confirmed valid:
+**All 6 deferred gaps resolved. Full-surface parse rate 218/246 → 245/246.** The single remaining
+failure (`StyleManager.spec.bs`) is a genuine source typo (`@it("…")n`, see "Not bugs"), correctly
+rejected — so by the acceptance rule below ("246/246 OR every remaining failure adjudicated *not* a
+grammar bug") **this phase is done.** All gates green (L0/L1/L2/L3/L5 + bsc); base/brighterscript/
+scenegraph corpus green; **angel-roku 52/52 zero-ERROR** `.bs` (and `.brs` improved 7→1 — see R6).
 
-- ✅ **R1** multi-line empty AA `{`⏎`}` (10 files) — FIXED (`roadmap/05` item 6).
-- ✅ **R4** numeric type designators `1.0!` / `1%` (1 file) — FIXED (`roadmap/05` item 6).
-- ⏳ **R2, R3, R5, R6, R8, R9** — DEFERRED here (28 files remain; parse rate after R1+R4 = **218/246**).
+Two of the six were **misdiagnosed in the original triage** — investigating the *real* failing
+construct (not the roadmap's minimal repro) was essential:
 
-The two fixed ones were low-risk lexer/list shape changes. The six below are higher-risk (external
-scanner / contextual keywords, GLR ambiguity, the per-token `_nl`-suppression design, expression
-precedence) against a **device-validated** grammar — hence a dedicated phase. **Commit each fix
-separately** so there is always a clean rollback point before the next piece of grammar surgery.
+- **R3** was NOT anon-function GLR ambiguity — the trigger was `catch` (a keyword) used as a member
+  name in a chain (`p.then(…).catch(…)`); the anon functions were incidental. Fix: add the missing
+  keywords to `_reserved_word`. This also resolved **R2b** (reserved words as AA keys).
+- **R9**'s minimal repro is **invalid `.brs`** (bsc rejects a newline inside call parens) but **valid
+  `.bs`** — BrighterScript allows newlines inside `( )`; plain BrightScript does not. The fix is a
+  brighterscript-only `ArgumentList` override; the base stays strict. (The original triage tested the
+  repro as `.brs`, hence "bsc-confirmed valid" was wrong for `.brs`.)
+
+### Resolutions (per gap)
+
+- ✅ **R1** multi-line empty AA (10 files) — FIXED earlier (`roadmap/05` item 6).
+- ✅ **R4** numeric type designators `1.0!`/`1%` (1 file) — FIXED earlier (`roadmap/05` item 6).
+- ✅ **R8** multi-line annotation arg list — brighterscript `Annotation` gained a newline-tolerant
+  `_AnnotationArgs` (aliased to `ArgumentList`). +1 file (JsonCombiner.spec.bs).
+- ✅ **R5** `'` inside an interpolated template — `TemplateChars` is now an **external scanner token**
+  (`tree-sitter-brighterscript/src/scanner.c`), so the `'` comment opener is never skipped as an
+  extra after a `${…}` (the interpolation `}` shares its lex-state with the AA `}`, which legitimately
+  skips extras — precedence alone could not fix it). +2 files.
+- ✅ **R3** keyword as member name in a chain (+ **R2b** AA keys) — base `_reserved_word` += `catch`,
+  `continue`, `try`, `throw`, `endfor`, `exitfor`, `endtry`, `true`, `library` (BrightScript
+  AllowedProperties). +7 files.
+- ✅ **R2** keyword as identifier — **R2a** class method/field names (`_MethodName`, `FieldDeclaration`
+  name → `_NameOrKeyword`); **R2c** keyword path segments after `.` (`QualifiedName`); **R2d**
+  function/sub names (base) + enum/class/const/interface names (brighterscript) → `_NameOrKeyword`.
+  +10 files.
+- ✅ **R9** newline inside call-arg parens (`.bs`-only) — brighterscript `ArgumentList` override
+  tolerates `_nl`; base `.brs` stays strict (matches bsc + the device-validated newline design).
+  `.bs` is transpiled to one line before the device, so no runtime impact. +4 files.
+- ✅ **R6** additive-left comparison in an `if` condition — narrowed the CallExpression callee /
+  PostfixExpr object from the full `_Expression` to the **callable tier** `_Callable`
+  (`Primary | PostfixExpr | CallExpression`), matching the EBNF `Primary PostfixSuffix*`. A
+  binary/unary expression is a callee/object only when parenthesized (→ ParenExpr → Primary), so no
+  valid parse is lost; the spurious "unary `+` starts the consequence" reading is gone. **Bonus:**
+  this made **all** declared `conflicts` unnecessary (both grammars now declare none of the old
+  l-value/paren/index conflicts) and fixed **6 pre-existing angel-roku `.brs`** failures. +1 file.
+
+### No device re-validation needed (applies to all six)
+
+The tree-sitter grammar is a **static-analysis** artifact (ast-grep search/lint/rewrite). It is NOT
+in the execution path: the device runs raw `.brs` on the Roku interpreter, or bsc-transpiled `.brs`
+for `.bs` — bsc does the lowering, not this parser. Every construct enabled here is a real construct
+from shipping libraries (maestro/rooibos/promises) that already runs on-device. So these parser
+fixes cannot change runtime behavior; the per-gap loop's device step is moot for them.
+
+### Newly-discovered gap (out of the original 6, NOT fixed — follow-up)
+
+- **`else <inline-statement>` then a block** in a block-`if` — `angel-roku`
+  `components/app/modals/account/SignOutController.brs:85` (`else m.x.isInFocusChain()` ⏎ `navigateBack(…)`
+  ⏎ `end if`). bsc **accepts** it (an `else` clause whose first statement is on the `else` line, then
+  more block statements). The grammar's `ElseClause` requires `else` ⏎ block. This is `.brs` (base),
+  pre-existing, and outside the documented 6-gap scope, so it is left for a follow-up rather than
+  more end-of-phase base-grammar surgery. It is the **only** remaining angel-roku `.brs` failure.
+
+---
+
+## Original triage (historical)
+
+Baseline parse rate **210/246**; 36 failures → 8 root causes; R1+R4 fixed first (→ **218/246**); the
+six below were deferred to this phase (now all resolved — see Resolutions above). Kept for context.
 
 ## The standing full-surface regression corpus
 
@@ -209,14 +264,17 @@ ExpressionStatement/`CallExpression`-callee path instead.
   correct rejection. Excluded from the corpus measure.
 - One genuine source typo (`@it("…")n`, maestro `StyleManager.spec.bs`) — correct rejection.
 
-## Acceptance (this phase)
+## Acceptance (this phase) — ✅ MET
 
-- Each tackled gap: grammar fixed, EBNF parity kept, a `test/corpus` case added, all three
+- ✅ Each tackled gap: grammar fixed, EBNF parity kept, a `test/corpus` case added, all three
   tree-sitter suites green, L0/L1/L3/L5 + bsc green, **angel-roku 52/52** zero-ERROR, and the
   full-surface pass rate strictly increased with no new failures.
-- Phase done when the full-surface corpus parses **246/246** (excl. scaffolding) OR every remaining
-  failure is adjudicated *not a grammar bug* (and recorded here).
-- Stretch: the full-surface corpus is wired into a committed regression gate.
+- ✅ Phase done: full-surface corpus parses **245/246** (excl. scaffolding); the one remaining failure
+  (`StyleManager.spec.bs`) is adjudicated *not a grammar bug* (genuine `@it("…")n` typo — removing the
+  stray `n` makes it parse clean).
+- ◷ Stretch (NOT done): wire the full-surface corpus into a committed regression gate
+  (`grammar/check_realworld.py` or an npm script that re-clones the pinned SHAs and asserts a
+  non-regressing pass rate). Optional follow-up.
 
 ---
 

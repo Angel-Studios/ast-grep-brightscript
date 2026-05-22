@@ -177,3 +177,29 @@ end sub
         (EOS))
       (EndSub)))
   (EOS))
+
+================================================================================
+function declaration named with a reserved keyword (R2d)
+================================================================================
+
+function try() as dynamic
+  return 0
+end function
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (FunctionDeclaration
+    name: (Identifier)
+    (ReturnType
+      type: (Type
+        (Identifier
+          (IdentStart))))
+    (EOS)
+    body: (Block
+      (ReturnStatement
+        (IntegerLiteral))
+      (EOS))
+    (EndFunction))
+  (EOS))

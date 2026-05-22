@@ -556,4 +556,31 @@ DOLLAR_LBRACE   ::= '${'            (* template interpolation opener *)
      is also kept out of postfix/member/index/call OBJECT position (it is the
      outermost wrapper), so `expr as a.b.c` / `expr as T[]` bind the dotted name /
      `[]` into the TYPE rather than as a suffix on the cast.
+
+  10. NEWLINES INSIDE CALL-ARGUMENT PARENS -- a `.bs`-vs-`.brs` DIALECT difference.
+     BrighterScript permits line breaks inside a call/`new`/callfunc argument list
+     (`foo(`<NL>`1,`<NL>`2`<NL>`)`, and a multi-line array arg whose closing `]`
+     is followed by a newline before the `)`); plain BrightScript does NOT -- bsc
+     rejects the identical text in `.brs` (BS1075) AND the DEVICE rejects it
+     (compile error &h02; DEVICE_FACTS #21 -- a raw multi-line-call `.brs` channel
+     fails to compile, the single-line form runs). So the BrighterScript grammar
+     overrides ArgumentList to be
+     newline-tolerant (admit the `_nl` token around args/commas), while the imported
+     brightscript.ebnf ArgumentList stays strict. A grouping `( expr )` is NOT
+     newline-tolerant in either dialect (DEVICE_FACTS #14). On transpile the `.bs`
+     is lowered to a single line, so the device only ever sees the strict `.brs`
+     form -- no runtime impact. (Found via maestro/promises in the full-surface
+     stress-test; see roadmap/brighterscript/06-grammar-fidelity.md R9.)
+
+  11. KEYWORDS AS DECLARATION / MEMBER / PATH NAMES (extends note 6). Beyond member
+     access and AA keys, a reserved word may NAME a function/sub, a class method or
+     field, an enum/class/const/interface, or a dotted-path SEGMENT after a `.`
+     (`function try()`, `class C { function run() }`, `public type as string`,
+     `enum Type`, `namespace mc.private`, `new mc.Sub()`) -- bsc accepts all
+     (AllowedProperties; function/method/field names are the broad AllowedProperties
+     set, declaration names a slightly narrower set that still includes e.g. `Type`/
+     `run`). The grammar routes these name positions through `_NameOrKeyword` (the
+     base `_reserved_word` -- extended with the try/catch family, `continue`,
+     `endfor`/`exitfor`/`endtry`, `true`, `library` -- plus the brighterscript
+     declaration keywords). See roadmap/brighterscript/06-grammar-fidelity.md R2/R3.
 *)

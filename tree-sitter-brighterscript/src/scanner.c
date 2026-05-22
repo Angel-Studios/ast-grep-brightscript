@@ -22,6 +22,7 @@
 enum TokenType {
   IDENT_START,
   NL,
+  TEMPLATE_CHARS,
 };
 
 // Hard reserved words. The BrightScript base set, PLUS the BrighterScript
@@ -89,6 +90,45 @@ void tree_sitter_brighterscript_external_scanner_deserialize(void *p, const char
 bool tree_sitter_brighterscript_external_scanner_scan(void *payload, TSLexer *lexer,
                                                       const bool *valid_symbols) {
   (void)payload;
+
+  // ---- TemplateChars : a run of literal text inside a `...` template string.
+  // Lexed by the scanner (not an internal token) so that after a `${...}`
+  // interpolation the `'` comment opener (and any other extra) is NEVER skipped:
+  // the external scanner is consulted BEFORE extras-skipping, so it reads the
+  // template text deterministically. The internal lexer could not, because the
+  // interpolation's closing `}` shares its follow lex-state with the AA-literal
+  // `}` (which legitimately skips extras for `{a:1} + b`), so a `'` right after
+  // `}` was eaten as a Comment to EOL (R5). Checked FIRST, before the horizontal-
+  // whitespace skip below, since leading spaces are template content. Stops
+  // (without consuming) at a closing backtick, an interpolation opener `${`, or
+  // EOF; consumes `\<char>` escapes; a lone `$` (not `${`) is content.
+  if (valid_symbols[TEMPLATE_CHARS]) {
+    bool has_content = false;
+    for (;;) {
+      lexer->mark_end(lexer);
+      int32_t c = lexer->lookahead;
+      if (c == '`' || c == 0) break;
+      if (c == '\\') {
+        lexer->advance(lexer, false);                       // backslash
+        if (lexer->lookahead != 0) lexer->advance(lexer, false); // escaped char
+        has_content = true;
+        continue;
+      }
+      if (c == '$') {
+        lexer->advance(lexer, false);                       // consume '$'
+        if (lexer->lookahead == '{') break;                 // '${' opens interpolation
+        has_content = true;                                 // lone '$' is content
+        continue;
+      }
+      lexer->advance(lexer, false);
+      has_content = true;
+    }
+    if (has_content) {
+      lexer->result_symbol = TEMPLATE_CHARS;
+      return true;
+    }
+    return false;
+  }
 
   while (is_hspace(lexer->lookahead)) {
     lexer->advance(lexer, true);

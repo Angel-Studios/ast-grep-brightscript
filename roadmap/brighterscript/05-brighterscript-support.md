@@ -288,8 +288,18 @@ corpus.
    is not a single-file tree-sitter concern, and bsc lowers inline `.bs`→`.brs` before the device sees
    the component, so the embedding *mechanism* is already device-proven on the BrightScript side
    (DEVICE_FACTS #12). No grammar/EBNF change needed. Coverage 658→662; all gates green.
-6. **Full-surface real-world stress-test** — ◷ **IN PROGRESS (2026-05-21).** angel-roku only exercises
-   a SHALLOW `.bs` subset (namespace/class/annotations/`as Type`); the full surface (`enum`/`const`/
+6. **Full-surface real-world stress-test** — ✅ **COMPLETE (2026-05-21).** All 8 root causes resolved
+   or adjudicated: R1+R4 fixed early; R2/R3/R5/R6/R8/R9 fixed in the dedicated phase
+   [`06-grammar-fidelity.md`](06-grammar-fidelity.md); R7 (scaffolding) + the `@it("…")n` typo are
+   correct rejections. **Full-surface parse rate 218 → 245/246** (the 1 = the typo). All gates green;
+   base/brighterscript/scenegraph corpus green; angel-roku 52/52 `.bs` (and `.brs` 7→1 as a bonus from
+   R6's callee/object narrowing). R3 and R9 were misdiagnosed in the original triage (R3 = keyword
+   member name, not anon-fn GLR; R9 = `.bs`-only dialect — newlines in call parens are valid `.bs` but
+   invalid `.brs`). See `06-grammar-fidelity.md` for the per-gap resolutions and follow-ups (a stretch
+   committed regression gate; one newly-found base gap `else <inline-stmt>` then block). _Historical
+   in-progress notes below._
+
+   angel-roku only exercises a SHALLOW `.bs` subset (namespace/class/annotations/`as Type`); the full surface (`enum`/`const`/
    `import`/`try`/`new`/optional-chaining/templates) was validated only by hand-written snippets. Cloned
    a real full-surface corpus — **maestro-roku** (`b1f7f35`, 212 `.bs`), **rooibos** (`1fe183b`),
    **promises** (`7acd59a`), bslib, ropm — **246 `.bs`** (excl. 14 `.maestro-templates/` `$NAME$`

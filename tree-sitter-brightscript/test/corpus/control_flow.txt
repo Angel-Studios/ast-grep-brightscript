@@ -245,3 +245,98 @@ end try
       (EOS))
     (EndTry))
   (EOS))
+
+================================================================================
+additive-left comparison in a block-if condition (R6)
+================================================================================
+
+sub f()
+  if a + 1 >= b then
+    print 1
+  end if
+end sub
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (SubDeclaration
+    name: (Identifier
+      (IdentStart))
+    (EOS)
+    body: (Block
+      (IfStatement
+        (BlockIf
+          condition: (ComparisonExpr
+            left: (AdditiveExpr
+              left: (Identifier
+                (IdentStart))
+              right: (IntegerLiteral))
+            op: (ComparisonOp)
+            right: (Identifier
+              (IdentStart)))
+          (EOS)
+          consequence: (Block
+            (PrintStatement
+              (PrintItemList
+                (IntegerLiteral)))
+            (EOS))
+          (EndIf)))
+      (EOS))
+    (EndSub))
+  (EOS))
+
+================================================================================
+block-if else with an inline first statement on the else line
+================================================================================
+
+sub f()
+  if a()
+    b()
+  else c()
+    d()
+  end if
+end sub
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (SubDeclaration
+    name: (Identifier
+      (IdentStart))
+    (EOS)
+    body: (Block
+      (IfStatement
+        (BlockIf
+          condition: (CallExpression
+            callee: (Identifier
+              (IdentStart))
+            (CallSuffix))
+          (EOS)
+          consequence: (Block
+            (ExpressionStatement
+              (CallExpression
+                callee: (Identifier
+                  (IdentStart))
+                (CallSuffix)))
+            (EOS))
+          (ElseClause
+            inline: (InlineStatements
+              (ExpressionStatement
+                (CallExpression
+                  callee: (Identifier
+                    (IdentStart))
+                  (CallSuffix))))
+            (EOS)
+            consequence: (Block
+              (ExpressionStatement
+                (CallExpression
+                  callee: (Identifier
+                    (IdentStart))
+                  (CallSuffix)))
+              (EOS)))
+          (EndIf)))
+      (EOS))
+    (EndSub))
+  (EOS))

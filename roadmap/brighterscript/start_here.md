@@ -126,16 +126,23 @@ bun run --cwd roku-listener replay out/console.last.log
   but the taxonomy never tracked. Coverage 658→662. See roadmap/05 §"Phase 7" item 5.
 - **Device/runnable backlog DRAINED** (28/28 `bs.*` runtime leaves device-tested). 10 remaining
   parse-only leaves are erased-on-transpile by design (`interface`/`type`/`typecast`/`alias`).
-- ◷ **Full-surface grammar stress-test (item 6) — IN PROGRESS.** Cloned a real full-surface corpus
-  (maestro-roku/rooibos/promises/bslib/ropm — 246 `.bs` in `/tmp/{maestro,rooibos,promises,bslib,ropm}
-  -test`) since angel-roku only exercises a shallow subset. Triaged to 8 root causes; **R1 (multi-line
-  empty AA) + R4 (numeric `!`/`%` designators) FIXED** (base+brighterscript rebuilt, base corpus 53→55,
-  parse rate 210→218/246, all gates green, angel-roku 52/52). **6 DEFERRED with minimal repros** (R2
-  keyword-as-identifier ~14 files; R3 chained anon-fn-arg calls 5; R9 nested multi-line array arg 2; R5
-  quote-in-interpolated-template 2; R8 multi-line annotation args 1; R6 additive-left if-condition 1) —
-  see **[`06-grammar-fidelity.md`](06-grammar-fidelity.md)** — the dedicated phase doc with the full
-  per-gap plan (repro, root cause, approach, risk, files, validation) for all 6 deferred gaps, the
-  re-clone-the-corpus instructions, the per-gap loop, AND an index of every other open initiative
-  (audit-for-rules, demand-driven surface). **Start there for the remaining grammar work.** Pick a gap
-  (suggested order R8 → R5 → R3 → R9 → R2 → R6), run the loop, **rebuild the `.so` yourself**, keep
-  base/brighterscript/scenegraph corpus + L0/L1/L3/L5 + angel-roku 52/52 green, re-measure the rate.
+- ✅ **Full-surface grammar fidelity (item 6 / `06-grammar-fidelity.md`) — COMPLETE (2026-05-21).**
+  Cloned a real full-surface corpus (maestro-roku/rooibos/promises/bslib/ropm — 246 `.bs`). R1+R4
+  fixed first (→218/246); then **all 6 deferred gaps resolved → 245/246**, the one remaining being a
+  genuine source typo (`@it("…")n` in StyleManager.spec.bs), correctly rejected. R8 annotation
+  multiline args; R5 `'` in interpolated template (TemplateChars → external scanner token); R3
+  keyword-as-member + R2b AA-key keywords (base `_reserved_word` extended); R2a/c/d keyword
+  declaration/member/field/path-segment names (`_NameOrKeyword`); R9 `.bs`-only newline-in-call-parens
+  (brighterscript `ArgumentList` override; base `.brs` stays strict per bsc); R6 additive-left
+  if-condition (narrowed call/postfix object to a `_Callable` tier — also removed ALL declared
+  conflicts and fixed 6 angel-roku `.brs` files, 7→1). All gates green; corpus green; angel-roku
+  52/52. **R3 and R9 were misdiagnosed in the original triage** (R3 = keyword `catch`, not anon-fn
+  GLR; R9 = `.bs`-only dialect, the `.brs` repro is bsc-invalid). See `06-grammar-fidelity.md` for the
+  per-gap resolutions. **Gotcha learned:** rebuild the `.so` AND run `tree-sitter parse` from inside
+  the grammar dir before every measurement — a stale `.so` (or running `parse` from a non-grammar dir)
+  gives bogus results. **Device-confirmed (2026-05-21):** the device REJECTS newlines inside a `.brs` call argument
+  list (compile error &h02 — DEVICE_FACTS #21; corrects #14's wrong "(and call argument lists)"
+  parenthetical). So R9's base-strict / brighterscript-only design is correct and matches the device.
+  **Follow-ups:** the stretch regression gate `check_realworld.py` is DONE (`npm run check:realworld`,
+  asserts 245/246). One newly-found base gap remains: `else <inline-stmt>` then block
+  (SignOutController.brs — bsc-valid, the only remaining angel-roku `.brs` failure).

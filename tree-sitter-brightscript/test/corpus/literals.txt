@@ -192,6 +192,32 @@ x = { a: 1, b: 2 }
   (EOS))
 
 ================================================================================
+reserved keywords as associative-array keys (R2b)
+================================================================================
+
+aa = { catch: 1, continue: 2 }
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (AssocArrayLiteral
+      (AAEntry
+        (AAKey
+          (Identifier))
+        (IntegerLiteral))
+      (ElementSep)
+      (AAEntry
+        (AAKey
+          (Identifier))
+        (IntegerLiteral))))
+  (EOS))
+
+================================================================================
 numeric type designators (! float, % integer) on decimal/integer literals
 ================================================================================
 

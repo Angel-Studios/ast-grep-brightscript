@@ -66,19 +66,18 @@ function annotationPrefix($) {
 export default grammar(base, {
   name: 'brighterscript',
 
-  conflicts: ($, previous) => [
-    // Inherit the base conflicts EXCEPT the three the two-tier expression model
-    // below makes unnecessary (tree-sitter flags them): the base
-    // [AssignTarget,_Expression], [ArgumentList,ParenExpr] and
-    // [IndexSuffix,ArrayElement] resolve cleanly now that the cascade derives only
-    // through _ExpressionNoCast. [AssignTarget,Primary] is still needed and kept.
-    ...previous.filter((pair) => {
-      const names = pair.map((s) => s.name).sort().join(',');
-      return ![
-        ['AssignTarget', '_Expression'], ['ArgumentList', 'ParenExpr'],
-        ['IndexSuffix', 'ArrayElement'],
-      ].some((d) => d.slice().sort().join(',') === names);
-    }),
+  // Inherit the base externals (IdentStart, _nl) and append TemplateChars — a
+  // run of literal `...` template text read by the scanner (src/scanner.c), so
+  // the `'` comment opener is never skipped as an extra after a `${...}`
+  // interpolation (R5). Order MUST match the scanner enum {IDENT_START, NL,
+  // TEMPLATE_CHARS}. The brighterscript scanner is a distinct copy, so this added
+  // external is brighterscript-only (the base grammar is unchanged).
+  externals: ($, previous) => [...previous, $.TemplateChars],
+
+  // The base now declares NO conflicts (the _Callable narrowing removed them), so
+  // these are the only brighterscript-specific ones. The l-value conflicts
+  // (AssignTarget vs the expression tiers) are likewise no longer needed.
+  conflicts: $ => [
     // `?` is both the ternary operator and the `print` shorthand: in a then-less
     // single-line `if` body, `if x ? a : b` is ambiguous (ternary condition vs
     // `if x` + `? a` print). Keep both alive; context (a later `end if` / use in
@@ -89,10 +88,6 @@ export default grammar(base, {
     // token (`(` -> TypedFunctionType, else IntrinsicType) decides; keep both alive.
     // Newly reachable via TypeCastExpression (`x as function(...)`).
     [$.IntrinsicType, $.TypedFunctionType],
-    // An l-value (`m.x`, `a[0]`) is an AssignTarget before `=`/`as Type =` but an
-    // ordinary expression otherwise — mirrors the base [AssignTarget, _Expression]
-    // conflict, now also against the no-cast tier that derives PostfixExpr.
-    [$.AssignTarget, $._ExpressionNoCast],
   ],
 
   rules: {
@@ -138,7 +133,10 @@ export default grammar(base, {
     //========================================================================
     // dotted / qualified name (declaration, extends, new, custom type)
     //========================================================================
-    QualifiedName: $ => prec.left(seq($.Identifier, repeat(seq('.', $.Identifier)))),
+    // A segment AFTER a `.` may be a reserved word (`namespace mc.private`,
+    // `new mc.Sub()`, type `mc.private.Bar`) — same AllowedProperties rule as
+    // member access. The first segment stays a plain Identifier. R2c.
+    QualifiedName: $ => prec.left(seq($.Identifier, repeat(seq('.', $._NameOrKeyword)))),
 
     //========================================================================
     // namespace
@@ -158,7 +156,8 @@ export default grammar(base, {
     // class
     //========================================================================
     ClassDeclaration: $ => seq(
-      ci('class'), field('name', $.Identifier),
+      // A class name may be a reserved word (`class Type`) — bsc allows it. R2d.
+      ci('class'), field('name', $._NameOrKeyword),
       optional(seq(ci('extends'), field('parent', $.QualifiedName))),
       repeat1($.EOS),
       optional(field('body', $.ClassBody)),
@@ -170,7 +169,11 @@ export default grammar(base, {
     FieldDeclaration: $ => seq(
       optional(field('access', $.AccessModifier)),
       optional(ci('optional')),
-      field('name', $.Identifier),
+      // A field name may be a reserved word (`public type as string`) per
+      // BrighterScript AllowedProperties. R2a. The MethodDeclaration shares the
+      // `function`/`sub` prefix, so [FieldDeclaration, MethodDeclaration] is a
+      // declared conflict resolved by lookahead (a name+`(` is a method).
+      field('name', $._NameOrKeyword),
       optional(seq(ci('as'), field('type', $.Type))),
       optional(seq('=', field('value', $._Expression))),
     ),
@@ -196,14 +199,18 @@ export default grammar(base, {
       optional(field('body', alias(blockBody($), $.Block))),
       $.EndSub,
     ),
-    _MethodName: $ => choice($.Identifier, alias(ci('new'), $.Identifier)),
+    // A class method name may be (almost) any keyword — `function run()`,
+    // `function stop()`, the `new` constructor — per BrighterScript Allowed
+    // properties. _NameOrKeyword (Identifier | the brighterscript _reserved_word,
+    // which includes `new`/`class`/… and the inherited base keywords) covers it. R2a.
+    _MethodName: $ => $._NameOrKeyword,
     AccessModifier: _ => choice(ci('public'), ci('protected'), ci('private')),
 
     //========================================================================
     // interface
     //========================================================================
     InterfaceDeclaration: $ => seq(
-      ci('interface'), field('name', $.Identifier),
+      ci('interface'), field('name', $._NameOrKeyword),
       optional(seq(ci('extends'), field('parent', $.QualifiedName))),
       repeat1($.EOS),
       optional(field('body', $.InterfaceBody)),
@@ -223,19 +230,20 @@ export default grammar(base, {
     // enum
     //========================================================================
     EnumDeclaration: $ => seq(
-      ci('enum'), field('name', $.Identifier), repeat1($.EOS),
+      // An enum name may be a reserved word (`enum Type`) — bsc allows it. R2d.
+      ci('enum'), field('name', $._NameOrKeyword), repeat1($.EOS),
       optional(field('body', $.EnumBody)),
       fused('end', 'enum'),
     ),
     EnumBody: $ => members($, $._EnumMember),
     _EnumMember: $ => choice($.AnnotatedEnumMember, $.EnumMemberDecl),
     AnnotatedEnumMember: $ => seq(annotationPrefix($), $.EnumMemberDecl),
-    EnumMemberDecl: $ => seq(field('name', $.Identifier), optional(seq('=', field('value', $._Expression)))),
+    EnumMemberDecl: $ => seq(field('name', $._NameOrKeyword), optional(seq('=', field('value', $._Expression)))),
 
     //========================================================================
     // const / import / typecast / alias / type-alias
     //========================================================================
-    ConstStatement: $ => seq(ci('const'), field('name', $.Identifier), '=', field('value', $._Expression)),
+    ConstStatement: $ => seq(ci('const'), field('name', $._NameOrKeyword), '=', field('value', $._Expression)),
     ImportStatement: $ => seq(ci('import'), $.StringLiteral),
     TypecastStatement: $ => seq(ci('typecast'), field('target', $.Identifier), ci('as'), field('type', $.Type)),
     AliasStatement: $ => seq(ci('alias'), field('name', $.Identifier), '=', field('value', $.Identifier)),
@@ -257,7 +265,10 @@ export default grammar(base, {
     _ExpressionNoCast: $ => choice(
       $.OrExpr, $.AndExpr, $.NotExpr, $.ComparisonExpr, $.BitshiftExpr,
       $.AdditiveExpr, $.MultiplicativeExpr, $.UnaryExpr, $.PowerExpr,
-      $.CallExpression, $.PostfixExpr, $.Primary,
+      // The callable tier reached only through the inherited _Callable (Primary +
+      // postfix cascade), so a postfix/call object is never a binary/unary
+      // expression without parens — see base _Callable (R6).
+      $._Callable,
       $.TernaryExpr, $.NullCoalesceExpr,
     ),
     // Ternary / null-coalescing bind looser than every binary operator (prec 0).
@@ -294,11 +305,27 @@ export default grammar(base, {
     // Fully redefined (not `previous`) to swap the object AND fold in the callfunc
     // suffix `obj@.method(args)` in one rule.
     PostfixExpr: $ => prec.left(10, seq(
-      field('object', $._ExpressionNoCast),
+      field('object', $._Callable),
       choice($.IndexSuffix, $.MemberSuffix, $.AttributeSuffix, $.OptChainSuffix, $.CallfuncSuffix),
     )),
-    CallExpression: $ => prec.left(10, seq(field('callee', $._ExpressionNoCast), $.CallSuffix)),
+    CallExpression: $ => prec.left(10, seq(field('callee', $._Callable), $.CallSuffix)),
     CallfuncSuffix: $ => seq('@.', field('name', $._NameOrKeyword), '(', optional($.ArgumentList), ')'),
+
+    // BrighterScript (unlike plain BrightScript) allows newlines INSIDE call
+    // argument parens — `foo(`⏎`1,`⏎`2`⏎`)`, and notably a multi-line array arg
+    // whose closing `]` is followed by a newline before the `)` (R9). bsc accepts
+    // this in `.bs` but REJECTS the identical text in `.brs`, so the override is
+    // brighterscript-only (base ArgumentList stays strict, matching .brs + the
+    // device-validated newline-suppression design). `.bs` is transpiled to one
+    // line before the device sees it, so there is no runtime impact. Newlines are
+    // admitted around args and commas (the `_nl` external token becomes valid here
+    // and the scanner emits it instead of erroring).
+    ArgumentList: $ => seq(
+      optional($._nl),
+      $._Expression,
+      repeat(seq(optional($._nl), ',', optional($._nl), $._Expression)),
+      optional($._nl),
+    ),
 
     // A bare callfunc call `obj@.method(args)` is a valid expression statement
     // (it ends in a call, like CallExpression). The base ExpressionStatement only
@@ -306,7 +333,7 @@ export default grammar(base, {
     // object, like PostfixExpr).
     ExpressionStatement: ($, previous) => choice(
       previous,
-      prec.left(10, seq($._ExpressionNoCast, $.CallfuncSuffix)),
+      prec.left(10, seq($._Callable, $.CallfuncSuffix)),
     ),
 
     // BrighterScript's AllowedProperties: nearly every keyword (incl. the new
@@ -370,16 +397,10 @@ export default grammar(base, {
     //========================================================================
     // template strings / regex / source literals
     //========================================================================
-    // The CLOSING backtick is token.immediate so that after a `${...}`
-    // interpolation no extras are skipped before the next template segment (R5).
-    // A `'` is the BrightScript comment opener; if any *non-immediate* token were
-    // valid after the interpolation's `}`, tree-sitter would skip extras and eat
-    // `'…`→EOL as a Comment. With the only continuations all immediate
-    // (TemplateChars, `${`, closing `` ` ``), `'` stays ordinary template text in
-    // an interpolated template, matching the no-interpolation case.
-    TemplateString: $ => seq('`', repeat(choice($.TemplateInterpolation, $.TemplateChars)), token.immediate('`')),
-    // A run of template text: anything but ` $ \  ; an escape \X; or a $ not opening ${.
-    TemplateChars: _ => token.immediate(prec(1, /([^`$\\]|\\[\s\S]|\$[^{])+/)),
+    // TemplateChars is an EXTERNAL token (scanner-lexed) — see the externals
+    // declaration above and src/scanner.c. A `${...}` interpolation; the `${`
+    // opener is token.immediate; `}` closes it.
+    TemplateString: $ => seq('`', repeat(choice($.TemplateInterpolation, $.TemplateChars)), '`'),
     TemplateInterpolation: $ => seq(token.immediate('${'), $._Expression, '}'),
     TaggedTemplate: $ => prec.right(11, seq(field('tag', $.Identifier), $.TemplateString)),
 

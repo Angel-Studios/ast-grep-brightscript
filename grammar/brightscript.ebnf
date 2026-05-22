@@ -524,7 +524,14 @@ BlockIf         ::= 'if' Expression 'then'? EOS
                     EndIf
 ElseIfClause    ::= ( 'else' 'if' | 'elseif' ) Expression 'then'? EOS
                         Block?
-ElseClause      ::= 'else' EOS
+(* In a BLOCK IF, the ELSE clause's FIRST statement(s) may sit on the SAME line
+   as 'else' (then the block continues on following lines), e.g.
+   'else c()' EOL 'd()' EOL 'end if'. Device/bsc-accepted. The optional inline
+   InlineStatements precedes the EOS+Block; 'end if' keeps this distinct from a
+   single-line ELSE. NOTE: this same-line inline first-statement form is ONLY
+   for the bare ELSE clause -- bsc REJECTS it after 'else if <cond>' (BS1081),
+   so ElseIfClause does NOT get the inline form. *)
+ElseClause      ::= 'else' InlineStatements? EOS
                         Block?
 EndIf           ::= 'end' 'if' | 'endif'
 

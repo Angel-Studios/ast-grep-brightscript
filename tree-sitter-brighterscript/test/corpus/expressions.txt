@@ -141,6 +141,28 @@ greeting = `hi ${name}`
   (EOS))
 
 ================================================================================
+single quote inside an interpolated template string (R5)
+================================================================================
+
+msg = `Failed '${key}' here`
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (AssignmentStatement
+    (AssignTarget
+      (Identifier
+        (IdentStart)))
+    (TemplateString
+      (TemplateChars)
+      (TemplateInterpolation
+        (Identifier
+          (IdentStart)))
+      (TemplateChars)))
+  (EOS))
+
+================================================================================
 tagged template string
 ================================================================================
 
@@ -345,4 +367,37 @@ end function
           (IdentStart)))
       (EOS))
     (EndFunction))
+  (EOS))
+
+================================================================================
+newline inside call argument parens (BrighterScript-only, R9)
+================================================================================
+
+sub f()
+  x = foo(1,
+    2)
+end sub
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (SubDeclaration
+    name: (Identifier
+      (IdentStart))
+    (EOS)
+    body: (Block
+      (AssignmentStatement
+        target: (AssignTarget
+          (Identifier
+            (IdentStart)))
+        value: (CallExpression
+          callee: (Identifier
+            (IdentStart))
+          (CallSuffix
+            (ArgumentList
+              (IntegerLiteral)
+              (IntegerLiteral)))))
+      (EOS))
+    (EndSub))
   (EOS))
