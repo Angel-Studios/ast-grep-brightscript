@@ -256,6 +256,7 @@
   {"id": "sg.xml.empty_elem", "kind": "EmptyElemTag", "layer": "scenegraph", "dimension": "self-closing empty element", "snippet": "<a/>", "device_testable": false, "expect": "parse"},
   {"id": "sg.xml.attr_double_quote", "kind": "AttValue", "layer": "scenegraph", "dimension": "double-quoted attribute value", "snippet": "<a x=\"1\"/>", "device_testable": false, "expect": "parse"},
   {"id": "sg.xml.attr_single_quote", "kind": "AttValue", "layer": "scenegraph", "dimension": "single-quoted attribute value", "snippet": "<a x='1'/>", "device_testable": false, "expect": "parse"},
+  {"id": "sg.xml.attr_text", "kind": "AttText", "layer": "scenegraph", "dimension": "literal attribute-value text run (visible node so ast-grep $meta-vars bind in attribute-value position)", "snippet": "<a x=\"hello\"/>", "device_testable": false, "expect": "parse"},
   {"id": "sg.xml.content_chardata", "kind": "CharData", "layer": "scenegraph", "dimension": "character data as element content", "snippet": "<a>hello</a>", "device_testable": false, "expect": "parse"},
   {"id": "sg.component.name", "kind": "ComponentAttribute", "layer": "scenegraph", "dimension": "required name attribute", "snippet": "<component name=\"MyComp\" />", "device_testable": true, "expect": "parse"},
   {"id": "sg.component.extends_builtin", "kind": "ExtendsValue", "layer": "scenegraph", "dimension": "extends a built-in node class", "snippet": "<component name=\"C\" extends=\"Group\" />", "device_testable": true, "expect": "parse"},

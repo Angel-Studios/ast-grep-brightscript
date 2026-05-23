@@ -122,8 +122,15 @@ Nmtokens   ::= Nmtoken ( #x20 Nmtoken )*
 (* Attribute values support both quote styles. References (entity / character)
  * are permitted inside attribute values; the raw quote that delimits the value
  * is excluded from its content. *)
-AttValue   ::= '"'  ( [^<&"] | Reference )* '"'
-             | "'"  ( [^<&'] | Reference )* "'"
+AttValue   ::= '"'  ( AttText | Reference )* '"'
+             | "'"  ( AttText | Reference )* "'"
+
+(* A run of literal attribute-value text, exposed as its own node (rather than an
+ * inline char class) so ast-grep can bind a $meta-variable written in attribute-
+ * value position, e.g. <field id="$ID"/> or <Poster uri="$U"/>. Markup delimiters
+ * (< &) and the delimiting quote are excluded; the dq/sq forms differ only in
+ * which quote they exclude. *)
+AttText    ::= ( [^<&"'] )+
 
 (* Entity-value and system/public literals (used by the prolog/DTD subset). *)
 EntityValue   ::= '"'  ( [^%&"] | PEReference | Reference )* '"'

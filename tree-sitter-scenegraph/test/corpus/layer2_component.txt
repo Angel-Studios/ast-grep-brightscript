@@ -10,7 +10,8 @@ component: required name attribute
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))))
+      value: (AttValue
+        (AttText)))))
 
 ================================================================================
 component: extends a built-in node class
@@ -24,7 +25,8 @@ component: extends a built-in node class
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (ComponentAttribute
       (Eq)
       value: (ExtendsAttValue
@@ -43,11 +45,13 @@ component: extends a user-defined component name
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (ComponentAttribute
       (Eq)
       value: (ExtendsAttValue
-        (ExtendsValue)))))
+        (ExtendsValue
+          (AttText))))))
 
 ================================================================================
 component: initialFocus and version attributes
@@ -61,13 +65,16 @@ component: initialFocus and version attributes
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (ComponentAttribute
       (Eq)
-      value: (AttValue))))
+      value: (AttValue
+        (AttText)))))
 
 ================================================================================
 interface: empty
@@ -81,7 +88,8 @@ interface: empty
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Interface)))
 
 ================================================================================
@@ -96,19 +104,22 @@ interface: with a field (integer with value)
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Interface
       (Field
         (FieldAttribute
           (Eq)
-          value: (AttValue))
+          value: (AttValue
+            (AttText)))
         (FieldAttribute
           (Eq)
           value: (FieldTypeAttValue
             (FieldType)))
         (FieldAttribute
           (Eq)
-          value: (AttValue))))))
+          value: (AttValue
+            (AttText)))))))
 
 ================================================================================
 field: type value matched case-insensitively (boolean)
@@ -122,19 +133,22 @@ field: type value matched case-insensitively (boolean)
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Interface
       (Field
         (FieldAttribute
           (Eq)
-          value: (AttValue))
+          value: (AttValue
+            (AttText)))
         (FieldAttribute
           (Eq)
           value: (FieldTypeAttValue
             (FieldType)))
         (FieldAttribute
           (Eq)
-          value: (AttValue))))))
+          value: (AttValue
+            (AttText)))))))
 
 ================================================================================
 field: alias micro-syntax
@@ -148,19 +162,22 @@ field: alias micro-syntax
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Interface
       (Field
         (FieldAttribute
           (Eq)
-          value: (AttValue))
+          value: (AttValue
+            (AttText)))
         (FieldAttribute
           (Eq)
           value: (FieldTypeAttValue
             (FieldType)))
         (FieldAttribute
           (Eq)
-          value: (AliasAttValue))))))
+          value: (AliasAttValue
+            (AttText)))))))
 
 ================================================================================
 field: onChange and alwaysNotify
@@ -174,22 +191,26 @@ field: onChange and alwaysNotify
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Interface
       (Field
         (FieldAttribute
           (Eq)
-          value: (AttValue))
+          value: (AttValue
+            (AttText)))
         (FieldAttribute
           (Eq)
           value: (FieldTypeAttValue
             (FieldType)))
         (FieldAttribute
           (Eq)
-          value: (AttValue))
+          value: (AttValue
+            (AttText)))
         (FieldAttribute
           (Eq)
-          value: (AttValue))
+          value: (AttValue
+            (AttText)))
         (FieldAttribute
           (Eq)
           value: (BoolAttValue
@@ -207,12 +228,14 @@ function: exposes a BrightScript fn (callFunc)
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Interface
       (Function
         (FunctionAttribute
           (Eq)
-          value: (AttValue))))))
+          value: (AttValue
+            (AttText)))))))
 
 ================================================================================
 script: external uri (no body), fixed type
@@ -226,7 +249,8 @@ script: external uri (no body), fixed type
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Script
       (ScriptExternal
         (ScriptAttribute
@@ -235,7 +259,8 @@ script: external uri (no body), fixed type
             (ScriptType)))
         (ScriptAttribute
           (Eq)
-          value: (AttValue))))))
+          value: (AttValue
+            (AttText)))))))
 
 ================================================================================
 script: inline CDATA BrightScript body (injection point)
@@ -250,7 +275,8 @@ end sub]]></script></component>
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Script
       (ScriptAttribute
         (Eq)
@@ -272,7 +298,8 @@ end sub</script></component>
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Script
       (ScriptAttribute
         (Eq)
@@ -293,7 +320,8 @@ script: inline CDATA BrighterScript body (injection point)
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Script
       (ScriptAttributeBs
         (Eq)
@@ -314,7 +342,8 @@ script: inline bare (non-CDATA) BrighterScript text (injection point)
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Script
       (ScriptAttributeBs
         (Eq)
@@ -335,7 +364,8 @@ script: external uri (no body) BrighterScript type
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Script
       (ScriptExternal
         (ScriptAttributeBs
@@ -344,4 +374,5 @@ script: external uri (no body) BrighterScript type
             (ScriptType)))
         (ScriptAttribute
           (Eq)
-          value: (AttValue))))))
+          value: (AttValue
+            (AttText)))))))

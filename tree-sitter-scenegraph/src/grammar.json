@@ -189,8 +189,13 @@
                 "type": "CHOICE",
                 "members": [
                   {
-                    "type": "SYMBOL",
-                    "name": "_att_dq_chunk"
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_att_dq_chunk"
+                    },
+                    "named": true,
+                    "value": "AttText"
                   },
                   {
                     "type": "SYMBOL",
@@ -218,8 +223,13 @@
                 "type": "CHOICE",
                 "members": [
                   {
-                    "type": "SYMBOL",
-                    "name": "_att_sq_chunk"
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_att_sq_chunk"
+                    },
+                    "named": true,
+                    "value": "AttText"
                   },
                   {
                     "type": "SYMBOL",
@@ -1029,8 +1039,13 @@
           "name": "BuiltinNodeClass"
         },
         {
-          "type": "SYMBOL",
-          "name": "_ext_name"
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_ext_name"
+          },
+          "named": true,
+          "value": "AttText"
         }
       ]
     },
@@ -1582,7 +1597,7 @@
       "type": "IMMEDIATE_TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "[A-Za-z][A-Za-z0-9]*"
+        "value": "\\$+[A-Za-z_][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9]*"
       }
     },
     "AliasAttValue": {
@@ -1596,8 +1611,13 @@
               "value": "\""
             },
             {
-              "type": "SYMBOL",
-              "name": "_alias_body"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_alias_body"
+              },
+              "named": true,
+              "value": "AttText"
             },
             {
               "type": "STRING",
@@ -1613,8 +1633,13 @@
               "value": "'"
             },
             {
-              "type": "SYMBOL",
-              "name": "_alias_body"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_alias_body"
+              },
+              "named": true,
+              "value": "AttText"
             },
             {
               "type": "STRING",
@@ -1682,6 +1707,10 @@
           {
             "type": "PATTERN",
             "value": "[fF][aA][lL][sS][eE]"
+          },
+          {
+            "type": "PATTERN",
+            "value": "\\$+[A-Za-z_][A-Za-z0-9_]*"
           }
         ]
       }
@@ -2499,8 +2528,13 @@
               "value": "\""
             },
             {
-              "type": "SYMBOL",
-              "name": "_role_body"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_role_body"
+              },
+              "named": true,
+              "value": "AttText"
             },
             {
               "type": "STRING",
@@ -2516,8 +2550,13 @@
               "value": "'"
             },
             {
-              "type": "SYMBOL",
-              "name": "_role_body"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_role_body"
+              },
+              "named": true,
+              "value": "AttText"
             },
             {
               "type": "STRING",

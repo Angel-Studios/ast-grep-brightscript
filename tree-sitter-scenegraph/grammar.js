@@ -129,10 +129,13 @@ export default grammar({
     Eq: _ => '=',
 
     // AttValue: the quoted string content (may contain references). Named so it
-    // is matchable as the coverage `AttValue` kind.
+    // is matchable as the coverage `AttValue` kind. The literal text run is
+    // exposed as a visible `AttText` node (both quote styles alias to it) so an
+    // ast-grep $meta-variable written in attribute-value position binds, e.g.
+    // <field id="$ID"/> -> AttValue(AttText "$ID") -> metavar ID.
     AttValue: $ => choice(
-      seq('"', repeat(choice($._att_dq_chunk, $.Reference)), '"'),
-      seq("'", repeat(choice($._att_sq_chunk, $.Reference)), "'"),
+      seq('"', repeat(choice(alias($._att_dq_chunk, $.AttText), $.Reference)), '"'),
+      seq("'", repeat(choice(alias($._att_sq_chunk, $.AttText), $.Reference)), "'"),
     ),
     _att_dq_chunk: _ => token.immediate(prec(1, /[^<&"]+/)),
     _att_sq_chunk: _ => token.immediate(prec(1, /[^<&']+/)),
@@ -270,7 +273,9 @@ export default grammar({
       seq('"', $.ExtendsValue, '"'),
       seq("'", $.ExtendsValue, "'"),
     ),
-    ExtendsValue: $ => choice($.BuiltinNodeClass, $._ext_name),
+    // The user-component-name branch is exposed as AttText (the shared free-text
+    // attribute node) so an ast-grep $meta-variable binds, e.g. extends="$BASE".
+    ExtendsValue: $ => choice($.BuiltinNodeClass, alias($._ext_name, $.AttText)),
     _ext_name: _ => token.immediate(/[^"'<&]+/),
 
     // Built-in SceneGraph node classes (XSD `extends` enumeration). SEMANTIC:
@@ -325,21 +330,26 @@ export default grammar({
 
     // FieldType: SEMANTIC. Captures the type token in any case; NOT restricted to
     // the enum (note 2 — case-insensitive; unknown spellings are caught by lint).
-    FieldType: _ => token.immediate(/[A-Za-z][A-Za-z0-9]*/),
+    // Also accepts an ast-grep $meta-variable (a leading run of '$') so a pattern
+    // like type="$T" binds — real field types never start with '$'.
+    FieldType: _ => token.immediate(/\$+[A-Za-z_][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9]*/),
 
-    // alias="node.field" micro-syntax.
+    // alias="node.field" micro-syntax. The body is exposed as AttText so an
+    // ast-grep $meta-variable binds, e.g. alias="$A".
     AliasAttValue: $ => choice(
-      seq('"', $._alias_body, '"'),
-      seq("'", $._alias_body, "'"),
+      seq('"', alias($._alias_body, $.AttText), '"'),
+      seq("'", alias($._alias_body, $.AttText), "'"),
     ),
     _alias_body: _ => token.immediate(/[^"'<&]+/),
 
-    // alwaysNotify="true|false" — matched case-insensitively (note 1).
+    // alwaysNotify="true|false" — matched case-insensitively (note 1). Also
+    // accepts an ast-grep $meta-variable (leading '$' run) so alwaysNotify="$B"
+    // binds — a real bool value is only true/false, never $-prefixed.
     BoolAttValue: $ => choice(
       seq('"', $.BoolText, '"'),
       seq("'", $.BoolText, "'"),
     ),
-    BoolText: _ => token.immediate(choice(ci('true'), ci('false'))),
+    BoolText: _ => token.immediate(choice(ci('true'), ci('false'), /\$+[A-Za-z_][A-Za-z0-9_]*/)),
 
     // <function name="..."/> — always an empty element.
     Function: $ => seq('<', 'function', repeat($.FunctionAttribute), '/>'),
@@ -480,10 +490,11 @@ export default grammar({
       seq(field('name', $.Name), $.Eq, field('value', $.FieldInitValue)),
     ),
 
-    // role="parentFieldName".
+    // role="parentFieldName". The body is exposed as AttText so an ast-grep
+    // $meta-variable binds, e.g. role="$R".
     RoleAttValue: $ => choice(
-      seq('"', $._role_body, '"'),
-      seq("'", $._role_body, "'"),
+      seq('"', alias($._role_body, $.AttText), '"'),
+      seq("'", alias($._role_body, $.AttText), "'"),
     ),
     _role_body: _ => token.immediate(/[^"'<&]+/),
 

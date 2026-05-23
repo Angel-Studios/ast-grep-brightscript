@@ -11,7 +11,8 @@ prolog: XML declaration (version only)
     (XMLDecl
       (VersionInfo
         (Eq)
-        (AttValue)))))
+        (AttValue
+          (AttText))))))
 
 ================================================================================
 prolog: encoding declaration
@@ -26,10 +27,12 @@ prolog: encoding declaration
     (XMLDecl
       (VersionInfo
         (Eq)
-        (AttValue))
+        (AttValue
+          (AttText)))
       (EncodingDecl
         (Eq)
-        (AttValue)))))
+        (AttValue
+          (AttText))))))
 
 ================================================================================
 prolog: standalone declaration
@@ -44,10 +47,12 @@ prolog: standalone declaration
     (XMLDecl
       (VersionInfo
         (Eq)
-        (AttValue))
+        (AttValue
+          (AttText)))
       (SDDecl
         (Eq)
-        (AttValue)))))
+        (AttValue
+          (AttText))))))
 
 ================================================================================
 prolog: no XML declaration (decl is optional)
@@ -61,7 +66,8 @@ prolog: no XML declaration (decl is optional)
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))))
+      value: (AttValue
+        (AttText)))))
 
 ================================================================================
 XML comment
@@ -112,8 +118,10 @@ entity reference in an attribute value
         name: (Name)
         (Eq)
         value: (AttValue
+          (AttText)
           (Reference
-            (EntityRef)))))))
+            (EntityRef))
+          (AttText))))))
 
 ================================================================================
 numeric character reference in an attribute value
@@ -176,7 +184,8 @@ double-quoted attribute value
       (Attribute
         name: (Name)
         (Eq)
-        value: (AttValue)))))
+        value: (AttValue
+          (AttText))))))
 
 ================================================================================
 single-quoted attribute value
@@ -193,4 +202,5 @@ single-quoted attribute value
       (Attribute
         name: (Name)
         (Eq)
-        value: (AttValue)))))
+        value: (AttValue
+          (AttText))))))

@@ -459,6 +459,47 @@ Once you have a built dynamic library:
    `languageSymbol` must line up. Easiest: make the `customLanguages` key equal the grammar `name`, then
    `languageSymbol` can be omitted.
 
+   **Meta-variables when `$` is a real token in your language.** ast-grep's default sigil is `$`, so a
+   pattern `$X` must lex as an identifier. If your language already uses `$` (e.g. BrightScript's `$`
+   String type-designator), `$X` lexes wrong and patterns ERROR. Two fixes, in order of preference:
+   - **If you OWN the scanner (preferred): accept `$`-prefixed words as identifiers.** In the external
+     scanner's IdentStart branch, also fire when the lookahead is `$`, consuming a leading run of `$`
+     (so `$X` and `$$$ARGS` become one identifier word) — meta words skip the reserved-word check, and a
+     *lone* `$` with no following ident char declines so a trailing type-suffix (`name$`) is unaffected.
+     This keeps the **standard `$VAR` ergonomics** with zero collision (real code never starts a word with
+     `$`). VERIFIED on this repo's brightscript/brighterscript scanners (2026-05-21): `$X = $Y` matches and
+     captures, `name$` still parses Identifier+TypeSuffix, corpus stayed green. Rebuild surgically without
+     regenerating (`gcc … -O2 src/scanner.c -xc src/parser.c`) so `parser.c` is provably unchanged.
+   - **`expandoChar` (fallback, when you can't change the grammar).** Pick a char that IS a valid
+     identifier char and write meta-vars with it (`_VAR` for `expandoChar: _`). Downsides: non-standard
+     ergonomics and it collides with any real identifier that starts with that char — bad for a language
+     whose idiom uses leading `_`. Prefer the scanner fix when the grammar is yours.
+
+   Two more issues independent of `$`, both seen + fixed in the SceneGraph (XML) grammar:
+   - **Attribute-value meta-vars need a visible text node.** If the attr value is one opaque token
+     (`AttValue` whose text is `"$ID"`, quotes included), `id="$ID"` keeps `$ID` buried — ast-grep finds
+     no meta-var node, so it matches but captures nothing. FIX: expose the value's literal text run as its
+     OWN visible node (e.g. `AttText`, via `alias($._chunk, $.AttText)`); then `"$ID"` parses as
+     `AttValue(AttText "$ID")` and `$ID` binds. VERIFIED: after exposing `AttText`, `<field id="$ID"
+     type="$T" value="$V"/>` captured `{ID,T,V}`. Several free-text value bodies can ALIAS to the SAME
+     `AttText` node (`alias($._alias_body, $.AttText)`, `alias($._role_body, $.AttText)`, …) so meta-vars
+     bind uniformly across them. Any value matched by a RESTRICTIVE token (SceneGraph's `FieldType` =
+     `/[A-Za-z][A-Za-z0-9]*/`, or a `BoolText` of just `true|false`) also needs that token broadened to
+     admit `$NAME` (add a `\$+[A-Za-z_]\w*` alternative) or the meta-var won't lex there. If a value is a
+     `choice(SemanticKind, FreeText)` (SceneGraph `extends` = `BuiltinNodeClass | AttText`), a meta-var
+     only matches the branch it parses to — capture EITHER branch with `{kind: ExtendsValue, has: {pattern:
+     $BASE}}` rather than pinning the child kind.
+   - **Context-sensitive element kinds** (`<field>` is a `Field` only inside `<interface>` inside
+     `<component>`; standalone it's a `GenericElement`). A flat pattern `<field/>` parses as the wrong
+     kind. FIX: use ast-grep's contextual pattern — `pattern: {context: '<component
+     name="C"><interface><field id="$ID"/></interface></component>', selector: Field}` — the context must
+     be a COMPLETE valid nesting down to the target. For elements with a variable attribute set (UI
+     nodes), exact patterns over-constrain; use a relational `kind:` rule instead, e.g.
+     `{kind: NodeAttribute, all: [{has: {field: name, regex: '^id$'}}, {has: {field: value, has: {kind:
+     AttText, pattern: $V}}}]}` to capture one attribute's value across all nodes.
+
+   Use language injection (above) for embedded code regions regardless.
+
 3. **Verify.** Run a pattern scan against the new language:
    ```sh
    ast-grep -p "print" -l mylang            # CLI pattern search, -l selects your language

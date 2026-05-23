@@ -10,7 +10,8 @@ children: empty
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Children)))
 
 ================================================================================
@@ -25,7 +26,8 @@ children: node element whose tag is a built-in class (self-closing, field init)
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Children
       (NodeElement
         (NodeEmptyTag
@@ -35,7 +37,8 @@ children: node element whose tag is a built-in class (self-closing, field init)
             name: (Name)
             (Eq)
             value: (FieldInitValue
-              (AttValue))))))))
+              (AttValue
+                (AttText)))))))))
 
 ================================================================================
 children: node element whose tag is a user component name
@@ -49,7 +52,8 @@ children: node element whose tag is a user component name
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Children
       (NodeElement
         (NodeEmptyTag
@@ -68,7 +72,8 @@ children: nested node elements (parent/child)
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Children
       (NodeElement
         (NodeStartTag
@@ -95,7 +100,8 @@ node: reserved id attribute
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Children
       (NodeElement
         (NodeEmptyTag
@@ -103,7 +109,8 @@ node: reserved id attribute
             (Name))
           (NodeAttribute
             (Eq)
-            value: (AttValue)))))))
+            value: (AttValue
+              (AttText))))))))
 
 ================================================================================
 node: role assigns child as the value of a parent field
@@ -117,7 +124,8 @@ node: role assigns child as the value of a parent field
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Children
       (NodeElement
         (NodeStartTag
@@ -130,7 +138,8 @@ node: role assigns child as the value of a parent field
                 (Name))
               (NodeAttribute
                 (Eq)
-                value: (RoleAttValue)))))
+                value: (RoleAttValue
+                  (AttText))))))
         (NodeEndTag
           (NodeName
             (Name)))))))
@@ -147,7 +156,8 @@ node: color and vector2d field-init micro-syntax (opaque strings)
   (Component
     (ComponentAttribute
       (Eq)
-      value: (AttValue))
+      value: (AttValue
+        (AttText)))
     (Children
       (NodeElement
         (NodeEmptyTag
@@ -157,9 +167,11 @@ node: color and vector2d field-init micro-syntax (opaque strings)
             name: (Name)
             (Eq)
             value: (FieldInitValue
-              (AttValue)))
+              (AttValue
+                (AttText))))
           (NodeAttribute
             name: (Name)
             (Eq)
             value: (FieldInitValue
-              (AttValue))))))))
+              (AttValue
+                (AttText)))))))))

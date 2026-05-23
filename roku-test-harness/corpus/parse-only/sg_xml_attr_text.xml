@@ -1,0 +1,2 @@
+<!-- coverage-id: sg.xml.attr_text expect: parse -->
+<a x="hello"/>
