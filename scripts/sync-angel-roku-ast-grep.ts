@@ -12,11 +12,13 @@
  *
  * What it does (idempotent):
  *   1. copy the 3 compiled tree-sitter parsers (.so) →
- *      <target>/.ast-grep/parsers/   (gitignored — platform-specific binaries)
+ *      <target>/.ast-grep/parsers/   (TRACKED in the target repo — see step 3)
  *   2. write a MANAGED <target>/sgconfig.yml registering the custom languages
  *      (brightscript/.brs, brighterscript/.bs, scenegraph/.xml) + the SceneGraph
  *      <script> language injections, libraryPath → the vendored .so
- *   3. ensure <target>/.gitignore ignores .ast-grep/parsers/
+ *   3. ensure <target>/.gitignore does NOT ignore the parser dir — the .so are
+ *      COMMITTED so the change is visible in git and a fresh clone works without a
+ *      re-sync (an older sync may have added an ignore rule; this strips it)
  *   4. ensure <target>/rules/ exists (the ruleDirs home for app-specific rules)
  *
  * The parsers are tree-sitter ABI15 and load with @ast-grep/cli ^0.42.3 — the
@@ -155,22 +157,26 @@ if (dryRun) {
   log(`write  ${SGCONFIG_REL}`);
 }
 
-// --- 3. ensure the parser dir is gitignored ---------------------------------
+// --- 3. ensure the parser dir is NOT gitignored (the .so are TRACKED) --------
+// The vendored parsers are committed to the target repo, so the binary change is
+// visible in git and a fresh clone works without re-syncing. If an older sync
+// added an ignore rule for the parser dir, strip it (and the managed comment
+// above it) so the binaries get tracked.
 const giPath = join(TARGET, ".gitignore");
-const gi = existsSync(giPath) ? readFileSync(giPath, "utf8") : "";
-const giHas = gi
-  .split(/\r?\n/)
-  .some((l) => l.trim() === GITIGNORE_LINE || l.trim() === ".ast-grep/" || l.trim() === ".ast-grep");
-if (giHas) {
-  log(".gitignore  →  parser dir already ignored (no change)");
-} else {
-  log(`${dryRun ? "would add" : "add"}  ${GITIGNORE_LINE}  →  .gitignore`);
-  if (!dryRun) {
-    const sep = gi.length === 0 || gi.endsWith("\n") ? "" : "\n";
-    writeFileSync(
-      giPath,
-      `${gi}${sep}\n# vendored ast-grep tree-sitter parsers (platform-specific; re-synced from ast-grep-brightscript)\n${GITIGNORE_LINE}\n`,
-    );
+if (existsSync(giPath)) {
+  const lines = readFileSync(giPath, "utf8").split(/\r?\n/);
+  const kept = lines.filter(
+    (l) =>
+      l.trim() !== GITIGNORE_LINE &&
+      l.trim() !== ".ast-grep/" &&
+      l.trim() !== ".ast-grep" &&
+      !l.startsWith("# vendored ast-grep tree-sitter parsers"),
+  );
+  if (kept.length !== lines.length) {
+    log(`${dryRun ? "would remove" : "remove"}  parser-dir ignore rule  →  .gitignore (binaries are tracked)`);
+    if (!dryRun) writeFileSync(giPath, kept.join("\n"));
+  } else {
+    log(".gitignore  →  parser dir not ignored (binaries tracked, no change)");
   }
 }
 
