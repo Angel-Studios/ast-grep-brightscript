@@ -13,6 +13,11 @@ pipeline-preview.png
 node_modules/
 parser.c.log
 
+# Per-platform parser build output (scripts/build-parsers.ts):
+# dist/parsers/<platform>-<arch>/<lang>.so. Built artifacts are vendored by
+# consumers (project-xavier's vendor-parsers.ts), never committed here.
+dist/
+
 # Python validator bytecode cache
 __pycache__/
 *.pyc

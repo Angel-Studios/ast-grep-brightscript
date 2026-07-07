@@ -34,7 +34,7 @@ green-check, the per-feature loop, and the hard-won grammar/device gotchas.
 ast-grep-brightscript/
 ├── CLAUDE.md                                  ← you are here (orientation)
 ├── README.md                                  ← project overview + the architecture diagram
-├── package.json                               ← npm scripts: check/lint (bsc) + roku:deploy/zip/install/launch/delete
+├── package.json                               ← npm scripts: check/lint (bsc) + build:parsers (per-platform grammar libs) + roku:deploy/zip/install/launch/delete
 ├── sgconfig.yml                               ← ast-grep config: registers the customLanguages + languageInjections
 ├── .env.example                               ← Roku device config template (copy to .env; .env is gitignored)
 ├── docs/
@@ -61,6 +61,7 @@ ast-grep-brightscript/
 ├── roku-listener/                             ← Bun/TS tool: parses the device's ##SPEC## debug stream → JSON report
 │   └── README.md                              ← the ##SPEC## protocol + live/replay usage
 ├── scripts/
+│   ├── build-parsers.ts                       ← compile the three grammars → dist/parsers/<platform>-<arch>/*.so (Linux ELF / macOS Mach-O; --in-place refreshes the grammar-dir copies sgconfig.yml loads)
 │   └── roku-deploy.ts                         ← package → digest-auth sideload → ECP launch automation
 └── roadmap/                                   ← next-step plans (expand coverage, roArray, tree-sitter, housekeeping)
     └── README.md
