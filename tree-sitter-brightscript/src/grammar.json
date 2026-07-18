@@ -2138,8 +2138,25 @@
                   "type": "SEQ",
                   "members": [
                     {
-                      "type": "SYMBOL",
-                      "name": "_BlockItem"
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "SYMBOL",
+                          "name": "FunctionDeclaration"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "SubDeclaration"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "LibraryStatement"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "_BlockItem"
+                        }
+                      ]
                     },
                     {
                       "type": "REPEAT1",
@@ -2197,8 +2214,25 @@
                         "type": "SEQ",
                         "members": [
                           {
-                            "type": "SYMBOL",
-                            "name": "_BlockItem"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "SYMBOL",
+                                "name": "FunctionDeclaration"
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "SubDeclaration"
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "LibraryStatement"
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "_BlockItem"
+                              }
+                            ]
                           },
                           {
                             "type": "REPEAT1",
@@ -2252,8 +2286,25 @@
                           "type": "SEQ",
                           "members": [
                             {
-                              "type": "SYMBOL",
-                              "name": "_BlockItem"
+                              "type": "CHOICE",
+                              "members": [
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "FunctionDeclaration"
+                                },
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "SubDeclaration"
+                                },
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "LibraryStatement"
+                                },
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "_BlockItem"
+                                }
+                              ]
                             },
                             {
                               "type": "REPEAT1",

@@ -1,0 +1,7 @@
+' coverage-id: neg.bs.leading_dot_enum
+' expect: error
+' Leading-dot enum member reference `= .Member`. bsc REJECTS this (BS1081
+' "Unexpected token '.'") in every position (typed assign, argument) — it is NOT
+' a BrighterScript feature. The brighterscript grammar emits a MISSING node, so
+' this snippet is a syntax-negative (device/bsc-rejected), NOT a coverage gap.
+x = .Active

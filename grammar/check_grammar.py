@@ -38,8 +38,8 @@ BR_DIR = ROOT / "tree-sitter-brighterscript"
 # Leaves whose snippet is a SYNTAX rejection: tree-sitter must produce an ERROR.
 # (Device-rejected SEMANTIC cases — as interface/custom, type="str", #error — are
 # well-formed syntax and must parse CLEAN; they are flagged by lint rules.)
-# These are all BrightScript/stdlib leaves; there are no brighterscript
-# syntax-negative leaves, so SYNTAX_ERROR_IDS stays brightscript-only.
+# Most are BrightScript/stdlib leaves; BR_SYNTAX_ERROR_IDS holds the
+# brighterscript-layer syntax-negatives (parsed with the brighterscript grammar).
 SYNTAX_ERROR_IDS = {
     "neg.assign.let",
     "neg.cc.if_and", "neg.cc.if_or", "neg.cc.if_not", "neg.cc.if_paren",
@@ -48,6 +48,14 @@ SYNTAX_ERROR_IDS = {
     "stmt.expr.optcall",
     "lex.eos.depth0_paren",
     "lex.eos.no_continuation",
+}
+
+# BrighterScript-layer syntax-negatives: the snippet must produce ERROR/MISSING
+# when parsed with the BRIGHTERSCRIPT grammar (a construct that LOOKS like a bs
+# feature but bsc rejects). leading-dot enum `= .Member` is bsc BS1081 (Unexpected
+# token '.') — NOT a BrighterScript feature; the grammar emits a MISSING node.
+BR_SYNTAX_ERROR_IDS = {
+    "neg.bs.leading_dot_enum",
 }
 
 # ---------------------------------------------------------------------------
@@ -144,6 +152,10 @@ def main() -> int:
         kind_present = bool(re.search(rf"\b{re.escape(kind)}\b", tree))
         clean = (not has_error) and kind_present
         br_checked += 1
+        if sid in BR_SYNTAX_ERROR_IDS:
+            if not has_error:
+                problems.append(f"[B-br] {sid}: expected a parse ERROR (syntax-negative) but parsed clean")
+            continue
         if sid in BR_PARSE_EXCEPTIONS:
             used_exceptions.add(sid)
             if clean:

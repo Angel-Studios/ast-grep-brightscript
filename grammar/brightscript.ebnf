@@ -673,9 +673,15 @@ EndIfDirective  ::= '#end' 'if' | '#endif'
 ErrorDirective  ::= '#error' ErrorMessageText
 ErrorMessageText ::= ( Char - LINE_BREAK )*
 
-(* Within a conditional-compilation block, ordinary source lines (any
-   BlockItem) appear and are conditionally included. *)
-BlockItemsCC    ::= ( BlockItem EOS )* BlockItem?
+(* Within a conditional-compilation block, source lines are conditionally
+   included. Besides ordinary BlockItems, a cc block may wrap top-level
+   DECLARATIONS (function/sub/library): a `#if ... #end if` is a preprocessor
+   span that legally brackets whole module-scope declarations (bsc-confirmed;
+   angel-roku source/xavier/*.brs wrap an entire module of sub/function
+   declarations in one `#if xavier_instrumented ... #end if`). The device audit
+   (2026-07-17) made this non-optional. Mirrors grammar.js ccBlockBody(). *)
+BlockItemsCC    ::= ( BlockItemCC EOS )* BlockItemCC?
+BlockItemCC     ::= FunctionDeclaration | SubDeclaration | LibraryStatement | BlockItem
 
 (* The expression in a #if / #else if. DEVICE-CONFIRMED on Roku OS 15.1.4
    (Streaming Stick 4K): the ONLY legal forms are a single boolean literal or a

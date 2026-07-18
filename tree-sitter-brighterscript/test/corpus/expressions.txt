@@ -401,3 +401,56 @@ end sub
       (EOS))
     (EndSub))
   (EOS))
+
+================================================================================
+new as an ordinary identifier — target, argument value, and new() call (bsc-valid)
+================================================================================
+
+sub f()
+  new = [1, 2]
+  r = pick(old, new)
+  obj = new ()
+end sub
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (SubDeclaration
+    name: (Identifier
+      (IdentStart))
+    (EOS)
+    body: (Block
+      (AssignmentStatement
+        target: (AssignTarget
+          (Identifier))
+        value: (ArrayLiteral
+          (ArrayElement
+            (IntegerLiteral))
+          (ElementSep)
+          (ArrayElement
+            (IntegerLiteral))))
+      (EOS)
+      (AssignmentStatement
+        target: (AssignTarget
+          (Identifier
+            (IdentStart)))
+        value: (CallExpression
+          callee: (Identifier
+            (IdentStart))
+          (CallSuffix
+            (ArgumentList
+              (Identifier
+                (IdentStart))
+              (Identifier)))))
+      (EOS)
+      (AssignmentStatement
+        target: (AssignTarget
+          (Identifier
+            (IdentStart)))
+        value: (CallExpression
+          callee: (Identifier)
+          (CallSuffix)))
+      (EOS))
+    (EndSub))
+  (EOS))

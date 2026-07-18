@@ -252,4 +252,13 @@ sub test_bs_all(t as Object)
     ' ----- source literal --------------------------------------------------
     t.spec("bs.source_literal.function_name", "BsSourceLiteral", "FUNCTION_NAME source literal")
     t.assertEqual("bs.source_literal.function_name: bsWhoAmI()", bsWhoAmI(), "bsWhoAmI")
+
+    ' ----- new as an ordinary identifier -----------------------------------
+    ' bsc allows `new` as a plain identifier when it is not the `new Class()`
+    ' operator (angel-roku DiscoveryHubController.spec.bs: `new = [...]`,
+    ' `pick(old, new)`). Here `new` is an assignment target then a value.
+    t.spec("bs.ident.new_as_identifier", "Identifier", "new as an ordinary identifier (target + value), not the new operator")
+    new = 7
+    newVal = new
+    t.assertEqual("bs.ident.new_as_identifier: new/newVal", newVal, 7)
 end sub

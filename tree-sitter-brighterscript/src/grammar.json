@@ -699,12 +699,33 @@
       "type": "CHOICE",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "Identifier"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "Identifier"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "PostfixExpr"
+            }
+          ]
         },
         {
-          "type": "SYMBOL",
-          "name": "PostfixExpr"
+          "type": "ALIAS",
+          "content": {
+            "type": "TOKEN",
+            "content": {
+              "type": "PREC",
+              "value": 2,
+              "content": {
+                "type": "PATTERN",
+                "value": "[nN][eE][wW]"
+              }
+            }
+          },
+          "named": true,
+          "value": "Identifier"
         }
       ]
     },
@@ -2260,8 +2281,25 @@
                   "type": "SEQ",
                   "members": [
                     {
-                      "type": "SYMBOL",
-                      "name": "_BlockItem"
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "SYMBOL",
+                          "name": "FunctionDeclaration"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "SubDeclaration"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "LibraryStatement"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "_BlockItem"
+                        }
+                      ]
                     },
                     {
                       "type": "REPEAT1",
@@ -2319,8 +2357,25 @@
                         "type": "SEQ",
                         "members": [
                           {
-                            "type": "SYMBOL",
-                            "name": "_BlockItem"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "SYMBOL",
+                                "name": "FunctionDeclaration"
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "SubDeclaration"
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "LibraryStatement"
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "_BlockItem"
+                              }
+                            ]
                           },
                           {
                             "type": "REPEAT1",
@@ -2374,8 +2429,25 @@
                           "type": "SEQ",
                           "members": [
                             {
-                              "type": "SYMBOL",
-                              "name": "_BlockItem"
+                              "type": "CHOICE",
+                              "members": [
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "FunctionDeclaration"
+                                },
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "SubDeclaration"
+                                },
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "LibraryStatement"
+                                },
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "_BlockItem"
+                                }
+                              ]
                             },
                             {
                               "type": "REPEAT1",
@@ -3252,6 +3324,22 @@
         {
           "type": "SYMBOL",
           "name": "BsSourceLiteral"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "TOKEN",
+            "content": {
+              "type": "PREC",
+              "value": 2,
+              "content": {
+                "type": "PATTERN",
+                "value": "[nN][eE][wW]"
+              }
+            }
+          },
+          "named": true,
+          "value": "Identifier"
         }
       ]
     },
@@ -7449,6 +7537,10 @@
     [
       "IntrinsicType",
       "TypedFunctionType"
+    ],
+    [
+      "NewExpression",
+      "Primary"
     ]
   ],
   "precedences": [],

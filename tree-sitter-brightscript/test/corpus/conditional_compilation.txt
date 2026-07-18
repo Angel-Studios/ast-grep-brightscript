@@ -72,3 +72,41 @@ conditional compilation error directive
       (EOS))
     (EndIfDirective))
   (EOS))
+
+================================================================================
+conditional compilation wrapping a top-level declaration (angel-roku source/xavier/*)
+================================================================================
+
+#if INSTRUMENTED
+function Ping() as string
+return "pong"
+end function
+#end if
+
+--------------------------------------------------------------------------------
+
+(SourceFile
+  (EOS)
+  (IfDirectiveBlock
+    (CCExpression
+      (Identifier
+        (IdentStart)))
+    (EOS)
+    (Block
+      (FunctionDeclaration
+        (Identifier
+          (IdentStart))
+        (ReturnType
+          (Type
+            (Identifier
+              (IdentStart))))
+        (EOS)
+        (Block
+          (ReturnStatement
+            (StringLiteral
+              (StringChar)))
+          (EOS))
+        (EndFunction))
+      (EOS))
+    (EndIfDirective))
+  (EOS))

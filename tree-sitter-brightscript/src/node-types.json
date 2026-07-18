@@ -974,6 +974,10 @@
           "named": true
         },
         {
+          "type": "FunctionDeclaration",
+          "named": true
+        },
+        {
           "type": "GotoStatement",
           "named": true
         },
@@ -994,6 +998,10 @@
           "named": true
         },
         {
+          "type": "LibraryStatement",
+          "named": true
+        },
+        {
           "type": "PrintStatement",
           "named": true
         },
@@ -1003,6 +1011,10 @@
         },
         {
           "type": "StopStatement",
+          "named": true
+        },
+        {
+          "type": "SubDeclaration",
           "named": true
         },
         {

@@ -63,6 +63,20 @@ function annotationPrefix($) {
   return repeat1(seq($.Annotation, repeat1($.EOS)));
 }
 
+/**
+ * `new` used as an ORDINARY identifier. `new` is scanner-reserved (so `new Foo()`
+ * is recognized as a NewExpression in expression position), which means it never
+ * lexes as IdentStart; re-admit it as an identifier where bsc allows it — as an
+ * assignment target and as a value (angel-roku: `new = [...]`, `pick(old, new)`;
+ * both bsc-confirmed valid). Aliased to Identifier so ast-grep `kind: Identifier`
+ * matches uniformly and no new node kind / EBNF rule is introduced (L5 parity).
+ * The [NewExpression, Primary] GLR conflict lets the token AFTER `new` decide:
+ * `Class(` → NewExpression, `=`/`,`/`)`/EOS/operator → this identifier.
+ */
+function newAsIdent($) {
+  return alias(ci('new'), $.Identifier);
+}
+
 export default grammar(base, {
   name: 'brighterscript',
 
@@ -88,6 +102,11 @@ export default grammar(base, {
     // token (`(` -> TypedFunctionType, else IntrinsicType) decides; keep both alive.
     // Newly reachable via TypeCastExpression (`x as function(...)`).
     [$.IntrinsicType, $.TypedFunctionType],
+    // `new` is both the NewExpression operator (`new Foo()`) and — bsc-allowed — an
+    // ordinary identifier (`new = [...]`, `f(old, new)`). After the `new` token both
+    // are live; the following token (`QualifiedName (` -> NewExpression, else the
+    // Primary identifier) decides. See newAsIdent.
+    [$.NewExpression, $.Primary],
   ],
 
   rules: {
@@ -292,10 +311,12 @@ export default grammar(base, {
       field('expression', $._Expression), ci('as'), field('type', $.Type),
     )),
 
-    // primary additions (Primary is an inherited supertype; these become subtypes)
+    // primary additions (Primary is an inherited supertype; these become subtypes).
+    // newAsIdent admits `new` as an ordinary value/identifier (see newAsIdent note).
     Primary: ($, previous) => choice(
       previous,
       $.NewExpression, $.TemplateString, $.TaggedTemplate, $.RegexLiteral, $.BsSourceLiteral,
+      newAsIdent($),
     ),
     NewExpression: $ => prec.right(seq(ci('new'), field('class', $.QualifiedName), '(', optional($.ArgumentList), ')')),
 
@@ -360,6 +381,10 @@ export default grammar(base, {
     //========================================================================
     // typed forms (override the inherited rules)
     //========================================================================
+    // `new` is admitted as an ordinary assignment target (`new = [...]`) — see the
+    // newAsIdent note. The base AssignTarget is Identifier | PostfixExpr; `new` is
+    // scanner-reserved so it is neither without this alternative.
+    AssignTarget: ($, previous) => choice(previous, newAsIdent($)),
     // typed local assignment: `name as Type = value`
     AssignmentStatement: ($, previous) => choice(
       previous,

@@ -72,6 +72,22 @@ function blockBody($) {
 }
 
 /**
+ * A conditional-compilation directive block body. Like blockBody, but ALSO admits
+ * top-level DECLARATIONS (function/sub/library) alongside block items, because a
+ * `#if … #end if` is a preprocessor span that may legally wrap ANY source —
+ * including whole module-scope declarations (bsc-confirmed; angel-roku
+ * source/xavier/*.brs wrap their entire module of `sub`/`function` decls in one
+ * `#if xavier_instrumented`). The statement-level blockBody deliberately omits
+ * declarations; cc blocks must not, or `#if`-wrapped top-level decls ERROR.
+ */
+function ccBlockBody($) {
+  return repeat(seq(
+    choice($.FunctionDeclaration, $.SubDeclaration, $.LibraryStatement, $._BlockItem),
+    repeat1($.EOS),
+  ));
+}
+
+/**
  * A newline-only EOS node, for use INSIDE collection literals. There a newline is
  * a separator but a ':' is not (':' there is the AA key separator), so the
  * colon-bearing EOS must not apply. The scanner already collapses newline runs
@@ -362,19 +378,21 @@ export default grammar({
 
     ConstDirective: $ => seq(token(/#[ \t]*[cC][oO][nN][sS][tT]/), field('name', $.Identifier), '=', field('value', $.CCExpression)),
 
+    // Body slots use ccBlockBody (not blockBody) so a `#if … #end if` may wrap
+    // top-level declarations, not just statements — see ccBlockBody's note.
     IfDirectiveBlock: $ => seq(
       token(/#[ \t]*[iI][fF]/), field('condition', $.CCExpression),
       repeat1($.EOS),
-      optional(alias(blockBody($), $.Block)),
+      optional(alias(ccBlockBody($), $.Block)),
       repeat(seq(
         token(/#[ \t]*[eE][lL][sS][eE][ \t]*[iI][fF]/), field('condition', $.CCExpression),
         repeat1($.EOS),
-        optional(alias(blockBody($), $.Block)),
+        optional(alias(ccBlockBody($), $.Block)),
       )),
       optional(seq(
         token(/#[ \t]*[eE][lL][sS][eE]/),
         repeat1($.EOS),
-        optional(alias(blockBody($), $.Block)),
+        optional(alias(ccBlockBody($), $.Block)),
       )),
       $.EndIfDirective,
     ),

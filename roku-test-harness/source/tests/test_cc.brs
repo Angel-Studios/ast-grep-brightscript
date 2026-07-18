@@ -15,6 +15,21 @@
 
 #const cch_flag = true
 
+' cc.decl.* — a #if wrapping TOP-LEVEL declarations. A #if/#end if is a
+' preprocessor span that may bracket whole module-scope declarations; the device
+' compiles the guarded declarations and they are callable. angel-roku
+' source/xavier/*.brs wrap an entire module of sub/function decls in one
+' #if xavier_instrumented ... #end if (the parse-completeness audit, 2026-07-17).
+#if true
+function cchd_fn() as integer
+    return 7
+end function
+
+sub cchd_sub(probe as object)
+    probe.ran = true
+end sub
+#end if
+
 sub test_cc_all(t as Object)
     ' --- #const NAME = true/false ------------------------------------------
     ' #const cch_flag = true was declared at file scope above; including its
@@ -88,4 +103,16 @@ sub test_cc_all(t as Object)
         x = 1
     #end if
     t.assertEqual("cc.manifest_const", x, 1)
+
+    ' --- #if wrapping a TOP-LEVEL function declaration ----------------------
+    ' cchd_fn() is declared at file scope inside `#if true ... #end if` (above).
+    ' Calling it proves the cc-wrapped declaration compiled and is callable.
+    t.spec("cc.decl.if_function", "IfDirectiveBlock", "#if wrapping a TOP-LEVEL function declaration (cc block body admits module-scope decls; angel-roku source/xavier/*)")
+    t.assertEqual("cc.decl.if_function", cchd_fn(), 7)
+
+    ' --- #if wrapping a TOP-LEVEL sub declaration ---------------------------
+    t.spec("cc.decl.if_sub", "IfDirectiveBlock", "#if wrapping a TOP-LEVEL sub declaration (cc block body admits module-scope decls)")
+    probe = {}
+    cchd_sub(probe)
+    t.assertTrue("cc.decl.if_sub: cc-wrapped sub ran", probe.ran = true)
 end sub
