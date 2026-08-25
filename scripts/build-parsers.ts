@@ -21,12 +21,27 @@
  * `tree-sitter parse --lib-path` before the script reports success — a build
  * that compiles but cannot load or parse is a failure here, never a green.
  *
+ * With `--wasm`, ALSO build each grammar to WebAssembly at
+ * `dist/parsers/wasm/<lang>.wasm`. A `.wasm` parser is architecture-INDEPENDENT,
+ * so it sits beside the per-platform directories rather than inside one. It is
+ * opt-in because the first `--wasm` build downloads a wasi-sdk (~113MB, once,
+ * network required); the default build stays offline-capable.
+ *
+ * A Wasm parser may only import a fixed set of libc symbols, so an external
+ * scanner that calls anything else (`tolower` did) cannot build. The CLI reports
+ * that and exits 1 — but it WRITES the output file BEFORE it validates, and the
+ * rejected artifact still LOADS in web-tree-sitter, failing only at parse with an
+ * error naming no symbol. Presence of a `.wasm` therefore proves nothing. This
+ * script gates on the exit code, DELETES a rejected artifact, and then re-checks
+ * the module's own function imports against the permitted set.
+ *
  *   npm run build:parsers            # dist/parsers/<platform>-<arch>/ only
  *   npm run build:parsers -- --in-place   # also refresh <grammar-dir>/<lang>.so
+ *   npm run build:parsers:wasm       # also dist/parsers/wasm/<lang>.wasm
  */
 
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,6 +51,19 @@ const REPO_ROOT = join(HERE, '..');
 const TREE_SITTER = join(REPO_ROOT, 'node_modules', '.bin', 'tree-sitter');
 const PLATFORM_KEY = `${process.platform}-${process.arch}`;
 const DIST_DIR = join(REPO_ROOT, 'dist', 'parsers', PLATFORM_KEY);
+const WASM_DIR = join(REPO_ROOT, 'dist', 'parsers', 'wasm');
+
+/**
+ * The libc symbols a tree-sitter Wasm parser is allowed to import. This is the
+ * list the CLI itself prints when it rejects a scanner; anything else must be
+ * written out by hand in the scanner (see the `ascii_lower` helpers).
+ */
+const WASM_ALLOWED_IMPORTS: ReadonlySet<string> = new Set([
+  'calloc', 'free', 'iswalnum', 'iswalpha', 'iswblank', 'iswdigit', 'iswlower',
+  'iswspace', 'iswupper', 'iswxdigit', 'malloc', 'memchr', 'memcmp', 'memcpy',
+  'memmove', 'memset', 'realloc', 'strcmp', 'strlen', 'strncat', 'strncmp',
+  'strncpy', 'towlower', 'towupper',
+]);
 
 type Grammar = {
   readonly dir: string;
@@ -105,12 +133,49 @@ function smokeParse(g: Grammar, libPath: string): void {
   }
 }
 
+function buildWasm(g: Grammar, outPath: string): void {
+  const grammarDir = join(REPO_ROOT, g.dir);
+  const res = spawnSync(TREE_SITTER, ['build', '--wasm', '--output', outPath, '.'], {
+    cwd: grammarDir,
+    encoding: 'utf8',
+  });
+  if (res.error !== undefined || res.status !== 0) {
+    // The CLI writes the artifact BEFORE it validates, so a rejected build leaves
+    // a plausible file behind. Remove it: a later step must not read it as green.
+    rmSync(outPath, { force: true });
+    fail(`tree-sitter build --wasm failed for ${g.lang}: ${res.error?.message ?? res.stderr}`);
+  }
+}
+
+function verifyWasmImports(g: Grammar, outPath: string): void {
+  let mod: WebAssembly.Module;
+  try {
+    mod = new WebAssembly.Module(readFileSync(outPath));
+  } catch (err) {
+    fail(`${g.lang}.wasm is not a loadable WebAssembly module: ${String(err)}`);
+  }
+  const forbidden = WebAssembly.Module.imports(mod)
+    .filter((i) => i.kind === 'function' && !WASM_ALLOWED_IMPORTS.has(i.name))
+    .map((i) => `${i.module}.${i.name}`);
+  if (forbidden.length > 0) {
+    rmSync(outPath, { force: true });
+    fail(
+      `${g.lang}.wasm imports symbols a Wasm parser may not use: ${forbidden.join(', ')}. ` +
+        `Write the operation out in the external scanner instead.`,
+    );
+  }
+}
+
 function main(): void {
   if (!existsSync(TREE_SITTER)) {
     fail(`tree-sitter CLI not found at ${TREE_SITTER} — run npm install first`);
   }
   const inPlace = process.argv.includes('--in-place');
+  const wantWasm = process.argv.includes('--wasm');
   mkdirSync(DIST_DIR, { recursive: true });
+  if (wantWasm) {
+    mkdirSync(WASM_DIR, { recursive: true });
+  }
   for (const g of GRAMMARS) {
     const distPath = join(DIST_DIR, `${g.lang}.so`);
     build(g, distPath);
@@ -119,9 +184,15 @@ function main(): void {
       copyFileSync(distPath, join(REPO_ROOT, g.dir, `${g.lang}.so`));
     }
     process.stdout.write(`built + smoke-parsed ${g.lang}.so → ${distPath}\n`);
+    if (wantWasm) {
+      const wasmPath = join(WASM_DIR, `${g.lang}.wasm`);
+      buildWasm(g, wasmPath);
+      verifyWasmImports(g, wasmPath);
+      process.stdout.write(`built + import-checked ${g.lang}.wasm → ${wasmPath}\n`);
+    }
   }
   process.stdout.write(
-    `done: ${GRAMMARS.length} parsers for ${PLATFORM_KEY}${inPlace ? ' (+ in-place grammar-dir copies)' : ''}\n`,
+    `done: ${GRAMMARS.length} parsers for ${PLATFORM_KEY}${inPlace ? ' (+ in-place grammar-dir copies)' : ''}${wantWasm ? ' (+ wasm)' : ''}\n`,
   );
 }
 

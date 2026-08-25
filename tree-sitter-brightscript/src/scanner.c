@@ -24,7 +24,6 @@
 
 #include "tree_sitter/parser.h"
 #include <string.h>
-#include <ctype.h>
 
 enum TokenType {
   IDENT_START,
@@ -51,6 +50,15 @@ static const char *const RESERVED[] = {
 };
 static const unsigned RESERVED_COUNT = sizeof(RESERVED) / sizeof(RESERVED[0]);
 
+// ASCII lower-case, free-standing. A Wasm parser may not use the <ctype.h>
+// `tolower`, and this scanner needs none of it: `word` holds only bytes that
+// `is_ident_cont` accepted, so every byte compared below is [A-Za-z0-9_]. Over
+// that set this mapping is identical to `tolower` in the C locale, which is the
+// only locale in effect here (the scanner never calls setlocale).
+static inline char ascii_lower(char c) {
+  return (c >= 'A' && c <= 'Z') ? (char)(c - 'A' + 'a') : c;
+}
+
 static bool is_reserved(const char *word, unsigned len) {
   // Linear scan with length+case-insensitive compare (list is small).
   for (unsigned i = 0; i < RESERVED_COUNT; i++) {
@@ -58,7 +66,7 @@ static bool is_reserved(const char *word, unsigned len) {
     if (strlen(kw) != len) continue;
     bool eq = true;
     for (unsigned j = 0; j < len; j++) {
-      if (kw[j] != tolower((unsigned char)word[j])) { eq = false; break; }
+      if (kw[j] != ascii_lower(word[j])) { eq = false; break; }
     }
     if (eq) return true;
   }
